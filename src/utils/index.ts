@@ -28,5 +28,12 @@ export function hexToBN(str) {
 }
 
 export function numberWithCommas(x) {
-  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  let y = x.toString()
+  const dotIndex = y.indexOf('.')
+  if (dotIndex !== -1) {
+    let a = y.substr(0, y.indexOf('.'))
+    let b = y.substr(y.indexOf('.'))
+    return a.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + b
+  }
+  return y.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }

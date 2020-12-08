@@ -27,7 +27,8 @@ export default class NotificationService {
 
     const usdp = Number(data.usdp / BigInt(10 ** 15)) / 1000
 
-    let minted = data.usdp > 0 ? 'Minted ' + numberWithCommas(usdp) + ' USDP' : ''
+    const duckCount = usdp < 1000 ? 1 : (usdp < 5000 ? 2 : (Math.round(usdp / 5000)))
+    let minted = data.usdp > 0 ? 'Minted ' + numberWithCommas(usdp) + ' USDP ' + '🦆'.repeat(duckCount) : ''
     minted = minted ? (deposit ? '\n' + minted : minted) : ''
 
     const text = deposit + minted + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
