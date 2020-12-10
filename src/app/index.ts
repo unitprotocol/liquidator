@@ -10,7 +10,6 @@ import {
 } from '../constants'
 import { TxConfig } from '../types/TxConfig'
 import web3 from '../provider'
-require('dotenv').config()
 
 
 class LiquidationMachine {
