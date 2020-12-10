@@ -21,13 +21,13 @@ export default class NotificationService {
     const colFormatted = data.col / BigInt(10 ** 18)
     let deposit =
       (mainFormatted > 0 ? numberWithCommas(mainFormatted) + ' ' + token.symbol + ' ' : '')
-      + (colFormatted > 0 ? numberWithCommas(colFormatted) + ' ' + ' COL ' : '')
+      + (colFormatted > 0 ? 'and ' + numberWithCommas(colFormatted) + ' ' + ' COL ' : '')
 
     deposit = deposit === '' ? '' : 'Deposited ' + deposit
 
     const usdp = Number(data.usdp / BigInt(10 ** 15)) / 1000
 
-    const duckCount = usdp < 1000 ? 1 : (usdp < 5000 ? 2 : (Math.round(usdp / 5000)))
+    const duckCount = usdp < 1000 ? 1 : (usdp < 5000 ? 2 : (Math.round(usdp / 5000) + 2))
     let minted = data.usdp > 0 ? 'Minted ' + numberWithCommas(usdp) + ' USDP ' + '🦆'.repeat(duckCount) : ''
     minted = minted ? (deposit ? '\n' + minted : minted) : ''
 
