@@ -52,4 +52,17 @@ export const JOIN_EVENT = 'join'
 export const EXIT_EVENT = 'exit'
 export const LIQUIDATION_TRIGGERED_EVENT = 'liquidationTriggered'
 
-export let ACTIVE_VAULT_MANAGERS = VAULT_MANAGERS.filter(v => !v.toBlock)
+const vaultManagerStandards = [
+  {
+    address: '0x56DD677842214CbB97Ad88dBAA58DD55e1b179Ea',
+    liquidationTrigger: null,
+    fromBlock: 11420394,
+  },
+  {
+    address: '0x2726ebDf958cC15f5adB01aAd22741329948fbDB',
+    liquidationTrigger: null,
+    fromBlock: 11316092,
+  },
+]
+
+export let ACTIVE_VAULT_MANAGERS = [...VAULT_MANAGERS.filter(v => !v.toBlock), ...vaultManagerStandards]

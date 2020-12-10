@@ -46,23 +46,7 @@ class SynchronizationService extends EventEmitter {
       this.checkAndPersistPosition(topics, data, liquidationTriggerByVaultManagerAddress(address))
     });
 
-    promises.length = 0
-    const keys = []
-    this.positions.forEach((_, k) => {
-      promises.push(this.web3.eth.call({
-        to: VAULT_ADDRESS,
-        data: GET_TOTAL_DEBT_SIGNATURE + k
-      }))
-      keys.push(k)
-    })
-    this.log('total positions', this.positions.size)
-    const usdpForPositions = await Promise.all(promises);
-    usdpForPositions.forEach((v, i) => {
-      if (BigInt(v) === BigInt(0)) {
-        this.positions.delete(keys[i])
-      }
-    })
-    this.log('open positions', this.positions.size)
+    await this.filterClosedPositions()
     this.emit('ready', this);
     this.trackEvents();
   }
@@ -84,23 +68,27 @@ class SynchronizationService extends EventEmitter {
       this.web3.eth.subscribe('logs', {
         address,
         topics: EXIT_TOPICS
-      }, (error, log ) =>{
+      }, (error, log ) => {
         if (!error) {
-          this.emit(EXIT_EVENT, parseJoinExit(log))
+          const exit = parseJoinExit(log)
+          this.emit(EXIT_EVENT, exit)
+          if (exit.usdp > BigInt(0))
+            this.checkClosedPosition(positionKey(log.topics))
         }
       })
     });
   }
 
-  private parseLog(topics, data): [boolean, string, bigint] {
+  private parseJoinData(topics, data): [boolean, string, bigint] {
     const id = positionKey(topics)
     const exist: CDP = this.positions.get(id)
     const USDP = BigInt('0x' + data.substring(2 + 2 * 64, 3 * 64))
-    return [!exist && USDP > BigInt(0), id, USDP]
+    const shouldPersist = !exist && USDP > BigInt(0)
+    return [shouldPersist, id, USDP]
   }
 
   private checkAndPersistPosition(topics, data, liquidationTrigger) {
-    const [shouldPersist, id, USDP] = this.parseLog(topics, data);
+    const [shouldPersist, id, USDP] = this.parseJoinData(topics, data);
     if (shouldPersist) {
       this.positions.set(id, { USDP, liquidationTrigger })
     }
@@ -134,6 +122,38 @@ class SynchronizationService extends EventEmitter {
         this.emit(TRIGGER_LIQUIDATION_EVENT, tx)
       }
     })
+  }
+
+  private async filterClosedPositions() {
+    const promises = []
+    const keys = []
+    this.positions.forEach((_, k) => {
+      promises.push(this.web3.eth.call({
+        to: VAULT_ADDRESS,
+        data: GET_TOTAL_DEBT_SIGNATURE + k
+      }))
+      keys.push(k)
+    })
+    this.log('total CDP count', this.positions.size)
+    const positionDebts = await Promise.all(promises);
+    positionDebts.forEach((debt, i) => {
+      if (BigInt(debt) === BigInt(0)) {
+        this.positions.delete(keys[i])
+      }
+    })
+    this.log('open CDP count', this.positions.size)
+  }
+
+  private async checkClosedPosition(key: string) {
+    const debt = await this.web3.eth.call({
+      to: VAULT_ADDRESS,
+      data: GET_TOTAL_DEBT_SIGNATURE + key
+    })
+    if (BigInt(debt) === BigInt(0)) {
+      this.positions.delete(key)
+      this.log(`CDP ${key} has been closed`)
+    }
+    this.log(`CDP ${key} is still open`)
   }
 
 
