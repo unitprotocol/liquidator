@@ -41,7 +41,7 @@ export default class NotificationService {
     const colFormatted = data.col / BigInt(10 ** 18)
     let withdrawn =
       (mainFormatted > 0 ? numberWithCommas(mainFormatted) + ' ' + token.symbol + ' ' : '')
-      + (colFormatted > 0 ? numberWithCommas(colFormatted) + ' ' + ' COL ' : '')
+      + (colFormatted > 0 ? 'and ' + numberWithCommas(colFormatted) + ' ' + ' COL ' : '')
 
     withdrawn = withdrawn === '' ? '' : 'Withdrawn ' + withdrawn
 
