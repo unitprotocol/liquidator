@@ -21,7 +21,7 @@ export default class NotificationService {
     const colFormatted = data.col / BigInt(10 ** 18)
     let deposit =
       (mainFormatted > 0 ? numberWithCommas(mainFormatted) + ' ' + token.symbol + ' ' : '')
-      + (colFormatted > 0 ? 'and ' + numberWithCommas(colFormatted) + ' ' + ' COL ' : '')
+      + (colFormatted > 0 ? (mainFormatted > 0 ? 'and ': '') + numberWithCommas(colFormatted) + ' COL' : '')
 
     deposit = deposit === '' ? '' : 'Deposited ' + deposit
 
@@ -41,7 +41,7 @@ export default class NotificationService {
     const colFormatted = data.col / BigInt(10 ** 18)
     let withdrawn =
       (mainFormatted > 0 ? numberWithCommas(mainFormatted) + ' ' + token.symbol + ' ' : '')
-      + (colFormatted > 0 ? 'and ' + numberWithCommas(colFormatted) + ' ' + ' COL ' : '')
+      + (colFormatted > 0 ? (mainFormatted > 0 ? 'and ': '') + numberWithCommas(colFormatted) + ' COL' : '')
 
     withdrawn = withdrawn === '' ? '' : 'Withdrawn ' + withdrawn
 
