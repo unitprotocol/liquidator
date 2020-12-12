@@ -102,6 +102,78 @@ export const tokenList = [
   },
   {
     addresses: {
+      1: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984',
+    },
+    symbol: 'UNI',
+    defaultOracleType: 3,
+    collateral: true,
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9',
+    },
+    symbol: 'AAVE',
+    defaultOracleType: 3,
+    collateral: true,
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xc00e94cb662c3520282e6f5717214004a7f26888',
+    },
+    symbol: 'COMP',
+    defaultOracleType: 3,
+    collateral: true,
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f',
+    },
+    symbol: 'SNX',
+    defaultOracleType: 3,
+    collateral: true,
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x514910771af9ca656af840dff83e8264ecf986ca',
+    },
+    symbol: 'LINK',
+    defaultOracleType: 3,
+    collateral: true,
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x04fa0d235c4abf4bcf4787af4cf447de572ef828',
+    },
+    symbol: 'UMA',
+    defaultOracleType: 3,
+    collateral: true,
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xeb4c2781e4eba804ce9a9803c67d0893436bb27d',
+    },
+    symbol: 'renBTC',
+    defaultOracleType: 3,
+    collateral: true,
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x584bc13c7d411c00c01a62e8019472de68768430',
+    },
+    symbol: 'HEGIC',
+    defaultOracleType: 3,
+    collateral: true,
+    decimals: 18,
+  },
+  {
+    addresses: {
       1: '0xbb2b8038a1640196fbe3e38816f3e67cba72d940',
     },
     symbol: 'UNISWAP LP WBTC-ETH',
@@ -158,6 +230,126 @@ export const tokenList = [
     collateral: true,
     defaultOracleType: 4,
     poolTokens: ['MKR', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852',
+    },
+    symbol: 'UNISWAP LP USDT-ETH',
+    collateral: true,
+    defaultOracleType: 4,
+    poolTokens: ['USDT', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc',
+    },
+    symbol: 'UNISWAP LP USDC-ETH',
+    collateral: true,
+    defaultOracleType: 4,
+    poolTokens: ['USDC', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xa478c2975ab1ea89e8196811f51a7b7ade33eb11',
+    },
+    symbol: 'UNISWAP LP DAI-ETH',
+    collateral: true,
+    defaultOracleType: 4,
+    poolTokens: ['DAI', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xa478c2975ab1ea89e8196811f51a7b7ade33eb11',
+    },
+    symbol: 'UNISWAP LP UNI-ETH',
+    collateral: true,
+    defaultOracleType: 4,
+    poolTokens: ['UNI', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xa2107fa5b38d9bbd2c461d6edf11b11a50f6b974',
+    },
+    symbol: 'UNISWAP LP LINK-ETH',
+    collateral: true,
+    defaultOracleType: 4,
+    poolTokens: ['LINK', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xdfc14d2af169b0d36c4eff567ada9b2e0cae044f',
+    },
+    symbol: 'UNISWAP LP AAVE-ETH',
+    collateral: true,
+    defaultOracleType: 4,
+    poolTokens: ['AAVE', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x81fbef4704776cc5bba0a5df3a90056d2c6900b3',
+    },
+    symbol: 'UNISWAP LP renBTC-ETH',
+    collateral: true,
+    defaultOracleType: 4,
+    poolTokens: ['renBTC', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x43ae24960e5534731fc831386c07755a2dc33d47',
+    },
+    symbol: 'UNISWAP LP SNX-ETH',
+    collateral: true,
+    defaultOracleType: 4,
+    poolTokens: ['SNX', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xcffdded873554f362ac02f8fb1f02e5ada10516f',
+    },
+    symbol: 'UNISWAP LP COMP-ETH',
+    collateral: true,
+    defaultOracleType: 4,
+    poolTokens: ['COMP', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x88d97d199b9ed37c29d846d00d443de980832a22',
+    },
+    symbol: 'UNISWAP LP UMA-ETH',
+    collateral: true,
+    defaultOracleType: 4,
+    poolTokens: ['UMA', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x1273ad5d8f3596a7a39efdb5a4b8f82e8f003fc3',
+    },
+    symbol: 'UNISWAP LP HEGIC-ETH',
+    collateral: true,
+    defaultOracleType: 4,
+    poolTokens: ['HEGIC', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xfd29420060464b69f2e1804b685354c31687121e',
+    },
+    symbol: 'UNISWAP LP COL-ETH',
+    collateral: true,
+    defaultOracleType: 4,
+    poolTokens: ['COL', 'ETH'],
     decimals: 18,
   },
 ]
