@@ -264,7 +264,7 @@ export const tokenList = [
   },
   {
     addresses: {
-      1: '0xa478c2975ab1ea89e8196811f51a7b7ade33eb11',
+      1: '0xd3d2e2692501a5c9ca623199d38826e513033a17',
     },
     symbol: 'UNISWAP LP UNI-ETH',
     collateral: true,
