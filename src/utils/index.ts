@@ -1,5 +1,6 @@
 import { Log } from 'web3-core/types'
 import { JoinExit } from '../types/JoinExit'
+import { Transfer } from '../types/Transfer'
 
 export function parseJoinExit(event: Log): JoinExit {
   const token = topicToAddr(event.topics[1])
@@ -15,6 +16,18 @@ export function parseJoinExit(event: Log): JoinExit {
     main,
     col,
     usdp,
+    txHash,
+  }
+}
+
+export function parseTransfer(event: Log): Transfer {
+  const to = topicToAddr(event.topics[2])
+  event.data = event.data.substr(2)
+  const amount = hexToBN(event.data.substr(0, 64))
+  const txHash = event.transactionHash
+  return {
+    to,
+    amount,
     txHash,
   }
 }
