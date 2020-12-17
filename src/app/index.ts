@@ -2,6 +2,7 @@ import SynchronizationService from '../services/synchronization'
 import LiquidationService from '../services/liquidation'
 import NotificationService from '../services/notification'
 import {
+  DUCK_CREATION_EVENT,
   EXIT_EVENT,
   JOIN_EVENT,
   LIQUIDATION_TRIGGERED_EVENT,
@@ -38,6 +39,10 @@ class LiquidationMachine {
 
     this.synchronizer.on(JOIN_EVENT, join => {
       this.notificator.notifyJoin(join)
+    })
+
+    this.synchronizer.on(DUCK_CREATION_EVENT, mint => {
+      this.notificator.notifyDuck(mint)
     })
 
     this.synchronizer.on(EXIT_EVENT, exit => {

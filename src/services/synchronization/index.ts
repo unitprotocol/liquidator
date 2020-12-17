@@ -6,11 +6,11 @@ import {
   GET_TOTAL_DEBT_SIGNATURE, JOIN_EVENT, liquidationTriggerByVaultManagerAddress, NEW_BLOCK_EVENT,
   JOIN_TOPICS, TRIGGER_LIQUIDATION_EVENT, TRIGGER_LIQUIDATION_SIGNATURE,
   VAULT_ADDRESS,
-  VAULT_MANAGERS, EXIT_TOPICS, EXIT_EVENT,
+  VAULT_MANAGERS, EXIT_TOPICS, EXIT_EVENT, DUCK_CREATION_TOPICS, DUCK_ADDRESS, DUCK_CREATION_EVENT,
 } from '../../constants'
 import Logger from '../../logger'
 import { TxConfig } from '../../types/TxConfig'
-import { parseJoinExit } from '../../utils'
+import { parseJoinExit, parseTransfer } from '../../utils'
 
 declare interface SynchronizationService {
   on(event: string, listener: Function): this;
@@ -77,6 +77,15 @@ class SynchronizationService extends EventEmitter {
         }
       })
     });
+    this.web3.eth.subscribe('logs', {
+      address: DUCK_ADDRESS,
+      topics: DUCK_CREATION_TOPICS
+    }, (error, log ) => {
+      if (!error) {
+        const mint = parseTransfer(log)
+        this.emit(DUCK_CREATION_EVENT, mint)
+      }
+    })
   }
 
   private parseJoinData(topics, data): [boolean, string, bigint] {

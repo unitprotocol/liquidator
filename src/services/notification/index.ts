@@ -1,3 +1,5 @@
+import { Transfer } from '../../types/Transfer'
+
 const TelegramBot = require("node-telegram-bot-api");
 import Logger from '../../logger'
 import { JoinExit } from '../../types/JoinExit'
@@ -51,6 +53,12 @@ export default class NotificationService {
     burned = burned ? (withdrawn ? '\n' + burned : burned) : ''
 
     const text = withdrawn + burned + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
+    this.sendMessage(text)
+  }
+
+  async notifyDuck(data: Transfer) {
+    const amountFormatted = Number(data.amount / BigInt(10 ** (18 - 4))) / 1e4
+    const text = `${amountFormatted} DUCK minted\n` + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan 🦆</a>`
     this.sendMessage(text)
   }
 

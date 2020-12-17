@@ -2,9 +2,11 @@ import web3 from '../provider'
 
 export const JOIN_TOPICS = ["0x330a0c3830f9c19654cc3b5701caa3230ec175384311f49b6a927dcc4b32ef4a"]
 export const EXIT_TOPICS = ["0x57c3a18962ef5229db59708e9fa0ec7925bf2f15049b6f591b6364d0f0d2aca5"]
+export const DUCK_CREATION_TOPICS = ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", "0x0000000000000000000000000000000000000000000000000000000000000000"]
 export const VAULT_ADDRESS = "0xb1cff81b9305166ff1efc49a129ad2afcd7bcf19"
 export const GET_TOTAL_DEBT_SIGNATURE = web3.eth.abi.encodeFunctionSignature('getTotalDebt(address,address)')
 export const TRIGGER_LIQUIDATION_SIGNATURE = web3.eth.abi.encodeFunctionSignature('triggerLiquidation(address,address)')
+export const DUCK_ADDRESS = "0x92E187a03B6CD19CB6AF293ba17F2745Fd2357D5"
 
 export const VAULT_MANAGERS: {
   address: string
@@ -51,6 +53,7 @@ export const NEW_BLOCK_EVENT = 'newBlock'
 export const JOIN_EVENT = 'join'
 export const EXIT_EVENT = 'exit'
 export const LIQUIDATION_TRIGGERED_EVENT = 'liquidationTriggered'
+export const DUCK_CREATION_EVENT = 'duckMinted'
 
 const vaultManagerStandards = [
   {
