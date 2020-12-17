@@ -65,7 +65,6 @@ class LiquidationService extends EventEmitter{
     txConfig.txHash = tx.transactionHash
     this.log('.triggerLiquidation: sending transaction', trx, tx.transactionHash);
 
-
     const tokenAddress = '0x' + txConfig.key.substr(24, 40);
     const ownerAddress = '0x' + txConfig.key.substr(88);
 

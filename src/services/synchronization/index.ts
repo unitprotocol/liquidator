@@ -116,7 +116,7 @@ class SynchronizationService extends EventEmitter {
     console.timeEnd(timeLabel)
     this.log(`.checkLiquidatable: there are ${gasData.filter(d => d).length} liquidatable positions`)
     gasData.forEach((gas, i) => {
-      if (gas) {
+      if (gas && +gas > 30_000) {
         const tx = txConfigs[i]
         tx.gas = gas
         this.emit(TRIGGER_LIQUIDATION_EVENT, tx)

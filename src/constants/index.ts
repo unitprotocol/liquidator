@@ -14,30 +14,30 @@ export const VAULT_MANAGERS: {
 }[] = [
   {
     address: '0x7f50d78062304B6f523f20E9bACa8F3C72197424',
-    liquidationTrigger: '0xa7e17e0E06544A1A281ffCe2B86090e6fE5F91Ed',
+    liquidationTrigger: '0x989AC9c8353C3F01412705d7E50B4Ab9E804c227',
     fromBlock: 11316117,
     toBlock: 11351816,
   },
   {
     address: '0x78727A77028d9130D2772713d570780231E64ECf',
-    liquidationTrigger: '0xa7e17e0E06544A1A281ffCe2B86090e6fE5F91Ed',
+    liquidationTrigger: '0x989AC9c8353C3F01412705d7E50B4Ab9E804c227',
     fromBlock: 11354460,
     toBlock: 11378571,
   },
   {
     address: '0x754106b2f312c987Dd34161F8b4735392fa93F06',
-    liquidationTrigger: '0xb5927cAE19572166BfD19a0Ad18af825760Fb75b',
+    liquidationTrigger: '0x0ca1A59a987922375234df94919A456F61e93E1e',
     fromBlock: 11320948,
     toBlock: 	11329829,
   },
   {
     address: '0x211a6d4d4f49c0c5814451589d6378fda614adb9',
-    liquidationTrigger: '0xa7e17e0E06544A1A281ffCe2B86090e6fE5F91Ed',
+    liquidationTrigger: '0x989AC9c8353C3F01412705d7E50B4Ab9E804c227',
     fromBlock: 11373662,
   },
   {
     address: '0x3052764f1af2f8B7a887dEAfA42153530676079B',
-    liquidationTrigger: '0xb5927cAE19572166BfD19a0Ad18af825760Fb75b',
+    liquidationTrigger: '0x0ca1A59a987922375234df94919A456F61e93E1e',
     fromBlock: 11373663,
   },
 ]
