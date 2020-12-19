@@ -9,7 +9,7 @@ declare interface LiquidationService {
   emit(event: string, payload: any): boolean;
 }
 
-class LiquidationService extends EventEmitter{
+class LiquidationService extends EventEmitter {
   private readonly web3: Web3
   private readonly transactions: Map<string, TxConfig>
   private readonly logger
