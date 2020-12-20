@@ -18,7 +18,7 @@ export default class NotificationService {
   }
 
   async notifyJoin(data: JoinExit) {
-    const token = tokenByAddress(data.token)
+    const token = tokenByAddress(data.token) || { decimals: 18, symbol: data.token}
     const mainFormatted = Number(data.main / BigInt(10 ** (token.decimals - 4))) / 10000
     const colFormatted = data.col / BigInt(10 ** 18)
     let deposit =
@@ -38,7 +38,7 @@ export default class NotificationService {
   }
 
   async notifyExit(data: JoinExit) {
-    const token = tokenByAddress(data.token)
+    const token = tokenByAddress(data.token) || { decimals: 18, symbol: data.token}
     const mainFormatted = Number(data.main / BigInt(10 ** (token.decimals - 4))) / 10000
     const colFormatted = data.col / BigInt(10 ** 18)
     let withdrawn =

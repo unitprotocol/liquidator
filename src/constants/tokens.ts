@@ -344,13 +344,23 @@ export const tokenList = [
   },
   {
     addresses: {
-      1: '0xfd29420060464b69f2e1804b685354c31687121e',
+      1: '0xc3601f3e1c26d1a47571c559348e4156786d1fec',
     },
-    symbol: 'UNISWAP LP COL-ETH',
+    symbol: 'UNISWAP LP DUCK-ETH',
     collateral: true,
     defaultOracleType: 4,
-    poolTokens: ['COL', 'ETH'],
+    poolTokens: ['DUCK', 'ETH'],
     decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x92E187a03B6CD19CB6AF293ba17F2745Fd2357D5',
+    },
+    symbol: 'DUCK',
+    collateral: true,
+    defaultOracleType: 3,
+    decimals: 18,
+    logoUrl: `${process.env.PUBLIC_URL}/duck_logo.png`,
   },
 ]
 
