@@ -10,17 +10,27 @@ import { numberWithCommas } from '../../utils'
 export default class NotificationService {
   private readonly bot
   private readonly logger
+  private processed
 
   constructor() {
     this.logger = Logger(NotificationService.name)
     const botToken = process.env.TELEGRAM_BOT_TOKEN
     this.bot = new TelegramBot(botToken, { polling: false });
+    this.processed = []
   }
 
   async notifyJoin(data: JoinExit) {
+    if (this.processed.includes(data.txHash)) {
+      this.log('.notifyJoin', 'already processed', data)
+      return
+    }
+    if (this.processed.length >= 100) {
+      this.processed = this.processed.slice(90)
+    }
+    this.processed.push(data.txHash)
     const token = tokenByAddress(data.token) || { decimals: 18, symbol: data.token}
     const mainFormatted = Number(data.main / BigInt(10 ** (token.decimals - 4))) / 10000
-    const colFormatted = data.col / BigInt(10 ** 18)
+    const colFormatted = data.col / BigInt(1e18)
     let deposit =
       (mainFormatted > 0 ? numberWithCommas(mainFormatted) + ' ' + token.symbol + ' ' : '')
       + (colFormatted > 0 ? (mainFormatted > 0 ? 'and ': '') + numberWithCommas(colFormatted) + ' COL' : '')
@@ -38,9 +48,17 @@ export default class NotificationService {
   }
 
   async notifyExit(data: JoinExit) {
+    if (this.processed.includes(data.txHash)) {
+      this.log('.notifyExit', 'already processed', data)
+      return
+    }
+    if (this.processed.length >= 100) {
+      this.processed = this.processed.slice(90)
+    }
+    this.processed.push(data.txHash)
     const token = tokenByAddress(data.token) || { decimals: 18, symbol: data.token}
     const mainFormatted = Number(data.main / BigInt(10 ** (token.decimals - 4))) / 10000
-    const colFormatted = data.col / BigInt(10 ** 18)
+    const colFormatted = data.col / BigInt(1e18)
     let withdrawn =
       (mainFormatted > 0 ? numberWithCommas(mainFormatted) + ' ' + token.symbol + ' ' : '')
       + (colFormatted > 0 ? (mainFormatted > 0 ? 'and ': '') + numberWithCommas(colFormatted) + ' COL' : '')
@@ -63,6 +81,14 @@ export default class NotificationService {
   }
 
   async notifyTriggered(data) {
+    if (this.processed.includes(data.txHash)) {
+      this.log('.notifyTriggered', 'already processed', data)
+      return
+    }
+    if (this.processed.length >= 100) {
+      this.processed = this.processed.slice(90)
+    }
+    this.processed.push(data.txHash)
     const token = tokenByAddress(data.mainAsset)
 
     const text = 'Liquidation triggered'
