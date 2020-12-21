@@ -3,6 +3,7 @@ import Web3 from 'web3'
 import Logger from '../../logger'
 import { TxConfig } from '../../types/TxConfig'
 import { LIQUIDATION_TRIGGERED_EVENT } from '../../constants'
+import axios from 'axios'
 
 declare interface LiquidationService {
   on(event: string, listener: Function): this;
@@ -46,9 +47,16 @@ class LiquidationService extends EventEmitter {
     // increment stored nonce
     this.nonce++
 
-    let gasPrice = await this.web3.eth.getGasPrice()
-    gasPrice = String(Number(gasPrice) * 110)
-    gasPrice = gasPrice.substr(0, gasPrice.length - 2)
+    const gasPriceResp = await axios.get("https://gasprice.poa.network/")
+    this.log('.triggerLiquidation', gasPriceResp)
+    let gasPrice
+    if (!gasPriceResp.data.health) {
+      gasPrice = await this.web3.eth.getGasPrice()
+      gasPrice = String(Number(gasPrice) * 120)
+      gasPrice = gasPrice.substr(0, gasPrice.length - 2)
+    } else {
+      gasPrice = gasPriceResp.data.instant * 1e9
+    }
 
     const trx = {
       to: txConfig.to,
