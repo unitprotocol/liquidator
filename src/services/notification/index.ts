@@ -10,11 +10,13 @@ import { numberWithCommas } from '../../utils'
 export default class NotificationService {
   private readonly bot
   private readonly logger
+  private readonly defaultChatId
   private processed
 
   constructor() {
     this.logger = Logger(NotificationService.name)
     const botToken = process.env.TELEGRAM_BOT_TOKEN
+    this.defaultChatId = process.env.TELEGRAM_CHAT_ID
     this.bot = new TelegramBot(botToken, { polling: false });
     this.processed = []
   }
@@ -100,7 +102,7 @@ export default class NotificationService {
     this.sendMessage(text)
   }
 
-  private async sendMessage(text, chatId = -1001400632946, form = { parse_mode: 'HTML', disable_web_page_preview: true }) {
+  private async sendMessage(text, chatId = this.defaultChatId, form = { parse_mode: 'HTML', disable_web_page_preview: true }) {
     return this.bot.sendMessage(chatId, text, form).catch((e) => {
       this.error('error', e);
     });
