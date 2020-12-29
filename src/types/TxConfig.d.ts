@@ -5,4 +5,6 @@ export type TxConfig = {
   from: string,
   gas?: string,
   txHash?: string,
+  sentAt?: number,
+  nonce?: number,
 }

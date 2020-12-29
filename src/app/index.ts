@@ -5,9 +5,10 @@ import {
   DUCK_CREATION_EVENT,
   EXIT_EVENT,
   JOIN_EVENT,
+  LIQUIDATION_TRIGGER_TX,
   LIQUIDATION_TRIGGERED_EVENT,
   NEW_BLOCK_EVENT,
-  TRIGGER_LIQUIDATION_EVENT,
+  TRIGGER_LIQUIDATION,
 } from '../constants'
 import { TxConfig } from '../types/TxConfig'
 import web3 from '../provider'
@@ -29,7 +30,11 @@ class LiquidationMachine {
     this.liquidator = new LiquidationService(web3)
     this.liquidator.on('ready', () => { this.liquidatorReady = true })
 
-    this.liquidator.on(LIQUIDATION_TRIGGERED_EVENT, data => {
+    this.liquidator.on(LIQUIDATION_TRIGGER_TX, data => {
+      this.notificator.notifyTriggerTx(data)
+    })
+
+    this.synchronizer.on(LIQUIDATION_TRIGGERED_EVENT, data => {
       this.notificator.notifyTriggered(data)
     })
 
@@ -49,7 +54,7 @@ class LiquidationMachine {
       this.notificator.notifyExit(exit)
     })
 
-    this.synchronizer.on(TRIGGER_LIQUIDATION_EVENT, (triggerTx: TxConfig) => {
+    this.synchronizer.on(TRIGGER_LIQUIDATION, (triggerTx: TxConfig) => {
 
       // postpone liquidations when service is not yet available
       if (!this.liquidatorReady) {

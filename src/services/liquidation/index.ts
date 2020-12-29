@@ -2,8 +2,9 @@ import { EventEmitter } from 'events'
 import Web3 from 'web3'
 import Logger from '../../logger'
 import { TxConfig } from '../../types/TxConfig'
-import { LIQUIDATION_TRIGGERED_EVENT } from '../../constants'
+import { LIQUIDATION_TRIGGER_TX } from '../../constants'
 import axios from 'axios'
+import { LiquidationTrigger } from '../../types/LiquidationTrigger'
 
 declare interface LiquidationService {
   on(event: string, listener: Function): this;
@@ -33,22 +34,30 @@ class LiquidationService extends EventEmitter {
 
   async triggerLiquidation(txConfig: TxConfig) {
     this.log('.triggerLiquidation', txConfig.key)
-    if (this.transactions.get(txConfig.key)) {
-      this.log('.triggerLiquidation: already exists', this.transactions.get(txConfig.key).txHash);
-      return
+
+    let nonce
+
+    const sentTx = this.transactions.get(txConfig.key)
+    const now = new Date().getTime() / 1000
+    if (sentTx) {
+      if (now - sentTx.sentAt > 60) {
+        // load nonce of sent tx
+        nonce = sentTx.nonce
+      } else {
+        this.log('.triggerLiquidation: already exists', this.transactions.get(txConfig.key).txHash);
+        return
+      }
+    } else {
+      // load stored nonce
+      nonce = this.nonce
+      // increment stored nonce
+      this.nonce++
     }
 
     this.transactions.set(txConfig.key, txConfig)
     this.log('.triggerLiquidation: buildingTx for', txConfig.key);
 
-    // load stored nonce
-    const nonce = this.nonce
-
-    // increment stored nonce
-    this.nonce++
-
     const gasPriceResp = await axios.get("https://gasprice.poa.network/")
-    this.log('.triggerLiquidation', gasPriceResp)
     let gasPrice
     if (!gasPriceResp.data.health) {
       gasPrice = await this.web3.eth.getGasPrice()
@@ -61,7 +70,7 @@ class LiquidationService extends EventEmitter {
     const trx = {
       to: txConfig.to,
       data: txConfig.data,
-      gas: +txConfig.gas + 200000,
+      gas: +txConfig.gas + 200_000,
       chainId: 1,
       gasPrice,
       nonce,
@@ -69,18 +78,22 @@ class LiquidationService extends EventEmitter {
 
     const tx = await this.web3.eth.accounts.signTransaction(trx, this.privateKey)
 
-    // set txHash
+    // set sending params
     txConfig.txHash = tx.transactionHash
+    txConfig.nonce = nonce
+    txConfig.sentAt = now
     this.log('.triggerLiquidation: sending transaction', trx, tx.transactionHash);
 
     const tokenAddress = '0x' + txConfig.key.substr(24, 40);
     const ownerAddress = '0x' + txConfig.key.substr(88);
 
-    this.emit(LIQUIDATION_TRIGGERED_EVENT, {
+    const payload: LiquidationTrigger =  {
       txHash: tx.transactionHash,
-      mainAsset: tokenAddress,
-      owner: ownerAddress,
-    })
+      token: tokenAddress,
+      user: ownerAddress,
+    }
+
+    this.emit(LIQUIDATION_TRIGGER_TX, payload)
 
     const result = await this.web3.eth.sendSignedTransaction(tx.rawTransaction)
     this.log('.triggerLiquidation: tx sending result', result);

@@ -5,6 +5,7 @@ import Logger from '../../logger'
 import { JoinExit } from '../../types/JoinExit'
 import { tokenByAddress } from '../../constants/tokens'
 import { numberWithCommas } from '../../utils'
+import { LiquidationTrigger } from '../../types/LiquidationTrigger'
 
 
 export default class NotificationService {
@@ -22,14 +23,7 @@ export default class NotificationService {
   }
 
   async notifyJoin(data: JoinExit) {
-    if (this.processed.includes(data.txHash)) {
-      this.log('.notifyJoin', 'already processed', data)
-      return
-    }
-    if (this.processed.length >= 100) {
-      this.processed = this.processed.slice(90)
-    }
-    this.processed.push(data.txHash)
+    if (!this._preNotify(this.notifyJoin.name + ' ' +  data.txHash)) return
     const token = tokenByAddress(data.token) || { decimals: 18, symbol: data.token}
     const mainFormatted = Number(data.main / BigInt(10 ** (token.decimals - 4))) / 10000
     const colFormatted = data.col / BigInt(1e18)
@@ -50,14 +44,7 @@ export default class NotificationService {
   }
 
   async notifyExit(data: JoinExit) {
-    if (this.processed.includes(data.txHash)) {
-      this.log('.notifyExit', 'already processed', data)
-      return
-    }
-    if (this.processed.length >= 100) {
-      this.processed = this.processed.slice(90)
-    }
-    this.processed.push(data.txHash)
+    if (!this._preNotify(this.notifyExit.name + ' ' +  data.txHash)) return
     const token = tokenByAddress(data.token) || { decimals: 18, symbol: data.token}
     const mainFormatted = Number(data.main / BigInt(10 ** (token.decimals - 4))) / 10000
     const colFormatted = data.col / BigInt(1e18)
@@ -82,21 +69,26 @@ export default class NotificationService {
     this.sendMessage(text)
   }
 
-  async notifyTriggered(data) {
-    if (this.processed.includes(data.txHash)) {
-      this.log('.notifyTriggered', 'already processed', data)
-      return
-    }
-    if (this.processed.length >= 100) {
-      this.processed = this.processed.slice(90)
-    }
-    this.processed.push(data.txHash)
-    const token = tokenByAddress(data.mainAsset)
+  async notifyTriggered(data: LiquidationTrigger) {
+    if (!this._preNotify(this.notifyTriggered.name + ' ' +  data.txHash)) return
+    const token = tokenByAddress(data.token)
 
     const text = 'Liquidation triggered'
       + `\nYou can buyout ${token.symbol} collateral`
-      + `\nMain asset: ${data.mainAsset}`
-      + `\nOwner: ${data.owner}`
+      + `\nMain asset: ${data.token}`
+      + `\nOwner: ${data.user}`
+      + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
+
+    this.sendMessage(text)
+  }
+
+  async notifyTriggerTx(data: LiquidationTrigger) {
+    if (!this._preNotify(this.notifyTriggerTx.name + ' ' +  data.txHash)) return
+    const token = tokenByAddress(data.token)
+
+    const text = `Trying to liquidate CDP with ${token.symbol} collateral`
+      + `\nMain asset: ${data.token}`
+      + `\nOwner: ${data.user}`
       + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
 
     this.sendMessage(text)
@@ -108,6 +100,17 @@ export default class NotificationService {
     });
   }
 
+  private _preNotify(id: string): boolean {
+    if (this.processed.includes(id)) {
+      this.log('._preNotify', 'already processed', id)
+      return false
+    }
+    if (this.processed.length >= 100) {
+      this.processed = this.processed.slice(90)
+    }
+    this.processed.push(id)
+    return true
+  }
 
   private log(...args) {
     this.logger.info(args)

@@ -1,6 +1,7 @@
 import { Log } from 'web3-core/types'
 import { JoinExit } from '../types/JoinExit'
 import { Transfer } from '../types/Transfer'
+import { LiquidationTrigger } from '../types/LiquidationTrigger'
 
 export function parseJoinExit(event: Log): JoinExit {
   const token = topicToAddr(event.topics[1])
@@ -16,6 +17,17 @@ export function parseJoinExit(event: Log): JoinExit {
     main,
     col,
     usdp,
+    txHash,
+  }
+}
+
+export function parseLiquidationTrigger(event: Log): LiquidationTrigger {
+  const token = topicToAddr(event.topics[1])
+  const user = topicToAddr(event.topics[2])
+  const txHash = event.transactionHash
+  return {
+    token,
+    user,
     txHash,
   }
 }

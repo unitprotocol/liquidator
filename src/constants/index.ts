@@ -1,6 +1,7 @@
 import web3 from '../provider'
 
 export const JOIN_TOPICS = ["0x330a0c3830f9c19654cc3b5701caa3230ec175384311f49b6a927dcc4b32ef4a"]
+export const LIQUIDATION_TRIGGERED_TOPICS = ["0x5b79a897d30813a62a1f95ba180d3320d3701d96605708b81105e00719a069e4"]
 export const EXIT_TOPICS = ["0x57c3a18962ef5229db59708e9fa0ec7925bf2f15049b6f591b6364d0f0d2aca5"]
 export const DUCK_CREATION_TOPICS = ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", "0x0000000000000000000000000000000000000000000000000000000000000000"]
 export const VAULT_ADDRESS = "0xb1cff81b9305166ff1efc49a129ad2afcd7bcf19"
@@ -44,14 +45,17 @@ export const VAULT_MANAGERS: {
   },
 ]
 
+export const LIQUIDATIONS_TRIGGERS = ['0x989AC9c8353C3F01412705d7E50B4Ab9E804c227', '0x0ca1A59a987922375234df94919A456F61e93E1e']
+
 export function liquidationTriggerByVaultManagerAddress(vaultMangerAddress) {
   return VAULT_MANAGERS.find(m => m.address.toLowerCase() === vaultMangerAddress.toLowerCase()).liquidationTrigger
 }
 
-export const TRIGGER_LIQUIDATION_EVENT = 'triggerLiquidation'
+export const TRIGGER_LIQUIDATION = 'triggerLiquidation'
 export const NEW_BLOCK_EVENT = 'newBlock'
 export const JOIN_EVENT = 'join'
 export const EXIT_EVENT = 'exit'
+export const LIQUIDATION_TRIGGER_TX = 'liquidationTriggerTx'
 export const LIQUIDATION_TRIGGERED_EVENT = 'liquidationTriggered'
 export const DUCK_CREATION_EVENT = 'duckMinted'
 

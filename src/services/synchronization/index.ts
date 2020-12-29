@@ -3,14 +3,24 @@ import Web3 from 'web3'
 import { CDP } from '../../types/Position'
 import {
   ACTIVE_VAULT_MANAGERS,
-  GET_TOTAL_DEBT_SIGNATURE, JOIN_EVENT, liquidationTriggerByVaultManagerAddress, NEW_BLOCK_EVENT,
-  JOIN_TOPICS, TRIGGER_LIQUIDATION_EVENT, TRIGGER_LIQUIDATION_SIGNATURE,
+  GET_TOTAL_DEBT_SIGNATURE,
+  JOIN_EVENT,
+  liquidationTriggerByVaultManagerAddress,
+  NEW_BLOCK_EVENT,
+  JOIN_TOPICS,
+  TRIGGER_LIQUIDATION,
+  TRIGGER_LIQUIDATION_SIGNATURE,
   VAULT_ADDRESS,
-  VAULT_MANAGERS, EXIT_TOPICS, EXIT_EVENT
+  VAULT_MANAGERS,
+  EXIT_TOPICS,
+  EXIT_EVENT,
+  LIQUIDATIONS_TRIGGERS,
+  LIQUIDATION_TRIGGERED_TOPICS,
+  LIQUIDATION_TRIGGERED_EVENT,
 } from '../../constants'
 import Logger from '../../logger'
 import { TxConfig } from '../../types/TxConfig'
-import { parseJoinExit } from '../../utils'
+import { parseJoinExit, parseLiquidationTrigger } from '../../utils'
 
 declare interface SynchronizationService {
   on(event: string, listener: Function): this;
@@ -77,6 +87,16 @@ class SynchronizationService extends EventEmitter {
         }
       })
     });
+    LIQUIDATIONS_TRIGGERS.forEach((address) => {
+      this.web3.eth.subscribe('logs', {
+        address,
+        topics: LIQUIDATION_TRIGGERED_TOPICS,
+      }, (error, log ) =>{
+        if (!error) {
+          this.emit(LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log))
+        }
+      })
+    });
     // this.web3.eth.subscribe('logs', {
     //   address: DUCK_ADDRESS,
     //   topics: DUCK_CREATION_TOPICS
@@ -128,7 +148,7 @@ class SynchronizationService extends EventEmitter {
       if (gas && +gas > 30_000) {
         const tx = txConfigs[i]
         tx.gas = gas
-        this.emit(TRIGGER_LIQUIDATION_EVENT, tx)
+        this.emit(TRIGGER_LIQUIDATION, tx)
       }
     })
   }
