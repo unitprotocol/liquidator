@@ -22,8 +22,8 @@ This code is responsible for [Unit Protocol Monitoring Telegram Bot](https://t.m
 1. ```cd liquidator && cp .env.example .env```
 1. Change variable values to your own in .env
 1. ```yarn```
-1. ```tsc src/app/index.ts```
-1. ```pm2 start src/app/index.js --name liquidator```
+1. ```tsc```
+1. ```pm2 start dist/app --name liquidator```
 
 #### Accessing logs
 ```pm2 logs liquidator```

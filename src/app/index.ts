@@ -1,6 +1,7 @@
-import SynchronizationService from '../services/synchronization'
-import LiquidationService from '../services/liquidation'
-import NotificationService from '../services/notification'
+import 'module-alias/register'
+import SynchronizationService from 'src/services/synchronization'
+import LiquidationService from 'src/services/liquidation'
+import NotificationService from 'src/services/notification'
 import {
   DUCK_CREATION_EVENT,
   EXIT_EVENT,
@@ -9,9 +10,9 @@ import {
   LIQUIDATION_TRIGGERED_EVENT,
   NEW_BLOCK_EVENT,
   TRIGGER_LIQUIDATION,
-} from '../constants'
-import { TxConfig } from '../types/TxConfig'
-import web3 from '../provider'
+} from 'src/constants'
+import { TxConfig } from 'src/types/TxConfig'
+import web3 from 'src/provider'
 
 
 class LiquidationMachine {
@@ -38,8 +39,8 @@ class LiquidationMachine {
       this.notificator.notifyTriggered(data)
     })
 
-    this.synchronizer.on(NEW_BLOCK_EVENT, (number) => {
-      this.synchronizer.checkLiquidatable(number)
+    this.synchronizer.on(NEW_BLOCK_EVENT, header => {
+      this.synchronizer.checkLiquidatable(header)
     })
 
     this.synchronizer.on(JOIN_EVENT, join => {

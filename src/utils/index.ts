@@ -1,7 +1,7 @@
 import { Log } from 'web3-core/types'
-import { JoinExit } from '../types/JoinExit'
-import { Transfer } from '../types/Transfer'
-import { LiquidationTrigger } from '../types/LiquidationTrigger'
+import { JoinExit } from 'src/types/JoinExit'
+import { Transfer } from 'src/types/Transfer'
+import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 
 export function parseJoinExit(event: Log): JoinExit {
   const token = topicToAddr(event.topics[1])

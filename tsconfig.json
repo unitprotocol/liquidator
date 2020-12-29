@@ -1,10 +1,16 @@
 {
   "compilerOptions": {
     "target": "es6",
+    "baseUrl": ".",
+    "rootDir": "src",
+    "paths": {
+      "src/*": [
+        "src/*",
+      ]
+    },
     "module": "commonjs",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "noEmit": true,
     "noImplicitAny": false,
     "strict": true,
     "strictNullChecks":false,

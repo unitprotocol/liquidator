@@ -1,10 +1,10 @@
 import { EventEmitter } from 'events'
 import Web3 from 'web3'
-import Logger from '../../logger'
-import { TxConfig } from '../../types/TxConfig'
-import { LIQUIDATION_TRIGGER_TX } from '../../constants'
+import Logger from 'src/logger'
+import { TxConfig } from 'src/types/TxConfig'
+import { LIQUIDATION_TRIGGER_TX } from 'src/constants'
 import axios from 'axios'
-import { LiquidationTrigger } from '../../types/LiquidationTrigger'
+import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 
 declare interface LiquidationService {
   on(event: string, listener: Function): this;

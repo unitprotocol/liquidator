@@ -1,4 +1,4 @@
-import web3 from '../provider'
+import web3 from 'src/provider'
 
 export const JOIN_TOPICS = ["0x330a0c3830f9c19654cc3b5701caa3230ec175384311f49b6a927dcc4b32ef4a"]
 export const LIQUIDATION_TRIGGERED_TOPICS = ["0x5b79a897d30813a62a1f95ba180d3320d3701d96605708b81105e00719a069e4"]

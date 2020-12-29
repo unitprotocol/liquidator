@@ -1,11 +1,11 @@
-import { Transfer } from '../../types/Transfer'
+import { Transfer } from 'src/types/Transfer'
 
 const TelegramBot = require("node-telegram-bot-api");
-import Logger from '../../logger'
-import { JoinExit } from '../../types/JoinExit'
-import { tokenByAddress } from '../../constants/tokens'
-import { numberWithCommas } from '../../utils'
-import { LiquidationTrigger } from '../../types/LiquidationTrigger'
+import Logger from 'src/logger'
+import { JoinExit } from 'src/types/JoinExit'
+import { tokenByAddress } from 'src/constants/tokens'
+import { numberWithCommas } from 'src/utils'
+import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 
 
 export default class NotificationService {

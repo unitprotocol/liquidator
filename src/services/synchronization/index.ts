@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import Web3 from 'web3'
-import { CDP } from '../../types/Position'
+import { CDP } from 'src/types/Position'
 import {
   ACTIVE_VAULT_MANAGERS,
   GET_TOTAL_DEBT_SIGNATURE,
@@ -17,10 +17,11 @@ import {
   LIQUIDATIONS_TRIGGERS,
   LIQUIDATION_TRIGGERED_TOPICS,
   LIQUIDATION_TRIGGERED_EVENT,
-} from '../../constants'
-import Logger from '../../logger'
-import { TxConfig } from '../../types/TxConfig'
-import { parseJoinExit, parseLiquidationTrigger } from '../../utils'
+} from 'src/constants'
+import Logger from 'src/logger'
+import { TxConfig } from 'src/types/TxConfig'
+import { BlockHeader } from 'web3-eth'
+import { parseJoinExit, parseLiquidationTrigger } from 'src/utils'
 
 declare interface SynchronizationService {
   on(event: string, listener: Function): this;
@@ -63,7 +64,7 @@ class SynchronizationService extends EventEmitter {
 
   private trackEvents() {
     this.web3.eth.subscribe("newBlockHeaders", (error, event) => {
-        this.emit(NEW_BLOCK_EVENT, event.number)
+        this.emit(NEW_BLOCK_EVENT, event)
       })
     ACTIVE_VAULT_MANAGERS.forEach(({ address, liquidationTrigger}) => {
       this.web3.eth.subscribe('logs', {
@@ -123,7 +124,7 @@ class SynchronizationService extends EventEmitter {
     }
   }
 
-  async checkLiquidatable(blockNumber) {
+  async checkLiquidatable(header: BlockHeader) {
     const keys = Array.from(this.positions.keys())
     const promises = []
     const txConfigs: TxConfig[] = []
@@ -139,7 +140,7 @@ class SynchronizationService extends EventEmitter {
       txConfigs.push(tx)
       promises.push(this.web3.eth.estimateGas(tx))
     })
-    const timeLabel = `estimating gas for ${keys.length} positions on block ${blockNumber}`
+    const timeLabel = `estimating gas for ${keys.length} positions on block ${header.number} ${header.hash}`
     console.time(timeLabel)
     const gasData = (await Promise.all(promises.map(p => p.catch(() => null))))
     console.timeEnd(timeLabel)
