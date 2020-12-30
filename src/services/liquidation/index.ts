@@ -87,21 +87,34 @@ class LiquidationService extends EventEmitter {
     const tokenAddress = '0x' + txConfig.key.substr(24, 40);
     const ownerAddress = '0x' + txConfig.key.substr(88);
 
-    const payload: LiquidationTrigger =  {
+    const result = await this.web3.eth.sendSignedTransaction(tx.rawTransaction).catch(async (e) => {
+      if (e.toString().includes("nonce too low")) {
+        this.log('.triggerLiquidation: nonce too low, updating', e)
+        await this.updateNonce()
+        this.transactions.delete(txConfig.key)
+      } else {
+        this.log('.triggerLiquidation: tx sending error', e)
+      }
+    })
+
+    const payload: LiquidationTrigger = {
       txHash: tx.transactionHash,
       token: tokenAddress,
       user: ownerAddress,
     }
 
-    this.emit(LIQUIDATION_TRIGGER_TX, payload)
-
-    const result = await this.web3.eth.sendSignedTransaction(tx.rawTransaction)
-    this.log('.triggerLiquidation: tx sending result', result);
+    if (result) {
+      this.emit(LIQUIDATION_TRIGGER_TX, payload)
+      this.log('.triggerLiquidation: tx sending result', result)
+    }
   }
 
   private async updateNonce() {
+    const initializing = !this.nonce
     this.nonce = await this.web3.eth.getTransactionCount(this.senderAddress)
-    this.emit('ready', this);
+    if (initializing) {
+      this.emit('ready', this)
+    }
   }
 
 
