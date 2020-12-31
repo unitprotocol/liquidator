@@ -104,7 +104,7 @@ class LiquidationService extends EventEmitter {
     }
 
     if (result) {
-      this.emit(LIQUIDATION_TRIGGER_TX, payload)
+      // this.emit(LIQUIDATION_TRIGGER_TX, payload)
       this.log('.triggerLiquidation: tx sending result', result)
     }
   }
