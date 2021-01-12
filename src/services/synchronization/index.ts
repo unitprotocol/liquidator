@@ -16,7 +16,9 @@ import {
   EXIT_EVENT,
   LIQUIDATIONS_TRIGGERS,
   LIQUIDATION_TRIGGERED_TOPICS,
-  LIQUIDATION_TRIGGERED_EVENT, JOIN_TOPICS,
+  LIQUIDATION_TRIGGERED_EVENT,
+  JOIN_TOPICS,
+  EXIT_TOPICS,
 } from 'src/constants'
 import Logger from 'src/logger'
 import { TxConfig } from 'src/types/TxConfig'
@@ -78,7 +80,7 @@ class SynchronizationService extends EventEmitter {
       })
       this.web3.eth.subscribe('logs', {
         address,
-        topics: EXIT_TOPICS_WITH_COL
+        topics: col ? EXIT_TOPICS_WITH_COL : EXIT_TOPICS
       }, (error, log ) => {
         if (!error) {
           const exit = parseJoinExit(log)
@@ -147,6 +149,8 @@ class SynchronizationService extends EventEmitter {
     console.timeEnd(timeLabel)
     this.log(`.checkLiquidatable: there are ${gasData.filter(d => d).length} liquidatable positions`)
     gasData.forEach((gas, i) => {
+      // during synchronization the node can respond with transaction to non-contract address
+      // so check gas limit to prevent this behaviour
       if (gas && +gas > 30_000) {
         const tx = txConfigs[i]
         tx.gas = gas

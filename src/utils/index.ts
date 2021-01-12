@@ -2,14 +2,22 @@ import { Log } from 'web3-core/types'
 import { JoinExit } from 'src/types/JoinExit'
 import { Transfer } from 'src/types/Transfer'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
+import { EXIT_TOPICS_WITH_COL, JOIN_TOPICS_WITH_COL } from 'src/constants'
 
 export function parseJoinExit(event: Log): JoinExit {
+  const withCol = event.topics[0] === JOIN_TOPICS_WITH_COL[0] || event.topics[0] === EXIT_TOPICS_WITH_COL[0]
   const token = topicToAddr(event.topics[1])
   const user = topicToAddr(event.topics[2])
   event.data = event.data.substr(2)
   const main = hexToBN(event.data.substr(0, 64))
-  const col = hexToBN(event.data.substr(64, 64))
-  const usdp = hexToBN(event.data.substr(128))
+  let col, usdp
+  if (withCol) {
+    col = hexToBN(event.data.substr(64, 64))
+    usdp = hexToBN(event.data.substr(128, 64))
+  } else {
+    col = BigInt(0)
+    usdp = hexToBN(event.data.substr(64, 64))
+  }
   const txHash = event.transactionHash
   return {
     token,
