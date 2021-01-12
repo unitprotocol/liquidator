@@ -7,16 +7,16 @@ import {
   JOIN_EVENT,
   liquidationTriggerByVaultManagerAddress,
   NEW_BLOCK_EVENT,
-  JOIN_TOPICS,
+  JOIN_TOPICS_WITH_COL,
   TRIGGER_LIQUIDATION,
   TRIGGER_LIQUIDATION_SIGNATURE,
   VAULT_ADDRESS,
   VAULT_MANAGERS,
-  EXIT_TOPICS,
+  EXIT_TOPICS_WITH_COL,
   EXIT_EVENT,
   LIQUIDATIONS_TRIGGERS,
   LIQUIDATION_TRIGGERED_TOPICS,
-  LIQUIDATION_TRIGGERED_EVENT,
+  LIQUIDATION_TRIGGERED_EVENT, JOIN_TOPICS,
 } from 'src/constants'
 import Logger from 'src/logger'
 import { TxConfig } from 'src/types/TxConfig'
@@ -43,12 +43,12 @@ class SynchronizationService extends EventEmitter {
 
   async fetchInitialData() {
     const promises = []
-    VAULT_MANAGERS.forEach(({address, fromBlock, toBlock}) => {
+    VAULT_MANAGERS.forEach(({address, fromBlock, toBlock, col}) => {
       promises.push(this.web3.eth.getPastLogs({
         fromBlock,
         toBlock,
         address,
-        topics: JOIN_TOPICS
+        topics: col ? JOIN_TOPICS_WITH_COL : JOIN_TOPICS
       }))
     })
     const logsArray = await Promise.all(promises);
@@ -66,10 +66,10 @@ class SynchronizationService extends EventEmitter {
     this.web3.eth.subscribe("newBlockHeaders", (error, event) => {
         this.emit(NEW_BLOCK_EVENT, event)
       })
-    ACTIVE_VAULT_MANAGERS.forEach(({ address, liquidationTrigger}) => {
+    ACTIVE_VAULT_MANAGERS.forEach(({ address, liquidationTrigger, col}) => {
       this.web3.eth.subscribe('logs', {
         address,
-        topics: JOIN_TOPICS
+        topics: col ? JOIN_TOPICS_WITH_COL : JOIN_TOPICS
       }, (error, log ) =>{
         if (!error) {
           this.checkAndPersistPosition(log.topics, log.data, liquidationTrigger)
@@ -78,7 +78,7 @@ class SynchronizationService extends EventEmitter {
       })
       this.web3.eth.subscribe('logs', {
         address,
-        topics: EXIT_TOPICS
+        topics: EXIT_TOPICS_WITH_COL
       }, (error, log ) => {
         if (!error) {
           const exit = parseJoinExit(log)
@@ -110,9 +110,10 @@ class SynchronizationService extends EventEmitter {
   }
 
   private parseJoinData(topics, data): [boolean, string, bigint] {
+    const withCol = topics[0] === JOIN_TOPICS_WITH_COL[0]
     const id = positionKey(topics)
     const exist: CDP = this.positions.get(id)
-    const USDP = BigInt('0x' + data.substring(2 + 2 * 64, 3 * 64))
+    const USDP = BigInt('0x' + data.substring(2 + (withCol ? 2 : 1) * 64, (withCol ? 3 : 2) * 64))
     const shouldPersist = !exist && USDP > BigInt(0)
     return [shouldPersist, id, USDP]
   }
