@@ -362,6 +362,156 @@ export const tokenList = [
     decimals: 18,
     logoUrl: `${process.env.PUBLIC_URL}/duck_logo.png`,
   },
+  {
+    addresses: {
+      1: '0x795065dcc9f64b5614c407a6efdc400da6221fb0',
+    },
+    symbol: 'SUSHISWAP LP SUSHI-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['SUSHI', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x001b6450083e531a5a7bf310bd2c1af4247e23d4',
+    },
+    symbol: 'SUSHISWAP LP UMA-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['UMA', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x06da0fd433C1A5d7a4faa01111c044910A184553',
+    },
+    symbol: 'SUSHISWAP LP USDT-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['USDT', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x088ee5007C98a9677165D78dD2109AE4a3D04d0C',
+    },
+    symbol: 'SUSHISWAP LP YFI-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['YFI', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x31503dcb60119A812feE820bb7042752019F2355',
+    },
+    symbol: 'SUSHISWAP LP COMP-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['COMP', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x397FF1542f962076d0BFE58eA045FfA2d347ACa0',
+    },
+    symbol: 'SUSHISWAP LP USDC-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['USDC', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x58Dc5a51fE44589BEb22E8CE67720B5BC5378009',
+    },
+    symbol: 'SUSHISWAP LP CRV-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['CRV', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x611CDe65deA90918c0078ac0400A72B0D25B9bb1',
+    },
+    symbol: 'SUSHISWAP LP REN-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['REN', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xA1d7b2d891e3A1f9ef4bBC5be20630C2FEB1c470',
+    },
+    symbol: 'SUSHISWAP LP SNX-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['SNX', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xA75F7c2F025f470355515482BdE9EFA8153536A8',
+    },
+    symbol: 'SUSHISWAP LP BAND-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['BAND', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xC3D03e4F041Fd4cD388c549Ee2A29a9E5075882f',
+    },
+    symbol: 'SUSHISWAP LP DAI-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['DAI', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xC40D16476380e4037e6b1A2594cAF6a6cc8Da967',
+    },
+    symbol: 'SUSHISWAP LP LINK-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['LINK', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xCEfF51756c56CeFFCA006cD410B03FFC46dd3a58',
+    },
+    symbol: 'SUSHISWAP LP WBTC-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['WBTC', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xd75ea151a61d06868e31f8988d28dfe5e9df57b4',
+    },
+    symbol: 'SUSHISWAP LP AAVE-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['AAVE', 'ETH'],
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xDafd66636E2561b0284EDdE37e42d192F2844D40',
+    },
+    symbol: 'SUSHISWAP LP UNI-ETH',
+    collateral: true,
+    defaultOracleType: 8,
+    poolTokens: ['UNI', 'ETH'],
+    decimals: 18,
+  },
 ]
 
 export function tokenByAddress(address) {
