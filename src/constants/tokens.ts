@@ -512,6 +512,132 @@ export const tokenList = [
     poolTokens: ['UNI', 'ETH'],
     decimals: 18,
   },
+  {
+    addresses: {
+      1: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    },
+    symbol: 'USDC',
+    decimals: 6,
+  },
+  {
+    addresses: {
+      1: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    },
+    symbol: 'USDT',
+    decimals: 6,
+  },
+  {
+    addresses: {
+      1: '0x6b175474e89094c44da98b954eedeac495271d0f',
+    },
+    symbol: 'DAI',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x57ab1ec28d129707052df4df418d58a2d46d5f51',
+    },
+    symbol: 'sUSD',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b',
+    },
+    symbol: 'DPI',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xba11d00c5f74255f56a5e366f4f77f5a186d7f55',
+    },
+    symbol: 'BAND',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x408e41876cccdc0f92210600ef50372656052a38',
+    },
+    symbol: 'REN',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2',
+    },
+    symbol: 'SUSHI',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xc944e90c64b2c07662a292be6244bdf05cda44a7',
+    },
+    symbol: 'GRT',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xa3bed4e1c75d00fa6f4e5e6922db7261b5e9acd2',
+    },
+    symbol: 'MTA',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x429881672b9ae42b8eba0e26cd9c73711b891ca5',
+    },
+    symbol: 'PICKLE',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xbc396689893d065f41bc2c6ecbee5e0085233447',
+    },
+    symbol: 'PERP',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x967da4048cd07ab37855c090aaf366e4ce1b9f48',
+    },
+    symbol: 'OCEAN',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xba100000625a3754423978a60c9317c58a424e3d',
+    },
+    symbol: 'BAL',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x2ba592f78db6436527729929aaf6c908497cb200',
+    },
+    symbol: 'CREAM',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0x5bc25f649fc4e26069ddf4cf4010f9f706c23831',
+    },
+    symbol: 'DUSD',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xe2f2a5c287993345a840db3b0845fbc70f5935a5',
+    },
+    symbol: 'mUSD',
+    decimals: 18,
+  },
+  {
+    addresses: {
+      1: '0xd26114cd6ee289accf82350c8d8487fedb8a0c07',
+    },
+    symbol: 'OMG',
+    decimals: 18,
+  },
 ]
 
 export function tokenByAddress(address) {
