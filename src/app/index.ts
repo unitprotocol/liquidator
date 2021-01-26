@@ -6,6 +6,7 @@ import {
   DUCK_CREATION_EVENT,
   EXIT_EVENT,
   JOIN_EVENT,
+  LIQUIDATED_EVENT,
   LIQUIDATION_TRIGGER_TX,
   LIQUIDATION_TRIGGERED_EVENT,
   NEW_BLOCK_EVENT,
@@ -37,6 +38,10 @@ class LiquidationMachine {
 
     this.synchronizer.on(LIQUIDATION_TRIGGERED_EVENT, data => {
       this.notificator.notifyTriggered(data)
+    })
+
+    this.synchronizer.on(LIQUIDATED_EVENT, data => {
+      this.notificator.notifyLiquidated(data)
     })
 
     this.synchronizer.on(NEW_BLOCK_EVENT, header => {

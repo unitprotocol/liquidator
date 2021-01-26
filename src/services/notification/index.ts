@@ -6,6 +6,7 @@ import { JoinExit } from 'src/types/JoinExit'
 import { tokenByAddress } from 'src/constants/tokens'
 import { numberWithCommas } from 'src/utils'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
+import { Liquidated } from 'src/types/Liquidated'
 
 
 export default class NotificationService {
@@ -77,6 +78,21 @@ export default class NotificationService {
       + `\nYou can buyout ${token.symbol} collateral`
       + `\nMain asset: ${data.token}`
       + `\nOwner: ${data.user}`
+      + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
+
+    this.sendMessage(text)
+  }
+
+  async notifyLiquidated(data: Liquidated) {
+    if (!this._preNotify(this.notifyLiquidated.name + ' ' +  data.txHash)) return
+    const token = tokenByAddress(data.token)
+
+    const repaymentFormatted = Number(data.repayment / BigInt(10 ** (18 - 4))) / 1e4
+
+    const text = 'Liquidated'
+      + `\n${token.symbol} collateral has been liquidated for ${repaymentFormatted} USDP`
+      + `\nMain asset: ${data.token}`
+      + `\nOwner: ${data.owner}`
       + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
 
     this.sendMessage(text)

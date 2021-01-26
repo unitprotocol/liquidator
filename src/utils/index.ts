@@ -3,6 +3,7 @@ import { JoinExit } from 'src/types/JoinExit'
 import { Transfer } from 'src/types/Transfer'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 import { EXIT_TOPICS_WITH_COL, JOIN_TOPICS_WITH_COL } from 'src/constants'
+import { Liquidated } from 'src/types/Liquidated'
 
 export function parseJoinExit(event: Log): JoinExit {
   const withCol = event.topics[0] === JOIN_TOPICS_WITH_COL[0] || event.topics[0] === EXIT_TOPICS_WITH_COL[0]
@@ -36,6 +37,22 @@ export function parseLiquidationTrigger(event: Log): LiquidationTrigger {
   return {
     token,
     user,
+    txHash,
+  }
+}
+
+export function parseLiquidated(event: Log): Liquidated {
+  const token = topicToAddr(event.topics[1])
+  const user = topicToAddr(event.topics[2])
+  event.data = event.data.substr(2)
+  const repayment = hexToBN(event.data.substr(0, 64))
+  const penalty = hexToBN(event.data.substr(64, 64))
+  const txHash = event.transactionHash
+  return {
+    token,
+    owner: user,
+    penalty,
+    repayment,
     txHash,
   }
 }

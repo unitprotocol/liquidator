@@ -19,11 +19,14 @@ import {
   LIQUIDATION_TRIGGERED_EVENT,
   JOIN_TOPICS,
   EXIT_TOPICS,
+  AUCTIONS,
+  LIQUIDATED_TOPICS,
+  LIQUIDATED_EVENT,
 } from 'src/constants'
 import Logger from 'src/logger'
 import { TxConfig } from 'src/types/TxConfig'
 import { BlockHeader } from 'web3-eth'
-import { parseJoinExit, parseLiquidationTrigger } from 'src/utils'
+import { parseJoinExit, parseLiquidated, parseLiquidationTrigger } from 'src/utils'
 
 declare interface SynchronizationService {
   on(event: string, listener: Function): this;
@@ -97,6 +100,16 @@ class SynchronizationService extends EventEmitter {
       }, (error, log ) =>{
         if (!error) {
           this.emit(LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log))
+        }
+      })
+    });
+    AUCTIONS.forEach((address) => {
+      this.web3.eth.subscribe('logs', {
+        address,
+        topics: LIQUIDATED_TOPICS,
+      }, (error, log ) =>{
+        if (!error) {
+          this.emit(LIQUIDATED_EVENT, parseLiquidated(log))
         }
       })
     });
