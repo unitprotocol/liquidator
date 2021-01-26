@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node src/app"
+    "start": "tsc && ts-node src/app"
   },
   "dependencies": {
     "axios": "^0.21.0",
