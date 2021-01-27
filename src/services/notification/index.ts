@@ -32,12 +32,12 @@ export default class NotificationService {
       (mainFormatted > 0 ? numberWithCommas(mainFormatted) + ' ' + token.symbol + ' ' : '')
       + (colFormatted > 0 ? (mainFormatted > 0 ? 'and ': '') + numberWithCommas(colFormatted) + ' COL' : '')
 
-    deposit = deposit === '' ? '' : 'Deposited ' + deposit
+    deposit = deposit === '' ? '' : '#deposited ' + deposit
 
     const usdp = Number(data.usdp / BigInt(10 ** 15)) / 1000
 
     const duckCount = usdp < 1000 ? 1 : (usdp < 5000 ? 2 : (Math.round(usdp / 5000) + 2))
-    let minted = data.usdp > 0 ? 'Minted ' + numberWithCommas(usdp) + ' USDP ' + '🦆'.repeat(duckCount) : ''
+    let minted = data.usdp > 0 ? '#minted ' + numberWithCommas(usdp) + ' USDP ' + '🦆'.repeat(duckCount) : ''
     minted = minted ? (deposit ? '\n' + minted : minted) : ''
 
     const text = deposit + minted + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
@@ -53,11 +53,11 @@ export default class NotificationService {
       (mainFormatted > 0 ? numberWithCommas(mainFormatted) + ' ' + token.symbol + ' ' : '')
       + (colFormatted > 0 ? (mainFormatted > 0 ? 'and ': '') + numberWithCommas(colFormatted) + ' COL' : '')
 
-    withdrawn = withdrawn === '' ? '' : 'Withdrawn ' + withdrawn
+    withdrawn = withdrawn === '' ? '' : '#withdrawn ' + withdrawn
 
     const usdp = Number(data.usdp / BigInt(10 ** 15)) / 1000
 
-    let burned = data.usdp > 0 ? 'Burned ' + numberWithCommas(usdp) + ' USDP' : ''
+    let burned = data.usdp > 0 ? '#burned ' + numberWithCommas(usdp) + ' USDP' : ''
     burned = burned ? (withdrawn ? '\n' + burned : burned) : ''
 
     const text = withdrawn + burned + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
@@ -74,7 +74,7 @@ export default class NotificationService {
     if (!this._preNotify(this.notifyTriggered.name + ' ' +  data.txHash)) return
     const token = tokenByAddress(data.token)
 
-    const text = 'Liquidation triggered'
+    const text = '#liquidation_trigger'
       + `\nYou can buyout ${token.symbol} collateral`
       + `\nMain asset: ${data.token}`
       + `\nOwner: ${data.user}`
@@ -89,7 +89,7 @@ export default class NotificationService {
 
     const repaymentFormatted = Number(data.repayment / BigInt(10 ** (18 - 4))) / 1e4
 
-    const text = 'Liquidated'
+    const text = '#liquidation'
       + `\n${token.symbol} collateral has been liquidated for ${repaymentFormatted} USDP`
       + `\nMain asset: ${data.token}`
       + `\nOwner: ${data.owner}`
