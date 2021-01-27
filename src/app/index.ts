@@ -12,7 +12,7 @@ import {
   NEW_BLOCK_EVENT,
   TRIGGER_LIQUIDATION,
 } from 'src/constants'
-import { TxConfig } from 'src/types/TxConfig'
+import { Liquidation } from 'src/types/TxConfig'
 import web3 from 'src/provider'
 
 
@@ -21,7 +21,7 @@ class LiquidationMachine {
   private readonly liquidator: LiquidationService
   private readonly notificator: NotificationService
   private liquidatorReady: boolean
-  private postponedLiquidationTriggers: TxConfig[]
+  private postponedLiquidationTriggers: Liquidation[]
 
   constructor() {
     this.synchronizer = new SynchronizationService(web3)
@@ -60,22 +60,25 @@ class LiquidationMachine {
       this.notificator.notifyExit(exit)
     })
 
-    this.synchronizer.on(TRIGGER_LIQUIDATION, (triggerTx: TxConfig) => {
+    this.synchronizer.on(TRIGGER_LIQUIDATION, ({tx, blockNumber}) => {
 
       // postpone liquidations when service is not yet available
       if (!this.liquidatorReady) {
-        this.postponedLiquidationTriggers.push(triggerTx)
+        this.postponedLiquidationTriggers.push( { tx, blockNumber } )
         return
       }
 
-      // process postponed liquidations
-      for (const postponedTx of this.postponedLiquidationTriggers)
-        this.liquidator.triggerLiquidation(postponedTx)
+      if (this.postponedLiquidationTriggers.length) {
+        // process postponed liquidations
+        for (const postponedTx of this.postponedLiquidationTriggers) {
+          this.liquidator.triggerLiquidation(postponedTx)
+        }
 
-      this.postponedLiquidationTriggers = []
+        this.postponedLiquidationTriggers = []
+      }
 
       // trigger the liquidation
-      this.liquidator.triggerLiquidation(triggerTx)
+      this.liquidator.triggerLiquidation({ tx, blockNumber })
     })
   }
 }

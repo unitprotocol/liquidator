@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events'
 import Web3 from 'web3'
 import Logger from 'src/logger'
-import { TxConfig } from 'src/types/TxConfig'
+import { Liquidation, TxConfig } from 'src/types/TxConfig'
 import { LIQUIDATION_TRIGGER_TX } from 'src/constants'
 import axios from 'axios'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
@@ -14,6 +14,8 @@ declare interface LiquidationService {
 class LiquidationService extends EventEmitter {
   private readonly web3: Web3
   private readonly transactions: Map<string, TxConfig>
+  private readonly preparing: Map<string, PreparingLiquidation>
+  private readonly postponedRemovals: Removal[]
   private readonly logger
   private readonly senderAddress: string
   private readonly privateKey: string
@@ -32,19 +34,42 @@ class LiquidationService extends EventEmitter {
     this.updateNonce()
   }
 
-  async triggerLiquidation(txConfig: TxConfig) {
-    this.log('.triggerLiquidation', txConfig.key)
+  async triggerLiquidation(liquidation: Liquidation) {
+    const { tx, blockNumber } = liquidation
+    this.log('.triggerLiquidation', tx.key)
+
+    this._processPostponedRemovals(blockNumber)
+
+    const prepared = this.preparing.get(tx.key)
+    if (!prepared) {
+      this.preparing.set(tx.key, {
+        lastSeenBlockNumber: blockNumber,
+        confirmations: 1,
+        tx,
+      })
+      this.log(`.triggerLiquidation: collecting 10 confirmations for ${tx.key} current: 1`);
+      return
+    } else if (prepared.confirmations < 10) {
+      this.log(`.triggerLiquidation: collecting 10 confirmations for ${tx.key} current: ${prepared.confirmations}`);
+      if (blockNumber > prepared.lastSeenBlockNumber) {
+        prepared.lastSeenBlockNumber = blockNumber
+        prepared.confirmations++
+      }
+      return
+    }
+
+    this.log(`.triggerLiquidation: collected 10 confirmations for ${tx.key} sending tx`);
 
     let nonce
 
-    const sentTx = this.transactions.get(txConfig.key)
+    const sentTx = this.transactions.get(tx.key)
     const now = new Date().getTime() / 1000
     if (sentTx) {
       if (now - sentTx.sentAt > 60) {
         // load nonce of sent tx
         nonce = sentTx.nonce
       } else {
-        this.log('.triggerLiquidation: already exists', this.transactions.get(txConfig.key).txHash);
+        this.log('.triggerLiquidation: already exists', this.transactions.get(tx.key).txHash);
         return
       }
     } else {
@@ -54,8 +79,8 @@ class LiquidationService extends EventEmitter {
       this.nonce++
     }
 
-    this.transactions.set(txConfig.key, txConfig)
-    this.log('.triggerLiquidation: buildingTx for', txConfig.key);
+    this.transactions.set(tx.key, tx)
+    this.log('.triggerLiquidation: buildingTx for', tx.key);
 
     const gasPriceResp = await axios.get("https://gasprice.poa.network/")
     let gasPrice
@@ -68,42 +93,44 @@ class LiquidationService extends EventEmitter {
     }
 
     const trx = {
-      to: txConfig.to,
-      data: txConfig.data,
-      gas: +txConfig.gas + 200_000,
+      to: tx.to,
+      data: tx.data,
+      gas: +tx.gas + 200_000,
       chainId: 1,
       gasPrice,
       nonce,
     }
 
-    const tx = await this.web3.eth.accounts.signTransaction(trx, this.privateKey)
+    const signedTransaction = await this.web3.eth.accounts.signTransaction(trx, this.privateKey)
 
     // set sending params
-    txConfig.txHash = tx.transactionHash
-    txConfig.nonce = nonce
-    txConfig.sentAt = now
-    this.log('.triggerLiquidation: sending transaction', trx, tx.transactionHash);
+    tx.txHash = signedTransaction.transactionHash
+    tx.nonce = nonce
+    tx.sentAt = now
+    this.log('.triggerLiquidation: sending transaction', trx, signedTransaction.transactionHash);
 
-    const tokenAddress = '0x' + txConfig.key.substr(24, 40);
-    const ownerAddress = '0x' + txConfig.key.substr(88);
-
-    const result = await this.web3.eth.sendSignedTransaction(tx.rawTransaction).catch(async (e) => {
+    const result = await this.web3.eth.sendSignedTransaction(signedTransaction.rawTransaction).catch(async (e) => {
       if (e.toString().includes("nonce too low")) {
         this.log('.triggerLiquidation: nonce too low, updating', e)
         await this.updateNonce()
-        this.transactions.delete(txConfig.key)
+        this.transactions.delete(tx.key)
       } else {
         this.log('.triggerLiquidation: tx sending error', e)
       }
     })
 
-    const payload: LiquidationTrigger = {
-      txHash: tx.transactionHash,
-      token: tokenAddress,
-      user: ownerAddress,
-    }
-
     if (result) {
+
+      // const tokenAddress = '0x' + tx.key.substr(24, 40);
+      // const ownerAddress = '0x' + tx.key.substr(88);
+
+      // const payload: LiquidationTrigger = {
+      //   txHash: signedTransaction.transactionHash,
+      //   token: tokenAddress,
+      //   user: ownerAddress,
+      // }
+
+      this._postponeRemoval(tx.key, blockNumber + 20)
       // this.emit(LIQUIDATION_TRIGGER_TX, payload)
       this.log('.triggerLiquidation: tx sending result', result)
     }
@@ -117,10 +144,36 @@ class LiquidationService extends EventEmitter {
     }
   }
 
+  private _postponeRemoval(key, removeAtBlock) {
+    this.postponedRemovals.push({ key, removeAtBlock })
+  }
+
+  private _processPostponedRemovals(currentBlockNumber: number) {
+    for (let i = this.postponedRemovals.length - 1; i >= 0; i--) {
+      const { key, removeAtBlock } = this.postponedRemovals[i]
+      if (currentBlockNumber >= removeAtBlock) {
+        this.postponedRemovals.splice(i, 1)
+        this.transactions.delete(key)
+        this.preparing.delete(key)
+      }
+    }
+  }
+
 
   private log(...args) {
     this.logger.info(args)
   }
+}
+
+interface PreparingLiquidation {
+  lastSeenBlockNumber: number
+  confirmations: number
+  tx: TxConfig
+}
+
+interface Removal {
+  key: string
+  removeAtBlock: number
 }
 
 export default LiquidationService

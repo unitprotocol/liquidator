@@ -8,3 +8,8 @@ export type TxConfig = {
   sentAt?: number,
   nonce?: number,
 }
+
+export interface Liquidation {
+  tx: TxConfig
+  blockNumber: number
+}

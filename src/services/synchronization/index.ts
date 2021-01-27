@@ -167,7 +167,7 @@ class SynchronizationService extends EventEmitter {
       if (gas && +gas > 30_000) {
         const tx = txConfigs[i]
         tx.gas = gas
-        this.emit(TRIGGER_LIQUIDATION, tx)
+        this.emit(TRIGGER_LIQUIDATION, { tx, blockNumber: +header.number })
       }
     })
   }
