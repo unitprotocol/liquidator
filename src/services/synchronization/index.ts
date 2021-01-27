@@ -156,11 +156,11 @@ class SynchronizationService extends EventEmitter {
       txConfigs.push(tx)
       promises.push(this.web3.eth.estimateGas(tx))
     })
-    const timeLabel = `estimating gas for ${keys.length} positions on block ${header.number} ${header.hash}`
-    console.time(timeLabel)
+    // const timeLabel = `estimating gas for ${keys.length} positions on block ${header.number} ${header.hash}`
+    // console.time(timeLabel)
     const gasData = (await Promise.all(promises.map(p => p.catch(() => null))))
-    console.timeEnd(timeLabel)
-    this.log(`.checkLiquidatable: there are ${gasData.filter(d => d).length} liquidatable positions`)
+    // console.timeEnd(timeLabel)
+    // this.log(`.checkLiquidatable: there are ${gasData.filter(d => d).length} liquidatable positions`)
     gasData.forEach((gas, i) => {
       // during synchronization the node can respond with transaction to non-contract address
       // so check gas limit to prevent this behaviour
