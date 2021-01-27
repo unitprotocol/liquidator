@@ -78,7 +78,8 @@ export default class NotificationService {
       + `\nYou can buyout ${token.symbol} collateral`
       + `\nMain asset: ${data.token}`
       + `\nOwner: ${data.user}`
-      + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
+      + `\n<a href="https://liquidation.unit.xyz">Liquidate</a>`
+      + `\n<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
 
     this.sendMessage(text)
   }
