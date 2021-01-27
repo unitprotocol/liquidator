@@ -77,7 +77,13 @@ export function hexToBN(str) {
   return BigInt('0x' + str)
 }
 
-export function numberWithCommas(x) {
+export function formatNumber(x: number) {
+  if (x > 1_000_000) {
+    return `${Math.floor(x / 10_000) / 100}M`
+  }
+  if (x > 1_000) {
+    return `${Math.floor(x / 10) / 100}K`
+  }
   let y = x.toString()
   const dotIndex = y.indexOf('.')
   if (dotIndex !== -1) {

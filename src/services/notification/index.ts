@@ -4,7 +4,7 @@ const TelegramBot = require("node-telegram-bot-api");
 import Logger from 'src/logger'
 import { JoinExit } from 'src/types/JoinExit'
 import { tokenByAddress } from 'src/constants/tokens'
-import { numberWithCommas } from 'src/utils'
+import { formatNumber } from 'src/utils'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 import { Liquidated } from 'src/types/Liquidated'
 
@@ -27,17 +27,17 @@ export default class NotificationService {
     if (!this._preNotify(this.notifyJoin.name + ' ' +  data.txHash)) return
     const token = tokenByAddress(data.token) || { decimals: 18, symbol: data.token}
     const mainFormatted = Number(data.main / BigInt(10 ** (token.decimals - 4))) / 10000
-    const colFormatted = data.col / BigInt(1e18)
+    const colFormatted = Number(data.col / BigInt(1e18))
     let deposit =
-      (mainFormatted > 0 ? numberWithCommas(mainFormatted) + ' ' + token.symbol + ' ' : '')
-      + (colFormatted > 0 ? (mainFormatted > 0 ? 'and ': '') + numberWithCommas(colFormatted) + ' COL' : '')
+      (mainFormatted > 0 ? formatNumber(mainFormatted) + ' ' + token.symbol + ' ' : '')
+      + (colFormatted > 0 ? (mainFormatted > 0 ? 'and ': '') + formatNumber(colFormatted) + ' COL' : '')
 
     deposit = deposit === '' ? '' : '#deposited ' + deposit
 
     const usdp = Number(data.usdp / BigInt(10 ** 15)) / 1000
 
     const duckCount = usdp < 1000 ? 1 : (usdp < 5000 ? 2 : (Math.round(usdp / 5000) + 2))
-    let minted = data.usdp > 0 ? '#minted ' + numberWithCommas(usdp) + ' USDP ' + '🦆'.repeat(duckCount) : ''
+    let minted = data.usdp > 0 ? '#minted ' + formatNumber(usdp) + ' USDP ' + '🦆'.repeat(duckCount) : ''
     minted = minted ? (deposit ? '\n' + minted : minted) : ''
 
     const text = deposit + minted + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
@@ -48,16 +48,16 @@ export default class NotificationService {
     if (!this._preNotify(this.notifyExit.name + ' ' +  data.txHash)) return
     const token = tokenByAddress(data.token) || { decimals: 18, symbol: data.token}
     const mainFormatted = Number(data.main / BigInt(10 ** (token.decimals - 4))) / 10000
-    const colFormatted = data.col / BigInt(1e18)
+    const colFormatted = Number(data.col / BigInt(1e18))
     let withdrawn =
-      (mainFormatted > 0 ? numberWithCommas(mainFormatted) + ' ' + token.symbol + ' ' : '')
-      + (colFormatted > 0 ? (mainFormatted > 0 ? 'and ': '') + numberWithCommas(colFormatted) + ' COL' : '')
+      (mainFormatted > 0 ? formatNumber(mainFormatted) + ' ' + token.symbol + ' ' : '')
+      + (colFormatted > 0 ? (mainFormatted > 0 ? 'and ': '') + formatNumber(colFormatted) + ' COL' : '')
 
     withdrawn = withdrawn === '' ? '' : '#withdrawn ' + withdrawn
 
     const usdp = Number(data.usdp / BigInt(10 ** 15)) / 1000
 
-    let burned = data.usdp > 0 ? '#burned ' + numberWithCommas(usdp) + ' USDP' : ''
+    let burned = data.usdp > 0 ? '#burned ' + formatNumber(usdp) + ' USDP' : ''
     burned = burned ? (withdrawn ? '\n' + burned : burned) : ''
 
     const text = withdrawn + burned + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
