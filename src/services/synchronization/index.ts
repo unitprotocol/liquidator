@@ -200,8 +200,9 @@ class SynchronizationService extends EventEmitter {
     if (BigInt(debt) === BigInt(0)) {
       this.positions.delete(key)
       this.log(`CDP ${key} has been closed`)
+    } else {
+      this.log(`CDP ${key} is still open`)
     }
-    this.log(`CDP ${key} is still open`)
   }
 
 
