@@ -2,7 +2,7 @@ import { EventEmitter } from 'events'
 import Web3 from 'web3'
 import Logger from 'src/logger'
 import { Liquidation, TxConfig } from 'src/types/TxConfig'
-import { LIQUIDATION_TRIGGER_TX } from 'src/constants'
+import { CONFIRMATIONS_THRESHOLD, LIQUIDATION_TRIGGER_TX } from 'src/constants'
 import axios from 'axios'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 
@@ -49,8 +49,8 @@ class LiquidationService extends EventEmitter {
       })
       this.log(`.triggerLiquidation: collecting 10 confirmations for ${tx.key} current: 1`);
       return
-    } else if (prepared.confirmations < 10) {
-      this.log(`.triggerLiquidation: collecting 10 confirmations for ${tx.key} current: ${prepared.confirmations}`);
+    } else if (prepared.confirmations < CONFIRMATIONS_THRESHOLD) {
+      this.log(`.triggerLiquidation: collecting ${CONFIRMATIONS_THRESHOLD} confirmations for ${tx.key} current: ${prepared.confirmations}`);
       if (blockNumber > prepared.lastSeenBlockNumber) {
         prepared.lastSeenBlockNumber = blockNumber
         prepared.confirmations++
@@ -58,7 +58,7 @@ class LiquidationService extends EventEmitter {
       return
     }
 
-    this.log(`.triggerLiquidation: collected 10 confirmations for ${tx.key} sending tx`);
+    this.log(`.triggerLiquidation: collected ${CONFIRMATIONS_THRESHOLD} confirmations for ${tx.key} sending tx`);
 
     let nonce
 

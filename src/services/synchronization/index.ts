@@ -21,7 +21,7 @@ import {
   EXIT_TOPICS,
   AUCTIONS,
   LIQUIDATED_TOPICS,
-  LIQUIDATED_EVENT,
+  LIQUIDATED_EVENT, LIQUIDATION_CHECK_TIMEOUT,
 } from 'src/constants'
 import Logger from 'src/logger'
 import { TxConfig } from 'src/types/TxConfig'
@@ -37,6 +37,7 @@ class SynchronizationService extends EventEmitter {
   private readonly positions: Map <string, CDP>
   private readonly web3: Web3
   private readonly logger
+  private lastLiquidationCheck: number
 
   constructor(web3) {
     super();
@@ -141,35 +142,38 @@ class SynchronizationService extends EventEmitter {
   }
 
   async checkLiquidatable(header: BlockHeader) {
-    const keys = Array.from(this.positions.keys())
-    const promises = []
-    const txConfigs: TxConfig[] = []
-    keys.forEach(key => {
-      const v = this.positions.get(key)
-      if (!v) return
-      const tx: TxConfig = {
-        to: v.liquidationTrigger,
-        data: TRIGGER_LIQUIDATION_SIGNATURE + key,
-        from: process.env.ETHEREUM_ADDRESS,
-        key,
-      }
-      txConfigs.push(tx)
-      promises.push(this.web3.eth.estimateGas(tx))
-    })
-    // const timeLabel = `estimating gas for ${keys.length} positions on block ${header.number} ${header.hash}`
-    // console.time(timeLabel)
-    const gasData = (await Promise.all(promises.map(p => p.catch(() => null))))
-    // console.timeEnd(timeLabel)
-    // this.log(`.checkLiquidatable: there are ${gasData.filter(d => d).length} liquidatable positions`)
-    gasData.forEach((gas, i) => {
-      // during synchronization the node can respond with transaction to non-contract address
-      // so check gas limit to prevent this behaviour
-      if (gas && +gas > 30_000) {
-        const tx = txConfigs[i]
-        tx.gas = gas
-        this.emit(TRIGGER_LIQUIDATION, { tx, blockNumber: +header.number })
-      }
-    })
+    if (!this.lastLiquidationCheck || +header.number >= this.lastLiquidationCheck + LIQUIDATION_CHECK_TIMEOUT) {
+      this.lastLiquidationCheck = +header.number
+      const keys = Array.from(this.positions.keys())
+      const promises = []
+      const txConfigs: TxConfig[] = []
+      keys.forEach(key => {
+        const v = this.positions.get(key)
+        if (!v) return
+        const tx: TxConfig = {
+          to: v.liquidationTrigger,
+          data: TRIGGER_LIQUIDATION_SIGNATURE + key,
+          from: process.env.ETHEREUM_ADDRESS,
+          key,
+        }
+        txConfigs.push(tx)
+        promises.push(this.web3.eth.estimateGas(tx))
+      })
+      const timeLabel = `estimating gas for ${keys.length} positions on block ${header.number} ${header.hash}`
+      console.time(timeLabel)
+      const gasData = (await Promise.all(promises.map(p => p.catch(() => null))))
+      console.timeEnd(timeLabel)
+      // this.log(`.checkLiquidatable: there are ${gasData.filter(d => d).length} liquidatable positions`)
+      gasData.forEach((gas, i) => {
+        // during synchronization the node can respond with transaction to non-contract address
+        // so check gas limit to prevent this behaviour
+        if (gas && +gas > 30_000) {
+          const tx = txConfigs[i]
+          tx.gas = gas
+          this.emit(TRIGGER_LIQUIDATION, { tx, blockNumber: +header.number })
+        }
+      })
+    }
   }
 
   private async filterClosedPositions() {
