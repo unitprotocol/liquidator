@@ -21,7 +21,9 @@ import {
   EXIT_TOPICS,
   AUCTIONS,
   LIQUIDATED_TOPICS,
-  LIQUIDATED_EVENT, LIQUIDATION_CHECK_TIMEOUT,
+  LIQUIDATED_EVENT,
+  LIQUIDATION_CHECK_TIMEOUT,
+  OLD_COL_MOCK,
 } from 'src/constants'
 import Logger from 'src/logger'
 import { TxConfig } from 'src/types/TxConfig'
@@ -127,6 +129,9 @@ class SynchronizationService extends EventEmitter {
 
   private parseJoinData(topics, data): [boolean, string, bigint] {
     const withCol = topics[0] === JOIN_TOPICS_WITH_COL[0]
+    if ('0x' + topics[1].substr(26) === OLD_COL_MOCK) {
+      return [false, null, null]
+    }
     const id = positionKey(topics)
     const exist: CDP = this.positions.get(id)
     const USDP = BigInt('0x' + data.substring(2 + (withCol ? 2 : 1) * 64, (withCol ? 3 : 2) * 64))
@@ -161,7 +166,12 @@ class SynchronizationService extends EventEmitter {
       })
       const timeLabel = `estimating gas for ${keys.length} positions on block ${header.number} ${header.hash}`
       console.time(timeLabel)
-      const gasData = (await Promise.all(promises.map(p => p.catch(() => null))))
+      const gasData = (await Promise.all(promises.map((p, i) => p.catch((e) =>{
+        if (!e.toString().includes('SAFE_POSITION')) {
+          console.log(e.toString())
+          console.log(txConfigs[i])
+        }
+      }))))
       console.timeEnd(timeLabel)
       // this.log(`.checkLiquidatable: there are ${gasData.filter(d => d).length} liquidatable positions`)
       gasData.forEach((gas, i) => {

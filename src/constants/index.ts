@@ -11,6 +11,7 @@ export const VAULT_ADDRESS = "0xb1cff81b9305166ff1efc49a129ad2afcd7bcf19"
 export const GET_TOTAL_DEBT_SIGNATURE = web3.eth.abi.encodeFunctionSignature('getTotalDebt(address,address)')
 export const TRIGGER_LIQUIDATION_SIGNATURE = web3.eth.abi.encodeFunctionSignature('triggerLiquidation(address,address)')
 export const DUCK_ADDRESS = "0x92E187a03B6CD19CB6AF293ba17F2745Fd2357D5"
+export const OLD_COL_MOCK = "0x6aade8a8a6b85921009d2caa25dc69348f4c009e"
 
 export const VAULT_MANAGERS: {
   address: string
