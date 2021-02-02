@@ -407,6 +407,11 @@ const collaterals = {
       defaultOracleType: 3,
       decimals: 18,
     },
+    '0x3472a5a71965499acd81997a54bba8d852c6e53d': {
+      symbol: 'BADGER',
+      defaultOracleType: 3,
+      decimals: 18,
+    },
   },
 }
 
