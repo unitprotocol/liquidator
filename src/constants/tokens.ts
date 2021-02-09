@@ -390,38 +390,6 @@ const collaterals = {
       poolTokens: ['0x1f9840a85d5af5bf1d1762f925bdaddc4201f984', '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'],
       decimals: 18,
     },
-  },
-  4: {
-    '0xc778417e063141139fce010982780140aa0cd5ab': {
-      symbol: 'ETH',
-      decimals: 18,
-      defaultOracleType: 3,
-    },
-    '0x03f1a5d11cb1c698d865756ebedeb144898bb319': {
-      symbol: 'WBTC',
-      defaultOracleType: 3,
-      decimals: 8,
-    },
-    '0xeED5B67BEf854D8Cb7FCa3e8220c54b3b48C461B': {
-      symbol: 'STAKE',
-      defaultOracleType: 3,
-      decimals: 18,
-    },
-    '0x62289c64a943416205142bdccf1d752792a687e3': {
-      symbol: 'YFI',
-      defaultOracleType: 3,
-      decimals: 18,
-    },
-    '0xc5d9497fd3fa13549026f2fc8048dbae11d7114c': {
-      symbol: 'MKR',
-      defaultOracleType: 3,
-      decimals: 18,
-    },
-    '0x0F235462cA4a41EA92Fca6b7c4d67dAe0DA8d1D6': {
-      symbol: 'COL',
-      defaultOracleType: 3,
-      decimals: 18,
-    },
     '0x3472a5a71965499acd81997a54bba8d852c6e53d': {
       symbol: 'BADGER',
       defaultOracleType: 3,
