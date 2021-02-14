@@ -26,6 +26,7 @@ class LiquidationService extends EventEmitter {
     super()
     this.web3 = web3
     this.transactions = new Map()
+    this.preparing = new Map()
     this.logger = Logger(LiquidationService.name)
     this.senderAddress = process.env.ETHEREUM_ADDRESS
     this.privateKey = process.env.ETHEREUM_PRIVATE_KEY
