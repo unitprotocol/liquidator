@@ -29,6 +29,7 @@ class LiquidationService extends EventEmitter {
     this.logger = Logger(LiquidationService.name)
     this.senderAddress = process.env.ETHEREUM_ADDRESS
     this.privateKey = process.env.ETHEREUM_PRIVATE_KEY
+    this.postponedRemovals = []
     if (!this.privateKey.startsWith('0x'))
       this.privateKey = '0x' + this.privateKey
     this.updateNonce()
