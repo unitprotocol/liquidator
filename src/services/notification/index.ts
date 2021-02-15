@@ -60,6 +60,8 @@ export default class NotificationService {
     let burned = data.usdp > 0 ? '#burned ' + formatNumber(usdp) + ' USDP' : ''
     burned = burned ? (withdrawn ? '\n' + burned : burned) : ''
 
+    if (withdrawn + burned === '') return
+
     const text = withdrawn + burned + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
     this.sendMessage(text)
   }
