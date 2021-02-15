@@ -90,7 +90,7 @@ export default class NotificationService {
 
     const repaymentFormatted = Number(data.repayment / BigInt(10 ** (18 - 4))) / 1e4
 
-    const text = '#liquidation'
+    const text = '#liquidated'
       + `\n${token.symbol} collateral has been liquidated for ${repaymentFormatted} USDP`
       + `\nMain asset: ${data.token}`
       + `\nOwner: ${data.owner}`
