@@ -395,6 +395,18 @@ const collaterals = {
       defaultOracleType: 3,
       decimals: 18,
     },
+    '0xc5bddf9843308380375a611c18b50fb9341f502a': {
+      symbol: 'yveCRV-DAO',
+      defaultOracleType: 7,
+      decimals: 18,
+      logoUrl: `${process.env.PUBLIC_URL}/images/ic-yveCrv-DAO.png`,
+    },
+    '0x10b47177e92ef9d5c6059055d92ddf6290848991': {
+      symbol: 'SUSHISWAP LP yveCRV-DAO-ETH',
+      defaultOracleType: 8,
+      poolTokens: ['0xc5bddf9843308380375a611c18b50fb9341f502a', '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'],
+      decimals: 18,
+    },
   },
 }
 
