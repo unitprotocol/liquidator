@@ -78,17 +78,21 @@ export function hexToBN(str) {
 }
 
 export function formatNumber(x: number) {
-  if (x > 1_000_000) {
+  if (x >= 1_000_000) {
     return `${Math.floor(x / 10_000) / 100}M`
   }
-  if (x > 1_000) {
+  if (x >= 1_000) {
     return `${Math.floor(x / 10) / 100}K`
   }
-  let y = x.toString()
+  if (x >= 1) {
+    return `${Math.floor(x * 100) / 100}`
+  }
+
+  const y = x.toString()
   const dotIndex = y.indexOf('.')
   if (dotIndex !== -1) {
-    let a = y.substr(0, y.indexOf('.'))
-    let b = y.substr(y.indexOf('.'))
+    const a = y.substr(0, y.indexOf('.'))
+    const b = y.substr(y.indexOf('.'))
     return a.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + b
   }
   return y.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
