@@ -167,7 +167,7 @@ class SynchronizationService extends EventEmitter {
       const timeLabel = `estimating gas for ${keys.length} positions on block ${header.number} ${header.hash}`
       console.time(timeLabel)
       const gasData = (await Promise.all(promises.map((p, i) => p.catch((e) =>{
-        if (!e.toString().includes('SAFE_POSITION')) {
+        if (SynchronizationService.isSuspiciousError(e.toString())) {
           console.log(e.toString())
           console.log(txConfigs[i])
         }
@@ -219,6 +219,14 @@ class SynchronizationService extends EventEmitter {
     }
   }
 
+  private static isSuspiciousError(errMsg) {
+    const legitMsgs = ['SAFE_POSITION', 'LIQUIDATING_POSITION']
+    for (const legitMsg of legitMsgs) {
+      if (errMsg.includes(legitMsg))
+        return false
+    }
+    return true
+  }
 
   private log(...args) {
     this.logger.info(args)

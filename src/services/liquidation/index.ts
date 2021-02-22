@@ -49,7 +49,7 @@ class LiquidationService extends EventEmitter {
         confirmations: 1,
         tx,
       })
-      this.log(`.triggerLiquidation: collecting 10 confirmations for ${tx.key} current: 1`);
+      this.log(`.triggerLiquidation: collecting ${CONFIRMATIONS_THRESHOLD} confirmations for ${tx.key} current: 1`);
       return
     } else if (prepared.confirmations < CONFIRMATIONS_THRESHOLD) {
       this.log(`.triggerLiquidation: collecting ${CONFIRMATIONS_THRESHOLD} confirmations for ${tx.key} current: ${prepared.confirmations}`);
