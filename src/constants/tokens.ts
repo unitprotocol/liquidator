@@ -197,6 +197,11 @@ const collaterals = {
       defaultOracleType: 9,
       decimals: 18,
     },
+    '0xf99d58e463a2e07e5692127302c20a191861b4d6': {
+      symbol: 'ANY',
+      defaultOracleType: 7,
+      decimals: 18,
+    },
     '0xc3601f3e1c26d1a47571c559348e4156786d1fec': {
       symbol: 'UNISWAP LP DUCK-ETH',
       defaultOracleType: 4,
