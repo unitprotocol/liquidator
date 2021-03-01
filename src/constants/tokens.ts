@@ -202,6 +202,21 @@ const collaterals = {
       defaultOracleType: 7,
       decimals: 18,
     },
+    '0x1337def16f9b486faed0293eb623dc8395dfe46a': {
+      symbol: 'ARMOR',
+      defaultOracleType: 7,
+      decimals: 18,
+    },
+    '0x3c9d6c1c73b31c837832c72e04d3152f051fc1a9': {
+      symbol: 'BOR',
+      defaultOracleType: 7,
+      decimals: 18,
+    },
+    '0xb753428af26e81097e7fd17f40c88aaa3e04902c': {
+      symbol: 'SFI',
+      defaultOracleType: 3,
+      decimals: 18,
+    },
     '0xc3601f3e1c26d1a47571c559348e4156786d1fec': {
       symbol: 'UNISWAP LP DUCK-ETH',
       defaultOracleType: 4,
