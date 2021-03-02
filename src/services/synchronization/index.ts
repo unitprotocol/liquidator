@@ -24,11 +24,14 @@ import {
   LIQUIDATED_EVENT,
   LIQUIDATION_CHECK_TIMEOUT,
   OLD_COL_MOCK,
+  APP_STATE_FILENAME,
 } from 'src/constants'
 import Logger from 'src/logger'
 import { TxConfig } from 'src/types/TxConfig'
 import { BlockHeader } from 'web3-eth'
 import { parseJoinExit, parseLiquidated, parseLiquidationTrigger } from 'src/utils'
+import fs from 'fs'
+import { Log } from 'web3-core/types'
 
 declare interface SynchronizationService {
   on(event: string, listener: Function): this;
@@ -40,50 +43,75 @@ class SynchronizationService extends EventEmitter {
   private readonly web3: Web3
   private readonly logger
   private lastLiquidationCheck: number
+  private lastProcessedBlock: number
 
   constructor(web3) {
     super();
     this.positions = new Map<string, CDP>()
+    this.lastLiquidationCheck = 0
+    this.lastProcessedBlock = 0
     this.web3 = web3
-    this.fetchInitialData()
     this.logger = Logger(SynchronizationService.name)
+    this.fetchInitialData()
   }
 
   async fetchInitialData() {
-    const promises = []
-    VAULT_MANAGERS.forEach(({address, fromBlock, toBlock, col}) => {
-      promises.push(this.web3.eth.getPastLogs({
-        fromBlock,
-        toBlock,
-        address,
-        topics: col ? JOIN_TOPICS_WITH_COL : JOIN_TOPICS
-      }))
-    })
-    const logsArray = await Promise.all(promises);
-    const logs = logsArray.reduce((acc, curr) => [...acc, ...curr], []);
-    logs.forEach(({ topics, data, address }) => {
-      this.checkAndPersistPosition(topics, data, liquidationTriggerByVaultManagerAddress(address))
-    });
+
+    let currentBlock
+    try {
+      this.log('Connecting to rpc...')
+      currentBlock = await this.web3.eth.getBlockNumber()
+    } catch (e) { this.logError('broken RPC'); process.exit() }
+
+    try {
+
+      const loadedStateState = JSON.parse(fs.readFileSync(APP_STATE_FILENAME, 'utf8'));
+
+      this.lastProcessedBlock = +loadedStateState.lastProcessedBlock
+
+      this.lastLiquidationCheck = +loadedStateState.lastLiquidationCheck
+
+      const loadedPositions = loadedStateState.positions
+      for (const key in loadedPositions) {
+        this.positions.set(key, loadedPositions[key])
+      }
+
+      this.log(`Loaded app state, last synced block: ${this.lastProcessedBlock}. Onchain: ${currentBlock}`)
+
+    } catch (e) {  }
+
+    this.log('Fetching initial data')
+
+    await this.loadMissedEvents(this.lastProcessedBlock)
 
     await this.filterClosedPositions()
-    this.emit('ready', this);
-    this.trackEvents();
+
+    this.setLastProcessedBlock(currentBlock)
+
+    this.log('Finished initializing. Tracking events...')
+    this.emit('ready', this)
+    this.trackEvents()
   }
 
   private trackEvents() {
+
     this.web3.eth.subscribe("newBlockHeaders", (error, event) => {
         this.emit(NEW_BLOCK_EVENT, event)
-      })
+    })
+
     ACTIVE_VAULT_MANAGERS.forEach(({ address, liquidationTrigger, col}) => {
+
       this.web3.eth.subscribe('logs', {
         address,
         topics: col ? JOIN_TOPICS_WITH_COL : JOIN_TOPICS
       }, (error, log ) =>{
         if (!error) {
-          this.checkAndPersistPosition(log.topics, log.data, liquidationTrigger)
+          if (this.checkAndPersistPosition(log.topics, log.data, liquidationTrigger))
+            this.saveState()
           this.emit(JOIN_EVENT, parseJoinExit(log))
         }
       })
+
       this.web3.eth.subscribe('logs', {
         address,
         topics: col ? EXIT_TOPICS_WITH_COL : EXIT_TOPICS
@@ -92,11 +120,14 @@ class SynchronizationService extends EventEmitter {
           const exit = parseJoinExit(log)
           this.emit(EXIT_EVENT, exit)
           if (exit.usdp > BigInt(0))
-            this.checkClosedPosition(positionKey(log.topics))
+            this.checkPositionStateOnExit(positionKey(log.topics))
         }
       })
+
     });
+
     LIQUIDATIONS_TRIGGERS.forEach((address) => {
+
       this.web3.eth.subscribe('logs', {
         address,
         topics: LIQUIDATION_TRIGGERED_TOPICS,
@@ -105,16 +136,21 @@ class SynchronizationService extends EventEmitter {
           this.emit(LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log))
         }
       })
+
     });
+
     AUCTIONS.forEach((address) => {
+
       this.web3.eth.subscribe('logs', {
         address,
         topics: LIQUIDATED_TOPICS,
       }, (error, log ) =>{
         if (!error) {
           this.emit(LIQUIDATED_EVENT, parseLiquidated(log))
+          this.checkPositionStateOnExit(positionKey(log.topics))
         }
       })
+
     });
     // this.web3.eth.subscribe('logs', {
     //   address: DUCK_ADDRESS,
@@ -127,7 +163,7 @@ class SynchronizationService extends EventEmitter {
     // })
   }
 
-  private parseJoinData(topics, data): [boolean, string, bigint] {
+  private parseJoinData(topics, data): [boolean, string, string] {
     const withCol = topics[0] === JOIN_TOPICS_WITH_COL[0]
     if ('0x' + topics[1].substr(26) === OLD_COL_MOCK) {
       return [false, null, null]
@@ -136,19 +172,21 @@ class SynchronizationService extends EventEmitter {
     const exist: CDP = this.positions.get(id)
     const USDP = BigInt('0x' + data.substring(2 + (withCol ? 2 : 1) * 64, (withCol ? 3 : 2) * 64))
     const shouldPersist = !exist && USDP > BigInt(0)
-    return [shouldPersist, id, USDP]
+    return [shouldPersist, id, USDP.toString()]
   }
 
-  private checkAndPersistPosition(topics, data, liquidationTrigger) {
+  private checkAndPersistPosition(topics, data, liquidationTrigger): boolean {
     const [shouldPersist, id, USDP] = this.parseJoinData(topics, data);
     if (shouldPersist) {
       this.positions.set(id, { USDP, liquidationTrigger })
     }
+    return shouldPersist
   }
 
   async checkLiquidatable(header: BlockHeader) {
-    if (!this.lastLiquidationCheck || +header.number >= this.lastLiquidationCheck + LIQUIDATION_CHECK_TIMEOUT) {
-      this.lastLiquidationCheck = +header.number
+    this.setLastProcessedBlock(+header.number)
+    if (+header.number >= this.lastLiquidationCheck + LIQUIDATION_CHECK_TIMEOUT) {
+      this.setLastLiquidationCheck(+header.number)
       const keys = Array.from(this.positions.keys())
       const promises = []
       const txConfigs: TxConfig[] = []
@@ -164,7 +202,7 @@ class SynchronizationService extends EventEmitter {
         txConfigs.push(tx)
         promises.push(this.web3.eth.estimateGas(tx))
       })
-      const timeLabel = `estimating gas for ${keys.length} positions on block ${header.number} ${header.hash}`
+      const timeLabel = `estimated gas for ${keys.length} positions on block ${header.number} ${header.hash}`
       console.time(timeLabel)
       const gasData = (await Promise.all(promises.map((p, i) => p.catch((e) =>{
         if (SynchronizationService.isSuspiciousError(e.toString())) {
@@ -175,8 +213,8 @@ class SynchronizationService extends EventEmitter {
       console.timeEnd(timeLabel)
       // this.log(`.checkLiquidatable: there are ${gasData.filter(d => d).length} liquidatable positions`)
       gasData.forEach((gas, i) => {
-        // during synchronization the node can respond with transaction to non-contract address
-        // so check gas limit to prevent this behaviour
+        // during synchronization the node may respond with tx data to non-contract address
+        // so check gas limit to prevent incorrect behaviour
         if (gas && +gas > 30_000) {
           const tx = txConfigs[i]
           tx.gas = gas
@@ -187,6 +225,7 @@ class SynchronizationService extends EventEmitter {
   }
 
   private async filterClosedPositions() {
+
     const promises = []
     const keys = []
     this.positions.forEach((_, k) => {
@@ -204,19 +243,115 @@ class SynchronizationService extends EventEmitter {
       }
     })
     this.log('open CDP count', this.positions.size)
+
   }
 
-  private async checkClosedPosition(key: string) {
+  private async checkPositionStateOnExit(key: string) {
+
     const debt = await this.web3.eth.call({
       to: VAULT_ADDRESS,
       data: GET_TOTAL_DEBT_SIGNATURE + key
     })
     if (BigInt(debt) === BigInt(0)) {
-      this.positions.delete(key)
+      this.deletePosition(key)
       this.log(`CDP ${key} has been closed`)
     } else {
       this.log(`CDP ${key} is still open`)
     }
+
+  }
+
+  private async loadMissedEvents(lastSyncedBlock) {
+
+    if (!lastSyncedBlock) return this.bootstrap()
+
+    const fromBlock = lastSyncedBlock + 1
+
+    const joinPromises = []
+    const exitPromises = []
+    const triggerPromises = []
+    const liquidationPromises = []
+
+    ACTIVE_VAULT_MANAGERS.forEach(({ address, col}) => {
+
+      joinPromises.push(this.web3.eth.getPastLogs({
+        fromBlock,
+        address,
+        topics: col ? JOIN_TOPICS_WITH_COL : JOIN_TOPICS
+      }))
+
+      exitPromises.push(this.web3.eth.getPastLogs({
+        fromBlock,
+        address,
+        topics: col ? EXIT_TOPICS_WITH_COL : EXIT_TOPICS
+      }))
+
+    });
+
+    LIQUIDATIONS_TRIGGERS.forEach((address) => {
+
+      triggerPromises.push(this.web3.eth.getPastLogs({
+        fromBlock,
+        address,
+        topics: LIQUIDATION_TRIGGERED_TOPICS,
+      }))
+
+    });
+
+    AUCTIONS.forEach((address) => {
+
+      liquidationPromises.push(this.web3.eth.getPastLogs({
+        fromBlock,
+        address,
+        topics: LIQUIDATED_TOPICS,
+      }))
+
+    });
+
+    const joins = (await Promise.all(joinPromises)).reduce((acc, curr) => [...acc, ...curr], [])
+    joins.forEach((log: Log) => {
+      this.checkAndPersistPosition(log.topics, log.data, liquidationTriggerByVaultManagerAddress(log.address))
+      this.emit(JOIN_EVENT, parseJoinExit(log as Log))
+    })
+
+    const exits = (await Promise.all(exitPromises)).reduce((acc, curr) => [...acc, ...curr], [])
+    exits.forEach(log => {
+      const exit = parseJoinExit(log as Log)
+      this.emit(EXIT_EVENT, exit)
+    })
+
+    const triggers = (await Promise.all(triggerPromises)).reduce((acc, curr) => [...acc, ...curr], [])
+    triggers.forEach(log => {
+      this.emit(LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log as Log))
+    })
+
+    const liquidations = (await Promise.all(liquidationPromises)).reduce((acc, curr) => [...acc, ...curr], [])
+    liquidations.forEach(log => {
+      this.emit(LIQUIDATED_EVENT, parseLiquidated(log as Log))
+    })
+
+  }
+
+  private async bootstrap() {
+
+    const promises = []
+
+    VAULT_MANAGERS.forEach(({ address, fromBlock, toBlock, col }) => {
+      if (toBlock > toBlock) return
+      promises.push(this.web3.eth.getPastLogs({
+        fromBlock,
+        toBlock,
+        address,
+        topics: col ? JOIN_TOPICS_WITH_COL : JOIN_TOPICS
+      }))
+    })
+
+    const logsArray = await Promise.all(promises);
+    const logs = logsArray.reduce((acc, curr) => [...acc, ...curr], [])
+    logs.forEach(({ topics, data, address }) => {
+      this.checkAndPersistPosition(topics, data, liquidationTriggerByVaultManagerAddress(address))
+    })
+
   }
 
   private static isSuspiciousError(errMsg) {
@@ -228,8 +363,45 @@ class SynchronizationService extends EventEmitter {
     return true
   }
 
+  private getAppState() {
+    return {
+      lastProcessedBlock: this.lastProcessedBlock,
+      lastLiquidationCheck: this.lastLiquidationCheck,
+      positions: Object.fromEntries(this.positions.entries()),
+    }
+  }
+
+  private setLastLiquidationCheck(value) {
+    if (value <= this.lastLiquidationCheck) return
+    this.lastLiquidationCheck = value
+    this.saveState()
+  }
+
+  private setLastProcessedBlock(value) {
+    if (value <= this.lastProcessedBlock) return
+    this.lastProcessedBlock = value
+    this.saveState()
+  }
+
+  private saveState() {
+    try {
+      fs.writeFileSync(APP_STATE_FILENAME, JSON.stringify(this.getAppState()))
+    } catch (e) {
+      this.logError(e)
+    }
+  }
+
+  private deletePosition(key) {
+    this.positions.delete(key)
+    this.saveState()
+  }
+
   private log(...args) {
     this.logger.info(args)
+  }
+
+  private logError(...args) {
+    this.logger.error(args)
   }
 }
 

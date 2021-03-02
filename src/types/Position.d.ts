@@ -1,4 +1,4 @@
 export type CDP = {
-  USDP: bigint,
+  USDP: string,
   liquidationTrigger: string
 }

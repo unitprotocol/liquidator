@@ -103,13 +103,17 @@ const vaultManagerStandards = [
     liquidationTrigger: null,
     fromBlock: 11420394,
     col: true,
+    toBlock: undefined,
   },
   {
     address: '0x2726ebDf958cC15f5adB01aAd22741329948fbDB',
     liquidationTrigger: null,
     fromBlock: 11316092,
+    toBlock: 11486510,
     col: true,
   },
 ]
 
-export let ACTIVE_VAULT_MANAGERS = [...VAULT_MANAGERS.filter(v => !v.toBlock), ...vaultManagerStandards]
+export let ACTIVE_VAULT_MANAGERS = [...VAULT_MANAGERS, ...vaultManagerStandards].filter(v => !v.toBlock)
+
+export const APP_STATE_FILENAME = 'app.dat'
