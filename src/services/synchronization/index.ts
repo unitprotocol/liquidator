@@ -99,14 +99,14 @@ class SynchronizationService extends EventEmitter {
         this.emit(NEW_BLOCK_EVENT, event)
     })
 
-    ACTIVE_VAULT_MANAGERS.forEach(({ address, liquidationTrigger, col}) => {
+    ACTIVE_VAULT_MANAGERS.forEach(({ address, col}) => {
 
       this.web3.eth.subscribe('logs', {
         address,
         topics: col ? JOIN_TOPICS_WITH_COL : JOIN_TOPICS
       }, (error, log ) =>{
         if (!error) {
-          if (this.checkAndPersistPosition(log.topics, log.data, liquidationTrigger))
+          if (this.checkAndPersistPosition(log))
             this.saveState()
           this.emit(JOIN_EVENT, parseJoinExit(log))
         }
@@ -175,10 +175,10 @@ class SynchronizationService extends EventEmitter {
     return [shouldPersist, id, USDP.toString()]
   }
 
-  private checkAndPersistPosition(topics, data, liquidationTrigger): boolean {
+  private checkAndPersistPosition({ topics, data, address }: Log ): boolean {
     const [shouldPersist, id, USDP] = this.parseJoinData(topics, data);
     if (shouldPersist) {
-      this.positions.set(id, { USDP, liquidationTrigger })
+      this.positions.set(id, { USDP, liquidationTrigger: liquidationTriggerByVaultManagerAddress(address) })
     }
     return shouldPersist
   }
@@ -308,27 +308,31 @@ class SynchronizationService extends EventEmitter {
 
     });
 
+    const notifications = []
     const joins = (await Promise.all(joinPromises)).reduce((acc, curr) => [...acc, ...curr], [])
     joins.forEach((log: Log) => {
-      this.checkAndPersistPosition(log.topics, log.data, liquidationTriggerByVaultManagerAddress(log.address))
-      this.emit(JOIN_EVENT, parseJoinExit(log as Log))
+      this.checkAndPersistPosition(log)
+      notifications.push({ time: log.blockNumber, args: [JOIN_EVENT, parseJoinExit(log as Log)] })
     })
 
     const exits = (await Promise.all(exitPromises)).reduce((acc, curr) => [...acc, ...curr], [])
     exits.forEach(log => {
-      const exit = parseJoinExit(log as Log)
-      this.emit(EXIT_EVENT, exit)
+      notifications.push({ time: log.blockNumber, args: [EXIT_EVENT, parseJoinExit(log as Log)] })
     })
 
     const triggers = (await Promise.all(triggerPromises)).reduce((acc, curr) => [...acc, ...curr], [])
     triggers.forEach(log => {
-      this.emit(LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log as Log))
+      notifications.push({ time: log.blockNumber, args: [LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log as Log)] })
     })
 
     const liquidations = (await Promise.all(liquidationPromises)).reduce((acc, curr) => [...acc, ...curr], [])
     liquidations.forEach(log => {
-      this.emit(LIQUIDATED_EVENT, parseLiquidated(log as Log))
+      notifications.push({ time: log.blockNumber, args: [LIQUIDATED_EVENT, parseLiquidated(log as Log)] })
     })
+
+    notifications
+      .sort((a, b) => a.time > b.time ? 1 : -1)
+      .forEach(({ args }) => this.emit(args[0], args[1]))
 
   }
 
@@ -348,9 +352,7 @@ class SynchronizationService extends EventEmitter {
 
     const logsArray = await Promise.all(promises);
     const logs = logsArray.reduce((acc, curr) => [...acc, ...curr], [])
-    logs.forEach(({ topics, data, address }) => {
-      this.checkAndPersistPosition(topics, data, liquidationTriggerByVaultManagerAddress(address))
-    })
+    logs.forEach(log => this.checkAndPersistPosition(log))
 
   }
 
