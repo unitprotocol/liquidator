@@ -217,6 +217,16 @@ const collaterals = {
       defaultOracleType: 3,
       decimals: 18,
     },
+    '0x23b608675a2b2fb1890d3abbd85c5775c51691d5': {
+      symbol: 'SOCKS',
+      defaultOracleType: 3,
+      decimals: 18,
+    },
+    '0xd291e7a03283640fdc51b121ac401383a46cc623': {
+      symbol: 'RGT',
+      defaultOracleType: 7,
+      decimals: 18,
+    },
     '0xc3601f3e1c26d1a47571c559348e4156786d1fec': {
       symbol: 'UNISWAP LP DUCK-ETH',
       defaultOracleType: 4,
