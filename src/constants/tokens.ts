@@ -227,6 +227,39 @@ const collaterals = {
       defaultOracleType: 7,
       decimals: 18,
     },
+    '0x1c5db575e2ff833e46a2e9864c22f4b22e0b37c2': {
+      symbol: 'renZEC',
+      defaultOracleType: 3,
+      decimals: 8,
+    },
+    '0xd5147bc8e386d91cc5dbe72099dac6c9b99276f5': {
+      symbol: 'renFIL',
+      defaultOracleType: 3,
+      decimals: 18,
+    },
+    '0x3832d2f059e55934220881f831be501d180671a7': {
+      symbol: 'renDOGE',
+      defaultOracleType: 7,
+      decimals: 8,
+    },
+    '0xe6c804ff4ec692e6808c0d032cdbc03772fc4d42': {
+      symbol: 'UNISWAP LP renZEC-ETH',
+      defaultOracleType: 4,
+      poolTokens: ['0x1c5db575e2ff833e46a2e9864c22f4b22e0b37c2', '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'],
+      decimals: 18,
+    },
+    '0x4423be2173401e96065953a3e962ba7b8fdba68a': {
+      symbol: 'UNISWAP LP renFIL-ETH',
+      defaultOracleType: 4,
+      poolTokens: ['0xd5147bc8e386d91cc5dbe72099dac6c9b99276f5', '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'],
+      decimals: 18,
+    },
+    '0xb46736888247c68c995b156ca86426ff32e27cc9': {
+      symbol: 'SUSHISWAP LP renDOGE-ETH',
+      defaultOracleType: 8,
+      poolTokens: ['0x3832d2f059e55934220881f831be501d180671a7', '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'],
+      decimals: 18,
+    },
     '0xc3601f3e1c26d1a47571c559348e4156786d1fec': {
       symbol: 'UNISWAP LP DUCK-ETH',
       defaultOracleType: 4,
