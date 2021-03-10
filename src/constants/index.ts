@@ -103,7 +103,7 @@ const vaultManagerStandards = [
     liquidationTrigger: null,
     fromBlock: 11420394,
     col: true,
-    toBlock: undefined,
+    toBlock: 12011695,
   },
   {
     address: '0x2726ebDf958cC15f5adB01aAd22741329948fbDB',
