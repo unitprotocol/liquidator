@@ -112,6 +112,12 @@ const vaultManagerStandards = [
     toBlock: 11486510,
     col: true,
   },
+  {
+    address: '0x3e7f1d12a7893ba8eb9478b779b648da2bd38ae6',
+    liquidationTrigger: null,
+    fromBlock: 12011186,
+    toBlock: undefined,
+  },
 ]
 
 export let ACTIVE_VAULT_MANAGERS = [...VAULT_MANAGERS, ...vaultManagerStandards].filter(v => !v.toBlock)
