@@ -95,7 +95,11 @@ class SynchronizationService extends EventEmitter {
   private trackEvents() {
 
     this.web3.eth.subscribe("newBlockHeaders", (error, event) => {
+      if (!error) {
         this.emit(NEW_BLOCK_EVENT, event)
+      } else {
+        console.error(error)
+      }
     })
 
     ACTIVE_VAULT_MANAGERS.forEach(({ address, col}) => {
@@ -108,6 +112,8 @@ class SynchronizationService extends EventEmitter {
           if (this.checkAndPersistPosition(log))
             this.saveState()
           this.emit(JOIN_EVENT, parseJoinExit(log))
+        } else {
+          console.error(error)
         }
       })
 
@@ -120,6 +126,8 @@ class SynchronizationService extends EventEmitter {
           this.emit(EXIT_EVENT, exit)
           if (exit.usdp > BigInt(0))
             this.checkPositionStateOnExit(positionKey(log.topics))
+        } else {
+          console.error(error)
         }
       })
 
@@ -133,6 +141,8 @@ class SynchronizationService extends EventEmitter {
       }, (error, log ) =>{
         if (!error) {
           this.emit(LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log))
+        } else {
+          console.error(error)
         }
       })
 
@@ -147,6 +157,8 @@ class SynchronizationService extends EventEmitter {
         if (!error) {
           this.emit(LIQUIDATED_EVENT, parseLiquidated(log))
           this.checkPositionStateOnExit(positionKey(log.topics))
+        } else {
+          console.error(error)
         }
       })
 
