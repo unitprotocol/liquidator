@@ -23,7 +23,6 @@ import {
   LIQUIDATED_TOPICS,
   LIQUIDATED_EVENT,
   LIQUIDATION_CHECK_TIMEOUT,
-  OLD_COL_MOCK,
   APP_STATE_FILENAME,
 } from 'src/constants'
 import Logger from 'src/logger'
@@ -165,9 +164,6 @@ class SynchronizationService extends EventEmitter {
 
   private parseJoinData(topics, data): [boolean, string, string] {
     const withCol = topics[0] === JOIN_TOPICS_WITH_COL[0]
-    if ('0x' + topics[1].substr(26) === OLD_COL_MOCK) {
-      return [false, null, null]
-    }
     const id = positionKey(topics)
     const exist: CDP = this.positions.get(id)
     const USDP = BigInt('0x' + data.substring(2 + (withCol ? 2 : 1) * 64, (withCol ? 3 : 2) * 64))
@@ -357,7 +353,7 @@ class SynchronizationService extends EventEmitter {
   }
 
   private static isSuspiciousError(errMsg) {
-    const legitMsgs = ['SAFE_POSITION', 'LIQUIDATING_POSITION']
+    const legitMsgs = ['gas required exceeds allowance']
     for (const legitMsg of legitMsgs) {
       if (errMsg.includes(legitMsg))
         return false
