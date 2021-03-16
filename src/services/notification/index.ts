@@ -80,7 +80,7 @@ export default class NotificationService {
       + `\nYou can buyout ${token.symbol} collateral`
       + `\nMain asset: ${data.token}`
       + `\nOwner: ${data.user}`
-      + `\n<a href="https://liquidation.unit.xyz">Liquidate</a>`
+      + `\n<a href="https://bsc.liquidation.unit.xyz">Liquidate</a>`
       + `\n<a href="https://bscscan.com/tx/${data.txHash}">Explorer</a>`
 
     this.sendMessage(text)
