@@ -68,6 +68,11 @@ export const VAULT_MANAGERS: {
     liquidationTrigger: '0xb088c78A8e2E454a6145bFBA37CA5de129688ff7',
     fromBlock: 11888275,
   },
+  {
+    address: '0x7a646c42b64d21E6b871EfD85f54d707aCe1f9D1',
+    liquidationTrigger: '0x97d940AFE6cb90BeA9E7562D8f3FDc1FC3e691f4',
+    fromBlock: 12070783,
+  },
 ]
 
 export const LIQUIDATIONS_TRIGGERS = [
@@ -76,6 +81,7 @@ export const LIQUIDATIONS_TRIGGERS = [
   '0x20c854cdd322d3a501da91374027b4b257de57dd',
   '0x78d09b58402c29016425497289e12fdd12f06027',
   '0xb088c78A8e2E454a6145bFBA37CA5de129688ff7',
+  '0x97d940AFE6cb90BeA9E7562D8f3FDc1FC3e691f4',
 ]
 
 export const AUCTIONS = [

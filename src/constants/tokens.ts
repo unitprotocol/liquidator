@@ -242,6 +242,108 @@ const collaterals = {
       defaultOracleType: 7,
       decimals: 8,
     },
+
+    '0xe41d2489571d322189246dafa5ebde1f4699f498': {
+      symbol: 'ZRX',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0x0d8775f648430679a709e98d2b0cb6250d2887ef': {
+      symbol: 'BAT',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0xdd974d5c2e2928dea5f71b9825b8b646686bd200': {
+      symbol: 'KNC',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0xbbbbca6a901c926f240b89eacb641d8aec7aeafd': {
+      symbol: 'LRC',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0x0f5d2fb29fb7d3cfee444a200298f468908cc942': {
+      symbol: 'MANA',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0x221657776846890989a759ba2973e427dff5c9bb': {
+      symbol: 'REP',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0xf629cbd94d3791c9250152bd8dfbdf380e2a3b9c': {
+      symbol: 'ENJ',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0xade00c28244d5ce17d72e40330b1c318cd12b7c3': {
+      symbol: 'ADX',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0xd46ba6d942050d489dbd938a2c909a5d5039a161': {
+      symbol: 'AMPL',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0xa117000000f279d81a1d3cc75430faa017fa5a2e': {
+      symbol: 'ANT',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0x56d811088235f11c8920698a204a5010a788f4b3': {
+      symbol: 'BZRX',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b': {
+      symbol: 'CRO',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0xe28b3b32b6c345a34ff64674606124dd5aceca30': {
+      symbol: 'INJ',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0': {
+      symbol: 'MATIC',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0x1776e1f26f98b1a5df9cd347953a26dd3cb46671': {
+      symbol: 'NMR',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0x8207c1ffc5b6804f6024322ccf34f29c3541ae26': {
+      symbol: 'OGN',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0x0258f474786ddfd37abce6df6bbb1dd5dfc4434a': {
+      symbol: 'ORN',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0x4575f41308ec1483f3d399aa9a2826d74da13deb': {
+      symbol: 'OXT',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0x8ce9137d39326ad0cd6491fb5cc0cba0e089b6a9': {
+      symbol: 'SXP',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+    '0x4c19596f5aaff459fa38b0f7ed92f11ae6543784': {
+      symbol: 'TRU',
+      defaultOracleType: 5,
+      decimals: 18,
+    },
+
     '0xe6c804ff4ec692e6808c0d032cdbc03772fc4d42': {
       symbol: 'UNISWAP LP renZEC-ETH',
       defaultOracleType: 4,
