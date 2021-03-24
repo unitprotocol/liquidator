@@ -14,7 +14,7 @@ import {
   VAULT_MANAGERS,
   EXIT_TOPICS_WITH_COL,
   EXIT_EVENT,
-  LIQUIDATIONS_TRIGGERS,
+  LIQUIDATION_TRIGGERS,
   LIQUIDATION_TRIGGERED_TOPICS,
   LIQUIDATION_TRIGGERED_EVENT,
   JOIN_TOPICS,
@@ -24,7 +24,7 @@ import {
   LIQUIDATED_EVENT,
   LIQUIDATION_CHECK_TIMEOUT,
   OLD_COL_MOCK,
-  APP_STATE_FILENAME,
+  APP_STATE_FILENAME, NEW_VERSION_OF_LIQUIDATION_TRIGGER,
 } from 'src/constants'
 import Logger from 'src/logger'
 import { TxConfig } from 'src/types/TxConfig'
@@ -73,6 +73,9 @@ class SynchronizationService extends EventEmitter {
 
       const loadedPositions = loadedStateState.positions
       for (const key in loadedPositions) {
+        if (NEW_VERSION_OF_LIQUIDATION_TRIGGER[loadedPositions[key].liquidationTrigger.toLowerCase()]) {
+          loadedPositions[key].liquidationTrigger = NEW_VERSION_OF_LIQUIDATION_TRIGGER[loadedPositions[key].liquidationTrigger.toLowerCase()]
+        }
         this.positions.set(key, loadedPositions[key])
       }
 
@@ -126,7 +129,7 @@ class SynchronizationService extends EventEmitter {
 
     });
 
-    LIQUIDATIONS_TRIGGERS.forEach((address) => {
+    LIQUIDATION_TRIGGERS.forEach((address) => {
 
       this.web3.eth.subscribe('logs', {
         address,
@@ -288,7 +291,7 @@ class SynchronizationService extends EventEmitter {
 
     });
 
-    LIQUIDATIONS_TRIGGERS.forEach((address) => {
+    LIQUIDATION_TRIGGERS.forEach((address) => {
 
       triggerPromises.push(this.web3.eth.getPastLogs({
         fromBlock,
