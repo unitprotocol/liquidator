@@ -51,7 +51,13 @@ export const VAULT_MANAGERS: {
     address: '0x3052764f1af2f8B7a887dEAfA42153530676079B',
     liquidationTrigger: '0x0ca1A59a987922375234df94919A456F61e93E1e',
     fromBlock: 11373663,
+    toBlock: 12072495,
     col: true,
+  },
+  {
+    address: '0x2637D65912660e527C998824b8933d1A1bD7daA3',
+    liquidationTrigger: '0xfeaCFc01e122Bb6b17dc4Aef4F0E3be20FCa888D',
+    fromBlock: 	12101566,
   },
   {
     address: '0x54ba276a62e7e3e76d362f672f00ed31a983067b',
@@ -62,6 +68,12 @@ export const VAULT_MANAGERS: {
     address: '0xD90332DB0FE0e5eA1A195A5Ba6fc8949EaB8AB4E',
     liquidationTrigger: '0x78d09b58402c29016425497289e12fdd12f06027',
     fromBlock: 11610755,
+    toBlock: 	12058830,
+  },
+  {
+    address: '0x18A2381d318EE56D19316f4a7D39a2a7996e8390',
+    liquidationTrigger: '0x88F2Ec209b58076db31E4221a737313941be2ef8',
+    fromBlock: 12101763,
   },
   {
     address: '0xB82c6D510B3a0Dc9f198dE0ad2a3839973c6783c',
