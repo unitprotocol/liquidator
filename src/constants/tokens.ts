@@ -343,6 +343,16 @@ const collaterals = {
       defaultOracleType: 5,
       decimals: 18,
     },
+    '0xdbdb4d16eda451d0503b854cf79d55697f90c8df': {
+      symbol: 'ALCX',
+      defaultOracleType: 7,
+      decimals: 18,
+    },
+    '0x8888801af4d980682e47f1a9036e589479e835c5': {
+      symbol: 'MPH',
+      defaultOracleType: 3,
+      decimals: 18,
+    },
 
     '0xe6c804ff4ec692e6808c0d032cdbc03772fc4d42': {
       symbol: 'UNISWAP LP renZEC-ETH',
