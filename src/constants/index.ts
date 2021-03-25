@@ -36,14 +36,14 @@ export const VAULT_MANAGERS: {
   },
   {
     address: '0x754106b2f312c987Dd34161F8b4735392fa93F06',
-    liquidationTrigger: '0x0ca1A59a987922375234df94919A456F61e93E1e',
+    liquidationTrigger: '0xfeacfc01e122bb6b17dc4aef4f0e3be20fca888d',
     fromBlock: 11320948,
     toBlock: 	11329829,
     col: true,
   },
   {
     address: '0x3052764f1af2f8B7a887dEAfA42153530676079B',
-    liquidationTrigger: '0x0ca1A59a987922375234df94919A456F61e93E1e',
+    liquidationTrigger: '0xfeacfc01e122bb6b17dc4aef4f0e3be20fca888d',
     fromBlock: 11373663,
     toBlock: 12072495,
     col: true,
