@@ -98,7 +98,7 @@ class LiquidationService extends EventEmitter {
       to: tx.to,
       data: tx.data,
       gas: +tx.gas + 200_000,
-      chainId: 1,
+      chainId: 56,
       gasPrice,
       nonce,
     }
