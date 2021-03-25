@@ -45,14 +45,16 @@ export function parseLiquidated(event: Log): Liquidated {
   const token = topicToAddr(event.topics[1])
   const user = topicToAddr(event.topics[2])
   event.data = event.data.substr(2)
-  const repayment = hexToBN(event.data.substr(0, 64))
-  const penalty = hexToBN(event.data.substr(64, 64))
+  const amount = hexToBN(event.data.substr(0, 64))
+  const price = hexToBN(event.data.substr(64, 64))
+  const penalty = hexToBN(event.data.substr(128, 64))
   const txHash = event.transactionHash
   return {
     token,
     owner: user,
     penalty,
-    repayment,
+    amount,
+    price,
     txHash,
   }
 }

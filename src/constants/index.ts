@@ -3,7 +3,7 @@ import web3 from 'src/provider'
 export const JOIN_TOPICS_WITH_COL = [web3.utils.sha3('Join(address,address,uint256,uint256,uint256)')]
 export const JOIN_TOPICS = [web3.utils.sha3('Join(address,address,uint256,uint256)')]
 export const LIQUIDATION_TRIGGERED_TOPICS = ["0x5b79a897d30813a62a1f95ba180d3320d3701d96605708b81105e00719a069e4"]
-export const LIQUIDATED_TOPICS = [web3.utils.sha3("Liquidated(address,address,uint256,uint256)")]
+export const LIQUIDATED_TOPICS = [web3.utils.sha3("Buyout(address,address,address,uint256,uint256,uint256)")]
 export const EXIT_TOPICS = [web3.utils.sha3('Exit(address,address,uint256,uint256)')]
 export const EXIT_TOPICS_WITH_COL = [web3.utils.sha3('Exit(address,address,uint256,uint256,uint256)')]
 export const VAULT_ADDRESS = "0xdacfeed000e12c356fb72ab5089e7dd80ff4dd93"

@@ -90,10 +90,11 @@ export default class NotificationService {
     if (!this._preNotify(this.notifyLiquidated.name + ' ' +  data.txHash)) return
     const token = tokenByAddress(data.token)
 
-    const repaymentFormatted = Number(data.repayment / BigInt(10 ** (18 - 4))) / 1e4
+    const repaymentFormatted = Number(data.price / BigInt(10 ** (18 - 4))) / 1e4
+    const collateralAmountFormatted = Number(data.amount / BigInt(10 ** (token.decimals - 4))) / 1e4
 
     const text = '#bsc_liquidated'
-      + `\n${token.symbol} collateral has been liquidated for ${repaymentFormatted} USDP`
+      + `\n${collateralAmountFormatted + ' ' + token.symbol} has been liquidated for ${repaymentFormatted} USDP`
       + `\nMain asset: ${data.token}`
       + `\nOwner: ${data.owner}`
       + '\n' + `<a href="https://bscscan.com/tx/${data.txHash}">Explorer</a>`
