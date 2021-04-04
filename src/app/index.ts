@@ -14,6 +14,7 @@ import {
 } from 'src/constants'
 import { Liquidation } from 'src/types/TxConfig'
 import web3 from 'src/provider'
+import { BlockHeader } from 'web3-eth'
 
 
 class LiquidationMachine {
@@ -44,8 +45,9 @@ class LiquidationMachine {
       this.notificator.notifyLiquidated(data)
     })
 
-    this.synchronizer.on(NEW_BLOCK_EVENT, header => {
+    this.synchronizer.on(NEW_BLOCK_EVENT, (header: BlockHeader) => {
       this.synchronizer.checkLiquidatable(header)
+      this.synchronizer.syncToBlock(header)
     })
 
     this.synchronizer.on(JOIN_EVENT, join => {

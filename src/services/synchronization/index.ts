@@ -57,6 +57,7 @@ class SynchronizationService extends EventEmitter {
 
   async fetchInitialData() {
 
+    console.time('Fetched in')
     let currentBlock
     try {
       this.log('Connecting to rpc...')
@@ -91,7 +92,8 @@ class SynchronizationService extends EventEmitter {
 
     this.setLastProcessedBlock(currentBlock)
 
-    this.log('Finished initializing. Tracking events...')
+    console.timeEnd('Fetched in')
+    this.log('Tracking events...')
     this.emit('ready', this)
     this.trackEvents()
   }
@@ -102,68 +104,90 @@ class SynchronizationService extends EventEmitter {
         this.emit(NEW_BLOCK_EVENT, event)
     })
 
+  }
+
+  public async syncToBlock(header: BlockHeader) {
+
+    const toBlock = header.number
+    if (this.lastProcessedBlock >= toBlock) return
+
+    const fromBlock = toBlock - 10;
+
+    let promises = []
+
     ACTIVE_VAULT_MANAGERS.forEach(({ address, col}) => {
 
-      this.web3.eth.subscribe('logs', {
+      promises.push(this.web3.eth.getPastLogs({
         address,
+        fromBlock,
+        toBlock,
         topics: col ? JOIN_TOPICS_WITH_COL : JOIN_TOPICS
-      }, (error, log ) =>{
-        if (!error) {
-          if (this.checkAndPersistPosition(log))
-            this.saveState()
-          this.emit(JOIN_EVENT, parseJoinExit(log))
-        }
-      })
+      }, (error, logs ) => {
+        logs.forEach(log => {
+          if (!error) {
+            if (this.checkAndPersistPosition(log))
+              this.saveState()
+            this.emit(JOIN_EVENT, parseJoinExit(log))
+          }
+        })
+      }))
 
-      this.web3.eth.subscribe('logs', {
+      promises.push(this.web3.eth.getPastLogs({
         address,
+        fromBlock,
+        toBlock,
         topics: col ? EXIT_TOPICS_WITH_COL : EXIT_TOPICS
-      }, (error, log ) => {
-        if (!error) {
-          const exit = parseJoinExit(log)
-          this.emit(EXIT_EVENT, exit)
-          if (exit.usdp > BigInt(0))
-            this.checkPositionStateOnExit(positionKey(log.topics))
-        }
-      })
+      }, (error, logs ) => {
+        logs.forEach(log => {
+          if (!error) {
+            const exit = parseJoinExit(log)
+            this.emit(EXIT_EVENT, exit)
+            if (exit.usdp > BigInt(0))
+              this.checkPositionStateOnExit(positionKey(log.topics))
+          }
+        })
+      }))
 
     });
 
     LIQUIDATION_TRIGGERS.forEach((address) => {
 
-      this.web3.eth.subscribe('logs', {
+      promises.push(this.web3.eth.getPastLogs({
         address,
+        fromBlock,
+        toBlock,
         topics: LIQUIDATION_TRIGGERED_TOPICS,
-      }, (error, log ) =>{
-        if (!error) {
-          this.emit(LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log))
-        }
-      })
+      }, (error, logs ) =>{
+        logs.forEach(log => {
+          if (!error) {
+            this.emit(LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log))
+          }
+        })
+      }))
 
     });
 
     AUCTIONS.forEach((address) => {
 
-      this.web3.eth.subscribe('logs', {
+      promises.push(this.web3.eth.getPastLogs({
         address,
+        fromBlock,
+        toBlock,
         topics: LIQUIDATED_TOPICS,
-      }, (error, log ) =>{
-        if (!error) {
-          this.emit(LIQUIDATED_EVENT, parseLiquidated(log))
-          this.checkPositionStateOnExit(positionKey(log.topics))
-        }
-      })
+      }, (error, logs ) => {
+        logs.forEach(log => {
+          if (!error) {
+            this.emit(LIQUIDATED_EVENT, parseLiquidated(log))
+            this.checkPositionStateOnExit(positionKey(log.topics))
+          }
+        })
+      }))
 
     });
-    // this.web3.eth.subscribe('logs', {
-    //   address: DUCK_ADDRESS,
-    //   topics: DUCK_CREATION_TOPICS
-    // }, (error, log ) => {
-    //   if (!error) {
-    //     const mint = parseTransfer(log)
-    //     this.emit(DUCK_CREATION_EVENT, mint)
-    //   }
-    // })
+
+    await Promise.all(promises);
+
+    this.setLastProcessedBlock(toBlock)
   }
 
   private parseJoinData(topics, data): [boolean, string, string] {
@@ -187,9 +211,9 @@ class SynchronizationService extends EventEmitter {
   }
 
   async checkLiquidatable(header: BlockHeader) {
-    this.setLastProcessedBlock(+header.number)
     if (+header.number >= this.lastLiquidationCheck + LIQUIDATION_CHECK_TIMEOUT) {
       this.setLastLiquidationCheck(+header.number)
+      const timeStart = new Date().getTime()
       const keys = Array.from(this.positions.keys())
       const promises = []
       const txConfigs: TxConfig[] = []
@@ -205,16 +229,15 @@ class SynchronizationService extends EventEmitter {
         txConfigs.push(tx)
         promises.push(this.web3.eth.estimateGas(tx))
       })
-      const timeLabel = `estimated gas for ${keys.length} positions on block ${header.number} ${header.hash}`
-      console.time(timeLabel)
       const gasData = (await Promise.all(promises.map((p, i) => p.catch((e) =>{
         if (SynchronizationService.isSuspiciousError(e.toString())) {
           console.log(e.toString())
           console.log(txConfigs[i])
         }
       }))))
-      console.timeEnd(timeLabel)
-      // this.log(`.checkLiquidatable: there are ${gasData.filter(d => d).length} liquidatable positions`)
+      const timeEnd = new Date().getTime()
+      this.log(`estimated gas for ${keys.length} positions on block ${header.number} ${header.hash} in ${timeEnd - timeStart}ms`)
+
       gasData.forEach((gas, i) => {
         // during synchronization the node may respond with tx data to non-contract address
         // so check gas limit to prevent incorrect behaviour
@@ -257,9 +280,6 @@ class SynchronizationService extends EventEmitter {
     })
     if (BigInt(debt) === BigInt(0)) {
       this.deletePosition(key)
-      this.log(`CDP ${key} has been closed`)
-    } else {
-      this.log(`CDP ${key} is still open`)
     }
 
   }
