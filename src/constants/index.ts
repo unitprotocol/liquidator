@@ -144,6 +144,12 @@ const vaultManagerStandards = [
   },
 ]
 
+export const UNISWAP_FACTORY = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
+export const SUSHISWAP_FACTORY = '0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac'
+export const WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+export const ZERO_ADDRESS = '0x' + '0'.repeat(40)
+export const ETH_USD_AGGREGATOR = '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419'
+
 export let ACTIVE_VAULT_MANAGERS = [...VAULT_MANAGERS, ...vaultManagerStandards].filter(v => !v.toBlock)
 
 export const APP_STATE_FILENAME = 'app.dat'

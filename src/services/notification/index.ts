@@ -1,12 +1,12 @@
 import { Transfer } from 'src/types/Transfer'
-
-const TelegramBot = require("node-telegram-bot-api");
 import Logger from 'src/logger'
 import { JoinExit } from 'src/types/JoinExit'
 import { tokenByAddress } from 'src/constants/tokens'
-import { formatNumber } from 'src/utils'
+import { formatNumber, getTokenDecimals, getTokenSymbol, tryFetchPrice } from 'src/utils'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 import { Liquidated } from 'src/types/Liquidated'
+
+const TelegramBot = require("node-telegram-bot-api");
 
 
 export default class NotificationService {
@@ -24,46 +24,45 @@ export default class NotificationService {
   }
 
   async notifyJoin(data: JoinExit) {
-    if (!this._preNotify(this.notifyJoin.name + ' ' +  data.txHash)) return
-    const token = tokenByAddress(data.token) || { decimals: 18, symbol: data.token}
-    const mainFormatted = Number(data.main / BigInt(10 ** (token.decimals - 4))) / 10000
-    const colFormatted = Number(data.col / BigInt(1e18))
-    let deposit =
-      (mainFormatted > 0 ? formatNumber(mainFormatted) + ' ' + token.symbol + ' ' : '')
-      + (colFormatted > 0 ? (mainFormatted > 0 ? 'and ': '') + formatNumber(colFormatted) + ' COL' : '')
+    this.sendMessage(await this.toMsg(data, true))
+  }
 
-    deposit = deposit === '' ? '' : '#deposited ' + deposit
+  async toMsg(data: JoinExit, isJoin) {
+    if (!this._shouldNotify(this.notifyJoin.name + ' ' +  data.txHash)) return
 
-    const usdp = Number(data.usdp / BigInt(10 ** 15)) / 1000
+    let assetAction = '', usdpAction = ''
 
-    const duckCount = usdp < 1000 ? 1 : (usdp < 5000 ? 2 : (Math.round(usdp / 5000) + 2))
-    let minted = data.usdp > 0 ? '#minted ' + formatNumber(usdp) + ' USDP ' + '🦆'.repeat(duckCount) : ''
-    minted = minted ? (deposit ? '\n' + minted : minted) : ''
+    const assetChange = data.main > 0
 
-    const text = deposit + minted + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
-    this.sendMessage(text)
+    const symbol = await getTokenSymbol(data.token)
+
+    if (assetChange) {
+      const assetPrefix = isJoin ? '#deposited' : '#withdrawn'
+      const decimals = await getTokenDecimals(data.token)
+      const assetValue = Number(data.main / BigInt(10 ** (decimals - 4))) / 10000
+
+      const assetPrice = await tryFetchPrice(data.token, assetValue);
+
+      assetAction = `${assetPrefix} ${formatNumber(assetValue)} ${symbol} (${assetPrice})`
+    }
+
+    const usdpChange = data.usdp > 0
+
+    if (usdpChange) {
+      const usdpPrefix = (assetChange ? '\n' : '') + (isJoin ? '#minted' : '#burned')
+      const usdp = Number(data.usdp / BigInt(10 ** 15)) / 1000
+      const duckCount = isJoin ? usdp < 1_000 ? 1 : (usdp < 5_000 ? 2 : (Math.round(usdp / 5_000) + 2)) : 0
+
+      const collateralInfo = assetChange ? '' : `(${symbol}) `
+
+      usdpAction = `${usdpPrefix} ${formatNumber(usdp)} USDP ${collateralInfo}${'🦆'.repeat(duckCount)}`
+    }
+
+    return assetAction + usdpAction + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
   }
 
   async notifyExit(data: JoinExit) {
-    if (!this._preNotify(this.notifyExit.name + ' ' +  data.txHash)) return
-    const token = tokenByAddress(data.token) || { decimals: 18, symbol: data.token}
-    const mainFormatted = Number(data.main / BigInt(10 ** (token.decimals - 4))) / 10000
-    const colFormatted = Number(data.col / BigInt(1e18))
-    let withdrawn =
-      (mainFormatted > 0 ? formatNumber(mainFormatted) + ' ' + token.symbol + ' ' : '')
-      + (colFormatted > 0 ? (mainFormatted > 0 ? 'and ': '') + formatNumber(colFormatted) + ' COL' : '')
-
-    withdrawn = withdrawn === '' ? '' : '#withdrawn ' + withdrawn
-
-    const usdp = Number(data.usdp / BigInt(10 ** 15)) / 1000
-
-    let burned = data.usdp > 0 ? '#burned ' + formatNumber(usdp) + ' USDP' : ''
-    burned = burned ? (withdrawn ? '\n' + burned : burned) : ''
-
-    if (withdrawn + burned === '') return
-
-    const text = withdrawn + burned + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
-    this.sendMessage(text)
+    this.sendMessage(await this.toMsg(data, false))
   }
 
   async notifyDuck(data: Transfer) {
@@ -73,7 +72,7 @@ export default class NotificationService {
   }
 
   async notifyTriggered(data: LiquidationTrigger) {
-    if (!this._preNotify(this.notifyTriggered.name + ' ' +  data.txHash)) return
+    if (!this._shouldNotify(this.notifyTriggered.name + ' ' +  data.txHash)) return
     const token = tokenByAddress(data.token)
 
     const text = '#liquidation_trigger'
@@ -87,7 +86,7 @@ export default class NotificationService {
   }
 
   async notifyLiquidated(data: Liquidated) {
-    if (!this._preNotify(this.notifyLiquidated.name + ' ' +  data.txHash)) return
+    if (!this._shouldNotify(this.notifyLiquidated.name + ' ' +  data.txHash)) return
     const token = tokenByAddress(data.token)
 
     const repaymentFormatted = Number(data.repayment / BigInt(10 ** (18 - 4))) / 1e4
@@ -102,7 +101,7 @@ export default class NotificationService {
   }
 
   async notifyTriggerTx(data: LiquidationTrigger) {
-    if (!this._preNotify(this.notifyTriggerTx.name + ' ' +  data.txHash)) return
+    if (!this._shouldNotify(this.notifyTriggerTx.name + ' ' +  data.txHash)) return
     const token = tokenByAddress(data.token)
 
     const text = `Trying to liquidate CDP with ${token.symbol} collateral`
@@ -119,7 +118,7 @@ export default class NotificationService {
     });
   }
 
-  private _preNotify(id: string): boolean {
+  private _shouldNotify(id: string): boolean {
     if (this.processed.includes(id)) {
       this.log('._preNotify', 'already processed', id)
       return false

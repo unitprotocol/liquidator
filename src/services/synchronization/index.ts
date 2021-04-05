@@ -288,6 +288,8 @@ class SynchronizationService extends EventEmitter {
 
     if (!lastSyncedBlock) return this.bootstrap()
 
+    this.log('Loading missed events...')
+
     const fromBlock = lastSyncedBlock + 1
 
     const joinPromises = []
@@ -360,6 +362,8 @@ class SynchronizationService extends EventEmitter {
   }
 
   private async bootstrap() {
+
+    this.log('Bootstrapping from scratch...')
 
     const promises = []
 
