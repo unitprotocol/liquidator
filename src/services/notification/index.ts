@@ -24,11 +24,14 @@ export default class NotificationService {
   }
 
   async notifyJoin(data: JoinExit) {
-    this.sendMessage(await this.toMsg(data, true))
+    const msg = await this.toMsg(data, true)
+    if (msg) {
+      this.sendMessage(msg)
+    }
   }
 
   async toMsg(data: JoinExit, isJoin) {
-    if (!this._shouldNotify(this.notifyJoin.name + ' ' +  data.txHash)) return
+    if (!this._shouldNotify((isJoin ? this.notifyJoin.name : this.notifyExit.name) + ' ' +  data.txHash)) return
 
     let assetAction = '', usdpAction = ''
 
@@ -62,7 +65,10 @@ export default class NotificationService {
   }
 
   async notifyExit(data: JoinExit) {
-    this.sendMessage(await this.toMsg(data, false))
+    const msg = await this.toMsg(data, false)
+    if (msg) {
+      this.sendMessage(msg)
+    }
   }
 
   async notifyDuck(data: Transfer) {
