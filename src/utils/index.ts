@@ -6,6 +6,7 @@ import {
   ETH_USD_AGGREGATOR,
   EXIT_TOPICS_WITH_COL,
   JOIN_TOPICS_WITH_COL,
+  ORACLE_REGISTRY,
   SUSHISWAP_FACTORY,
   UNISWAP_FACTORY,
   WETH,
@@ -250,6 +251,27 @@ async function _getTokenSymbol(token: string) {
     return parseSymbol(symbolRaw)
   } catch (e) {
     return token
+  }
+}
+
+export async function getOracleType(token: string): Promise<number> {
+  const oracleTypeByAssetSignature = web3.eth.abi.encodeFunctionCall({
+    name: 'oracleTypeByAsset',
+    type: 'function',
+    inputs: [{
+      type: 'address',
+      name: 'asset'
+    }]
+  }, [token])
+
+  try {
+    const typeRaw = await web3.eth.call({
+      to: ORACLE_REGISTRY,
+      data: oracleTypeByAssetSignature
+    })
+    return Number(web3.eth.abi.decodeParameter('uint', typeRaw))
+  } catch (e) {
+    return 0
   }
 }
 

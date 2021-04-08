@@ -29,7 +29,7 @@ import {
 import Logger from 'src/logger'
 import { TxConfig } from 'src/types/TxConfig'
 import { BlockHeader } from 'web3-eth'
-import { parseJoinExit, parseLiquidated, parseLiquidationTrigger } from 'src/utils'
+import { getOracleType, parseJoinExit, parseLiquidated, parseLiquidationTrigger } from 'src/utils'
 import fs from 'fs'
 import { Log } from 'web3-core/types'
 
@@ -216,10 +216,19 @@ class SynchronizationService extends EventEmitter {
       const timeStart = new Date().getTime()
       const keys = Array.from(this.positions.keys())
       const promises = []
+      let oracleTypes = []
+      let skipped = 0
       const txConfigs: TxConfig[] = []
       keys.forEach(key => {
+        const tokenAddr = '0x' + key.substring(24, 64);
+        oracleTypes.push(getOracleType(tokenAddr))
+      })
+
+      oracleTypes = await Promise.all(oracleTypes)
+
+      keys.forEach((key, i) => {
         const v = this.positions.get(key)
-        if (!v) return
+        if (!v || !oracleTypes[i]) return skipped++
         const tx: TxConfig = {
           to: v.liquidationTrigger,
           data: TRIGGER_LIQUIDATION_SIGNATURE + key,
@@ -236,7 +245,7 @@ class SynchronizationService extends EventEmitter {
         }
       }))))
       const timeEnd = new Date().getTime()
-      this.log(`estimated gas for ${keys.length} positions on block ${header.number} ${header.hash} in ${timeEnd - timeStart}ms`)
+      this.log(`estimated gas for ${keys.length} (skipped: ${skipped}) positions on block ${header.number} ${header.hash} in ${timeEnd - timeStart}ms`)
 
       gasData.forEach((gas, i) => {
         // during synchronization the node may respond with tx data to non-contract address

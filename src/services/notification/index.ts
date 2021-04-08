@@ -1,7 +1,6 @@
 import { Transfer } from 'src/types/Transfer'
 import Logger from 'src/logger'
 import { JoinExit } from 'src/types/JoinExit'
-import { tokenByAddress } from 'src/constants/tokens'
 import { formatNumber, getTokenDecimals, getTokenSymbol, tryFetchPrice } from 'src/utils'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 import { Liquidated } from 'src/types/Liquidated'
@@ -79,10 +78,10 @@ export default class NotificationService {
 
   async notifyTriggered(data: LiquidationTrigger) {
     if (!this._shouldNotify(this.notifyTriggered.name + ' ' +  data.txHash)) return
-    const token = tokenByAddress(data.token)
+    const symbol = await getTokenSymbol(data.token)
 
     const text = '#liquidation_trigger'
-      + `\nYou can buyout ${token.symbol} collateral`
+      + `\nYou can buyout ${symbol} collateral`
       + `\nMain asset: ${data.token}`
       + `\nOwner: ${data.user}`
       + `\n<a href="https://liquidation.unit.xyz">Liquidate</a>`
@@ -93,12 +92,12 @@ export default class NotificationService {
 
   async notifyLiquidated(data: Liquidated) {
     if (!this._shouldNotify(this.notifyLiquidated.name + ' ' +  data.txHash)) return
-    const token = tokenByAddress(data.token)
+    const symbol = await getTokenSymbol(data.token)
 
     const repaymentFormatted = Number(data.repayment / BigInt(10 ** (18 - 4))) / 1e4
 
     const text = '#liquidated'
-      + `\n${token.symbol} collateral has been liquidated for ${repaymentFormatted} USDP`
+      + `\n${symbol} collateral has been liquidated for ${repaymentFormatted} USDP`
       + `\nMain asset: ${data.token}`
       + `\nOwner: ${data.owner}`
       + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
@@ -108,9 +107,9 @@ export default class NotificationService {
 
   async notifyTriggerTx(data: LiquidationTrigger) {
     if (!this._shouldNotify(this.notifyTriggerTx.name + ' ' +  data.txHash)) return
-    const token = tokenByAddress(data.token)
+    const symbol = await getTokenSymbol(data.token)
 
-    const text = `Trying to liquidate CDP with ${token.symbol} collateral`
+    const text = `Trying to liquidate CDP with ${symbol} collateral`
       + `\nMain asset: ${data.token}`
       + `\nOwner: ${data.user}`
       + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
