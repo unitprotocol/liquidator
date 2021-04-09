@@ -98,6 +98,10 @@ export function formatNumber(x: number) {
     return `${Math.floor(x * 100) / 100}`
   }
 
+  if (x < 0.0001) {
+    return x.toString()
+  }
+
   const y = x.toString()
   const dotIndex = y.indexOf('.')
   if (dotIndex !== -1) {
@@ -139,7 +143,7 @@ export async function tryFetchPrice(token: string, amount: bigint, decimals: num
       data: latestAnswerSignature
     })))
 
-    return '$' + formatNumber(amount * Number(latestAnswer) / 1e8)
+    return '$' + formatNumber(Number(amount * latestAnswer / BigInt(1e6) / BigInt(10 ** decimals)) / 100)
   }
 
   const symbol = await _getTokenSymbol(token)
@@ -176,7 +180,7 @@ export async function tryFetchPrice(token: string, amount: bigint, decimals: num
         data: latestAnswerSignature
       })))
 
-      return '$' + formatNumber(amount * Number(latestAnswer * wethBalance * BigInt(2) / supply ) / 1e8)
+      return '$' + formatNumber(Number(amount * latestAnswer * wethBalance * BigInt(2) / supply / BigInt(1e6) / BigInt(10 ** decimals)) / 100)
     }
 
     const getPairSignature = web3.eth.abi.encodeFunctionCall({
@@ -217,19 +221,17 @@ export async function tryFetchPrice(token: string, amount: bigint, decimals: num
 
     const quotingPool = uniWethBalance > sushiWethBalance ? uniPool : sushiPool
 
-    const poolTokenBalance = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
+    const tokenAmountInLP = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
       to: token,
       data: balanceOfSignature(quotingPool)
     })))
-
-    const decimals = await getTokenDecimals(token)
 
     const latestAnswer = BigInt(web3.eth.abi.decodeParameter('int256', await web3.eth.call({
       to: ETH_USD_AGGREGATOR,
       data: latestAnswerSignature
     })))
 
-    return '$' + formatNumber(amount * Number(latestAnswer * (uniWethBalance > sushiWethBalance ? uniWethBalance : sushiWethBalance) / poolTokenBalance ) / 1e8 / 10 ** (18 - decimals))
+    return '$' + formatNumber(Number(amount * (latestAnswer * (uniWethBalance > sushiWethBalance ? uniWethBalance : sushiWethBalance) / tokenAmountInLP) / BigInt(1e6) / BigInt(10 ** (18 - decimals)) / BigInt(10 ** decimals)) / 100)
 
   } catch (e) {
     return 'unknown price'

@@ -41,9 +41,9 @@ export default class NotificationService {
     if (assetChange) {
       const assetPrefix = isJoin ? '#deposited' : '#withdrawn'
       const decimals = await getTokenDecimals(data.token)
-      const assetValue = Number(data.main / BigInt(10 ** (decimals - 4))) / 10000
+      const assetValue = Number(data.main) / 10 ** decimals
 
-      const assetPrice = await tryFetchPrice(data.token, assetValue);
+      const assetPrice = await tryFetchPrice(data.token, data.main, decimals);
 
       assetAction = `${assetPrefix} ${formatNumber(assetValue)} ${symbol} (${assetPrice})`
     }
