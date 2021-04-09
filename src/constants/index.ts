@@ -121,14 +121,14 @@ export function liquidationTriggerByVaultManagerAddress(vaultMangerAddress) {
   return VAULT_MANAGERS.find(m => m.address.toLowerCase() === vaultMangerAddress.toLowerCase()).liquidationTrigger
 }
 
-export const TRIGGER_LIQUIDATION = 'triggerLiquidation'
-export const NEW_BLOCK_EVENT = 'newBlock'
-export const JOIN_EVENT = 'join'
-export const EXIT_EVENT = 'exit'
-export const LIQUIDATION_TRIGGER_TX = 'liquidationTriggerTx'
-export const LIQUIDATION_TRIGGERED_EVENT = 'liquidationTriggered'
-export const LIQUIDATED_EVENT = 'liquidated'
-export const DUCK_CREATION_EVENT = 'duckMinted'
+export const SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT = 'SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT'
+export const SYNCHRONIZER_NEW_BLOCK_EVENT = 'SYNCHRONIZER_NEW_BLOCK_EVENT'
+export const SYNCHRONIZER_JOIN_EVENT = 'SYNCHRONIZER_JOIN_EVENT'
+export const SYNCHRONIZER_EXIT_EVENT = 'SYNCHRONIZER_EXIT_EVENT'
+export const LIQUIDATOR_LIQUIDATION_TX_SENT = 'LIQUIDATOR_LIQUIDATION_TX_SENT'
+export const SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT = 'SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT'
+export const SYNCHRONIZER_LIQUIDATED_EVENT = 'SYNCHRONIZER_LIQUIDATED_EVENT'
+export const SYNCHRONIZER_DUCK_CREATION_EVENT = 'SYNCHRONIZER_DUCK_CREATION_EVENT'
 export const CONFIRMATIONS_THRESHOLD = 3
 export const LIQUIDATION_CHECK_TIMEOUT = 10
 

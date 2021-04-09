@@ -4,24 +4,24 @@ import { CDP } from 'src/types/Position'
 import {
   ACTIVE_VAULT_MANAGERS,
   GET_TOTAL_DEBT_SIGNATURE,
-  JOIN_EVENT,
+  SYNCHRONIZER_JOIN_EVENT,
   liquidationTriggerByVaultManagerAddress,
-  NEW_BLOCK_EVENT,
+  SYNCHRONIZER_NEW_BLOCK_EVENT,
   JOIN_TOPICS_WITH_COL,
-  TRIGGER_LIQUIDATION,
+  SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT,
   TRIGGER_LIQUIDATION_SIGNATURE,
   VAULT_ADDRESS,
   VAULT_MANAGERS,
   EXIT_TOPICS_WITH_COL,
-  EXIT_EVENT,
+  SYNCHRONIZER_EXIT_EVENT,
   LIQUIDATION_TRIGGERS,
   LIQUIDATION_TRIGGERED_TOPICS,
-  LIQUIDATION_TRIGGERED_EVENT,
+  SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT,
   JOIN_TOPICS,
   EXIT_TOPICS,
   AUCTIONS,
   LIQUIDATED_TOPICS,
-  LIQUIDATED_EVENT,
+  SYNCHRONIZER_LIQUIDATED_EVENT,
   LIQUIDATION_CHECK_TIMEOUT,
   OLD_COL_MOCK,
   APP_STATE_FILENAME, NEW_VERSION_OF_LIQUIDATION_TRIGGER,
@@ -32,6 +32,7 @@ import { BlockHeader } from 'web3-eth'
 import { getOracleType, parseJoinExit, parseLiquidated, parseLiquidationTrigger } from 'src/utils'
 import fs from 'fs'
 import { Log } from 'web3-core/types'
+import { Processor } from 'src/processor'
 
 declare interface SynchronizationService {
   on(event: string, listener: Function): this;
@@ -44,13 +45,15 @@ class SynchronizationService extends EventEmitter {
   private readonly logger
   private lastLiquidationCheck: number
   private lastProcessedBlock: number
+  private processor: Processor
 
-  constructor(web3) {
+  constructor(web3, processor: Processor) {
     super();
     this.positions = new Map<string, CDP>()
     this.lastLiquidationCheck = 0
     this.lastProcessedBlock = 0
     this.web3 = web3
+    this.processor = processor
     this.logger = Logger(SynchronizationService.name)
     this.fetchInitialData()
   }
@@ -101,7 +104,7 @@ class SynchronizationService extends EventEmitter {
   private trackEvents() {
 
     this.web3.eth.subscribe("newBlockHeaders", (error, event) => {
-        this.emit(NEW_BLOCK_EVENT, event)
+        this.emit(SYNCHRONIZER_NEW_BLOCK_EVENT, event)
     })
 
   }
@@ -111,7 +114,7 @@ class SynchronizationService extends EventEmitter {
     const toBlock = header.number
     if (this.lastProcessedBlock >= toBlock) return
 
-    const fromBlock = toBlock - 10;
+    const fromBlock = toBlock - 100;
 
     let promises = []
 
@@ -127,7 +130,7 @@ class SynchronizationService extends EventEmitter {
           if (!error) {
             if (this.checkAndPersistPosition(log))
               this.saveState()
-            this.emit(JOIN_EVENT, parseJoinExit(log))
+            this.emit(SYNCHRONIZER_JOIN_EVENT, parseJoinExit(log))
           }
         })
       }))
@@ -141,7 +144,7 @@ class SynchronizationService extends EventEmitter {
         logs.forEach(log => {
           if (!error) {
             const exit = parseJoinExit(log)
-            this.emit(EXIT_EVENT, exit)
+            this.emit(SYNCHRONIZER_EXIT_EVENT, exit)
             if (exit.usdp > BigInt(0))
               this.checkPositionStateOnExit(positionKey(log.topics))
           }
@@ -160,7 +163,7 @@ class SynchronizationService extends EventEmitter {
       }, (error, logs ) =>{
         logs.forEach(log => {
           if (!error) {
-            this.emit(LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log))
+            this.emit(SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log))
           }
         })
       }))
@@ -177,7 +180,7 @@ class SynchronizationService extends EventEmitter {
       }, (error, logs ) => {
         logs.forEach(log => {
           if (!error) {
-            this.emit(LIQUIDATED_EVENT, parseLiquidated(log))
+            this.emit(SYNCHRONIZER_LIQUIDATED_EVENT, parseLiquidated(log))
             this.checkPositionStateOnExit(positionKey(log.topics))
           }
         })
@@ -253,7 +256,7 @@ class SynchronizationService extends EventEmitter {
         if (gas && +gas > 30_000) {
           const tx = txConfigs[i]
           tx.gas = gas
-          this.emit(TRIGGER_LIQUIDATION, { tx, blockNumber: +header.number })
+          this.emit(SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT, { tx, blockNumber: +header.number })
         }
       })
     }
@@ -346,27 +349,31 @@ class SynchronizationService extends EventEmitter {
     const joins = (await Promise.all(joinPromises)).reduce((acc, curr) => [...acc, ...curr], [])
     joins.forEach((log: Log) => {
       this.checkAndPersistPosition(log)
-      notifications.push({ time: log.blockNumber, args: [JOIN_EVENT, parseJoinExit(log as Log)] })
+      notifications.push({ time: log.blockNumber, args: [{ SYNCHRONIZER_JOIN_EVENT }, parseJoinExit(log as Log)] })
     })
 
     const exits = (await Promise.all(exitPromises)).reduce((acc, curr) => [...acc, ...curr], [])
     exits.forEach(log => {
-      notifications.push({ time: log.blockNumber, args: [EXIT_EVENT, parseJoinExit(log as Log)] })
+      notifications.push({ time: log.blockNumber, args: [{ SYNCHRONIZER_EXIT_EVENT }, parseJoinExit(log as Log)] })
     })
 
     const triggers = (await Promise.all(triggerPromises)).reduce((acc, curr) => [...acc, ...curr], [])
     triggers.forEach(log => {
-      notifications.push({ time: log.blockNumber, args: [LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log as Log)] })
+      notifications.push({ time: log.blockNumber, args: [{ SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT }, parseLiquidationTrigger(log as Log)] })
     })
 
     const liquidations = (await Promise.all(liquidationPromises)).reduce((acc, curr) => [...acc, ...curr], [])
     liquidations.forEach(log => {
-      notifications.push({ time: log.blockNumber, args: [LIQUIDATED_EVENT, parseLiquidated(log as Log)] })
+      notifications.push({ time: log.blockNumber, args: [{ SYNCHRONIZER_LIQUIDATED_EVENT }, parseLiquidated(log as Log)] })
     })
 
     notifications
       .sort((a, b) => a.time > b.time ? 1 : -1)
-      .forEach(({ args }) => this.emit(args[0], args[1]))
+
+
+    for (const { args } of notifications) {
+      await this.processor[Object.keys(args[0])[0]](args[1]);
+    }
 
   }
 

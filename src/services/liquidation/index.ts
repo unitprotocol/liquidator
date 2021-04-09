@@ -2,7 +2,7 @@ import { EventEmitter } from 'events'
 import Web3 from 'web3'
 import Logger from 'src/logger'
 import { Liquidation, TxConfig } from 'src/types/TxConfig'
-import { CONFIRMATIONS_THRESHOLD, LIQUIDATION_TRIGGER_TX } from 'src/constants'
+import { CONFIRMATIONS_THRESHOLD, LIQUIDATOR_LIQUIDATION_TX_SENT } from 'src/constants'
 import axios from 'axios'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 

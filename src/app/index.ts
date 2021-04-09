@@ -3,29 +3,31 @@ import SynchronizationService from 'src/services/synchronization'
 import LiquidationService from 'src/services/liquidation'
 import NotificationService from 'src/services/notification'
 import {
-  DUCK_CREATION_EVENT,
-  EXIT_EVENT,
-  JOIN_EVENT,
-  LIQUIDATED_EVENT,
-  LIQUIDATION_TRIGGER_TX,
-  LIQUIDATION_TRIGGERED_EVENT,
-  NEW_BLOCK_EVENT,
-  TRIGGER_LIQUIDATION,
+  SYNCHRONIZER_DUCK_CREATION_EVENT,
+  SYNCHRONIZER_EXIT_EVENT,
+  SYNCHRONIZER_JOIN_EVENT,
+  SYNCHRONIZER_LIQUIDATED_EVENT,
+  LIQUIDATOR_LIQUIDATION_TX_SENT,
+  SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT,
+  SYNCHRONIZER_NEW_BLOCK_EVENT,
+  SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT,
 } from 'src/constants'
 import { Liquidation } from 'src/types/TxConfig'
 import web3 from 'src/provider'
-import { BlockHeader } from 'web3-eth'
+import EventProcessor from 'src/processor'
 
 
 class LiquidationMachine {
-  private readonly synchronizer: SynchronizationService
-  private readonly liquidator: LiquidationService
-  private readonly notificator: NotificationService
-  private liquidatorReady: boolean
-  private postponedLiquidationTriggers: Liquidation[]
+  public readonly synchronizer: SynchronizationService
+  public readonly liquidator: LiquidationService
+  public readonly notificator: NotificationService
+  public liquidatorReady: boolean
+  public postponedLiquidationTriggers: Liquidation[]
 
   constructor() {
-    this.synchronizer = new SynchronizationService(web3)
+    const processor = EventProcessor(this)
+
+    this.synchronizer = new SynchronizationService(web3, processor)
     this.notificator = new NotificationService()
     this.liquidatorReady = false
     this.postponedLiquidationTriggers = []
@@ -33,56 +35,28 @@ class LiquidationMachine {
     this.liquidator = new LiquidationService(web3)
     this.liquidator.on('ready', () => { this.liquidatorReady = true })
 
-    this.liquidator.on(LIQUIDATION_TRIGGER_TX, data => {
-      this.notificator.notifyTriggerTx(data)
-    })
+    const events = {
+      LIQUIDATOR_LIQUIDATION_TX_SENT,
+      SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT,
+      SYNCHRONIZER_LIQUIDATED_EVENT,
+      SYNCHRONIZER_NEW_BLOCK_EVENT,
+      SYNCHRONIZER_JOIN_EVENT,
+      SYNCHRONIZER_DUCK_CREATION_EVENT,
+      SYNCHRONIZER_EXIT_EVENT,
+      SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT,
+    }
 
-    this.synchronizer.on(LIQUIDATION_TRIGGERED_EVENT, data => {
-      this.notificator.notifyTriggered(data)
-    })
+    const initListeners = () => {
+      Object.keys(events).forEach(eventName => {
+        const worker = eventName.substring(0, eventName.indexOf('_')).toLowerCase()
+        this[worker].on(events[eventName], processor[eventName])
+      })
+    }
 
-    this.synchronizer.on(LIQUIDATED_EVENT, data => {
-      this.notificator.notifyLiquidated(data)
-    })
-
-    this.synchronizer.on(NEW_BLOCK_EVENT, (header: BlockHeader) => {
-      this.synchronizer.checkLiquidatable(header)
-      this.synchronizer.syncToBlock(header)
-    })
-
-    this.synchronizer.on(JOIN_EVENT, join => {
-      this.notificator.notifyJoin(join)
-    })
-
-    this.synchronizer.on(DUCK_CREATION_EVENT, mint => {
-      this.notificator.notifyDuck(mint)
-    })
-
-    this.synchronizer.on(EXIT_EVENT, exit => {
-      this.notificator.notifyExit(exit)
-    })
-
-    this.synchronizer.on(TRIGGER_LIQUIDATION, ({tx, blockNumber}) => {
-
-      // postpone liquidations when service is not yet available
-      if (!this.liquidatorReady) {
-        this.postponedLiquidationTriggers.push( { tx, blockNumber } )
-        return
-      }
-
-      if (this.postponedLiquidationTriggers.length) {
-        // process postponed liquidations
-        for (const postponedTx of this.postponedLiquidationTriggers) {
-          this.liquidator.triggerLiquidation(postponedTx)
-        }
-
-        this.postponedLiquidationTriggers = []
-      }
-
-      // trigger the liquidation
-      this.liquidator.triggerLiquidation({ tx, blockNumber })
-    })
+    initListeners()
   }
 }
 
 new LiquidationMachine()
+
+export default LiquidationMachine

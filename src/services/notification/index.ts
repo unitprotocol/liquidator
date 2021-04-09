@@ -25,7 +25,7 @@ export default class NotificationService {
   async notifyJoin(data: JoinExit) {
     const msg = await this.toMsg(data, true)
     if (msg) {
-      this.sendMessage(msg)
+      return this.sendMessage(msg)
     }
   }
 
@@ -66,14 +66,14 @@ export default class NotificationService {
   async notifyExit(data: JoinExit) {
     const msg = await this.toMsg(data, false)
     if (msg) {
-      this.sendMessage(msg)
+      return this.sendMessage(msg)
     }
   }
 
   async notifyDuck(data: Transfer) {
     const amountFormatted = Number(data.amount / BigInt(10 ** (18 - 4))) / 1e4
     const text = `${amountFormatted} DUCK minted\n` + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan 🦆</a>`
-    this.sendMessage(text)
+    return this.sendMessage(text)
   }
 
   async notifyTriggered(data: LiquidationTrigger) {
@@ -87,7 +87,7 @@ export default class NotificationService {
       + `\n<a href="https://liquidation.unit.xyz">Liquidate</a>`
       + `\n<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
 
-    this.sendMessage(text)
+    return this.sendMessage(text)
   }
 
   async notifyLiquidated(data: Liquidated) {
@@ -102,7 +102,7 @@ export default class NotificationService {
       + `\nOwner: ${data.owner}`
       + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
 
-    this.sendMessage(text)
+    return this.sendMessage(text)
   }
 
   async notifyTriggerTx(data: LiquidationTrigger) {
@@ -114,7 +114,7 @@ export default class NotificationService {
       + `\nOwner: ${data.user}`
       + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
 
-    this.sendMessage(text)
+    return this.sendMessage(text)
   }
 
   private async sendMessage(text, chatId = this.defaultChatId, form = { parse_mode: 'HTML', disable_web_page_preview: true }) {
@@ -125,7 +125,6 @@ export default class NotificationService {
 
   private _shouldNotify(id: string): boolean {
     if (this.processed.includes(id)) {
-      this.log('._preNotify', 'already processed', id)
       return false
     }
     if (this.processed.length >= 100) {

@@ -125,7 +125,7 @@ export async function getTokenDecimals(token: string) : Promise<number> {
   }
 }
 
-export async function tryFetchPrice(token: string, amount: number) : Promise<string> {
+export async function tryFetchPrice(token: string, amount: bigint, decimals: number) : Promise<string> {
 
   const latestAnswerSignature = web3.eth.abi.encodeFunctionSignature({
     name: 'latestAnswer',
