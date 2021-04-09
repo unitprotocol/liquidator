@@ -114,7 +114,7 @@ class SynchronizationService extends EventEmitter {
     const toBlock = header.number
     if (this.lastProcessedBlock >= toBlock) return
 
-    const fromBlock = toBlock - 100;
+    const fromBlock = this.lastProcessedBlock - 100;
 
     let promises = []
 
