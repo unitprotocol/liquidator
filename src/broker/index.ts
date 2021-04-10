@@ -1,14 +1,13 @@
 import { BlockHeader } from 'web3-eth'
 import LiquidationMachine from 'src/app'
-import * as Process from 'process'
 
 type Process = (data: any) => any
 
-export type Processor = { [name: string]: Process }
+export type Broker = { [name: string]: Process }
 
-type EventProcessor = (LiquidationMachine) => Processor
+type EventBroker = (LiquidationMachine) => Broker
 
-const EventProcessor: EventProcessor = (machine: LiquidationMachine) => ({
+const EventBroker: EventBroker = (machine: LiquidationMachine) => ({
   LIQUIDATOR_LIQUIDATION_TX_SENT: data => machine.notificator.notifyTriggerTx(data),
   SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT: data => machine.notificator.notifyTriggered(data),
   SYNCHRONIZER_LIQUIDATED_EVENT: data => machine.notificator.notifyLiquidated(data),
@@ -46,4 +45,4 @@ const EventProcessor: EventProcessor = (machine: LiquidationMachine) => ({
   },
 })
 
-export default EventProcessor
+export default EventBroker

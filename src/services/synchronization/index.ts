@@ -32,7 +32,7 @@ import { TxConfig } from 'src/types/TxConfig'
 import { BlockHeader } from 'web3-eth'
 import { getOracleType, parseJoinExit, parseLiquidated, parseLiquidationTrigger } from 'src/utils'
 import { Log } from 'web3-core/types'
-import { Processor } from 'src/processor'
+import { Broker } from 'src/broker'
 import { SynchronizerState } from 'src/services/statemanager'
 
 declare interface SynchronizationService {
@@ -46,15 +46,15 @@ class SynchronizationService extends EventEmitter {
   private readonly logger
   private lastLiquidationCheck: number
   private lastProcessedBlock: number
-  private processor: Processor
+  private broker: Broker
 
-  constructor(web3, processor: Processor, appState: SynchronizerState) {
+  constructor(web3, broker: Broker, appState: SynchronizerState) {
     super();
     this.positions = new Map<string, CDP>()
     this.lastLiquidationCheck = 0
     this.lastProcessedBlock = 0
     this.web3 = web3
-    this.processor = processor
+    this.broker = broker
     this.logger = Logger(SynchronizationService.name)
     this.fetchInitialData(appState)
   }
@@ -347,22 +347,22 @@ class SynchronizationService extends EventEmitter {
     const joins = (await Promise.all(joinPromises)).reduce((acc, curr) => [...acc, ...curr], [])
     joins.forEach((log: Log) => {
       this.checkAndPersistPosition(log)
-      notifications.push({ time: log.blockNumber, args: [{ SYNCHRONIZER_JOIN_EVENT }, parseJoinExit(log as Log)] })
+      notifications.push({ time: log.blockNumber, args: [SYNCHRONIZER_JOIN_EVENT, parseJoinExit(log as Log)] })
     })
 
     const exits = (await Promise.all(exitPromises)).reduce((acc, curr) => [...acc, ...curr], [])
     exits.forEach(log => {
-      notifications.push({ time: log.blockNumber, args: [{ SYNCHRONIZER_EXIT_EVENT }, parseJoinExit(log as Log)] })
+      notifications.push({ time: log.blockNumber, args: [SYNCHRONIZER_EXIT_EVENT, parseJoinExit(log as Log)] })
     })
 
     const triggers = (await Promise.all(triggerPromises)).reduce((acc, curr) => [...acc, ...curr], [])
     triggers.forEach(log => {
-      notifications.push({ time: log.blockNumber, args: [{ SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT }, parseLiquidationTrigger(log as Log)] })
+      notifications.push({ time: log.blockNumber, args: [SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log as Log)] })
     })
 
     const liquidations = (await Promise.all(liquidationPromises)).reduce((acc, curr) => [...acc, ...curr], [])
     liquidations.forEach(log => {
-      notifications.push({ time: log.blockNumber, args: [{ SYNCHRONIZER_LIQUIDATED_EVENT }, parseLiquidated(log as Log)] })
+      notifications.push({ time: log.blockNumber, args: [SYNCHRONIZER_LIQUIDATED_EVENT, parseLiquidated(log as Log)] })
     })
 
     notifications
@@ -370,7 +370,7 @@ class SynchronizationService extends EventEmitter {
 
 
     for (const { args } of notifications) {
-      await this.processor[Object.keys(args[0])[0]](args[1]);
+      await this.broker[args[0]](args[1]);
     }
 
   }
