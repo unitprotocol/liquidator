@@ -21,7 +21,7 @@ export function parseJoinExit(event: Log): JoinExit {
   const user = topicToAddr(event.topics[2])
   event.data = event.data.substr(2)
   const main = hexToBN(event.data.substr(0, 64))
-  let col, usdp
+  let col: bigint, usdp: bigint
   if (withCol) {
     col = hexToBN(event.data.substr(64, 64))
     usdp = hexToBN(event.data.substr(128, 64))
@@ -37,6 +37,9 @@ export function parseJoinExit(event: Log): JoinExit {
     col,
     usdp,
     txHash,
+    blockHash: event.blockHash,
+    logIndex: event.logIndex,
+    txIndex: event.transactionIndex,
   }
 }
 
@@ -48,6 +51,9 @@ export function parseLiquidationTrigger(event: Log): LiquidationTrigger {
     token,
     user,
     txHash,
+    logIndex: event.logIndex,
+    txIndex: event.transactionIndex,
+    blockHash: event.blockHash,
   }
 }
 
@@ -64,6 +70,9 @@ export function parseLiquidated(event: Log): Liquidated {
     penalty,
     repayment,
     txHash,
+    logIndex: event.logIndex,
+    txIndex: event.transactionIndex,
+    blockHash: event.blockHash,
   }
 }
 
@@ -76,6 +85,9 @@ export function parseTransfer(event: Log): Transfer {
     to,
     amount,
     txHash,
+    logIndex: event.logIndex,
+    txIndex: event.transactionIndex,
+    blockHash: event.blockHash,
   }
 }
 

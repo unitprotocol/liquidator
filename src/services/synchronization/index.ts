@@ -24,15 +24,16 @@ import {
   SYNCHRONIZER_LIQUIDATED_EVENT,
   LIQUIDATION_CHECK_TIMEOUT,
   OLD_COL_MOCK,
-  APP_STATE_FILENAME, NEW_VERSION_OF_LIQUIDATION_TRIGGER,
+  NEW_VERSION_OF_LIQUIDATION_TRIGGER,
+  SYNCHRONIZER_SAVE_STATE_REQUEST,
 } from 'src/constants'
 import Logger from 'src/logger'
 import { TxConfig } from 'src/types/TxConfig'
 import { BlockHeader } from 'web3-eth'
 import { getOracleType, parseJoinExit, parseLiquidated, parseLiquidationTrigger } from 'src/utils'
-import fs from 'fs'
 import { Log } from 'web3-core/types'
 import { Processor } from 'src/processor'
+import { SynchronizerState } from 'src/services/statemanager'
 
 declare interface SynchronizationService {
   on(event: string, listener: Function): this;
@@ -47,7 +48,7 @@ class SynchronizationService extends EventEmitter {
   private lastProcessedBlock: number
   private processor: Processor
 
-  constructor(web3, processor: Processor) {
+  constructor(web3, processor: Processor, appState: SynchronizerState) {
     super();
     this.positions = new Map<string, CDP>()
     this.lastLiquidationCheck = 0
@@ -55,10 +56,10 @@ class SynchronizationService extends EventEmitter {
     this.web3 = web3
     this.processor = processor
     this.logger = Logger(SynchronizationService.name)
-    this.fetchInitialData()
+    this.fetchInitialData(appState)
   }
 
-  async fetchInitialData() {
+  async fetchInitialData(state: SynchronizerState) {
 
     console.time('Fetched in')
     let currentBlock
@@ -69,13 +70,11 @@ class SynchronizationService extends EventEmitter {
 
     try {
 
-      const loadedStateState = JSON.parse(fs.readFileSync(APP_STATE_FILENAME, 'utf8'));
+      this.lastProcessedBlock = +state.lastProcessedBlock
 
-      this.lastProcessedBlock = +loadedStateState.lastProcessedBlock
+      this.lastLiquidationCheck = +state.lastLiquidationCheck
 
-      this.lastLiquidationCheck = +loadedStateState.lastLiquidationCheck
-
-      const loadedPositions = loadedStateState.positions
+      const loadedPositions = state.positions
       for (const key in loadedPositions) {
         if (NEW_VERSION_OF_LIQUIDATION_TRIGGER[loadedPositions[key].liquidationTrigger.toLowerCase()]) {
           loadedPositions[key].liquidationTrigger = NEW_VERSION_OF_LIQUIDATION_TRIGGER[loadedPositions[key].liquidationTrigger.toLowerCase()]
@@ -83,7 +82,7 @@ class SynchronizationService extends EventEmitter {
         this.positions.set(key, loadedPositions[key])
       }
 
-      this.log(`Loaded app state, last synced block: ${this.lastProcessedBlock}. Onchain: ${currentBlock}`)
+      this.log(`Loaded synchronizer app state, last synced block: ${this.lastProcessedBlock}. Onchain: ${currentBlock}. Positions count: ${this.positions.size}`)
 
     } catch (e) {  }
 
@@ -129,7 +128,6 @@ class SynchronizationService extends EventEmitter {
         logs.forEach(log => {
           if (!error) {
             if (this.checkAndPersistPosition(log))
-              this.saveState()
             this.emit(SYNCHRONIZER_JOIN_EVENT, parseJoinExit(log))
           }
         })
@@ -408,7 +406,7 @@ class SynchronizationService extends EventEmitter {
     return true
   }
 
-  private getAppState() {
+  private getAppState(): SynchronizerState {
     return {
       lastProcessedBlock: this.lastProcessedBlock,
       lastLiquidationCheck: this.lastLiquidationCheck,
@@ -429,11 +427,7 @@ class SynchronizationService extends EventEmitter {
   }
 
   private saveState() {
-    try {
-      fs.writeFileSync(APP_STATE_FILENAME, JSON.stringify(this.getAppState()))
-    } catch (e) {
-      this.logError(e)
-    }
+    this.emit(SYNCHRONIZER_SAVE_STATE_REQUEST, this.getAppState())
   }
 
   private deletePosition(key) {

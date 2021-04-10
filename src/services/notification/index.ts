@@ -4,22 +4,37 @@ import { JoinExit } from 'src/types/JoinExit'
 import { formatNumber, getTokenDecimals, getTokenSymbol, tryFetchPrice } from 'src/utils'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 import { Liquidated } from 'src/types/Liquidated'
+import { BasicEvent } from 'src/types/BasicEvent'
+import { NotificationState } from 'src/services/statemanager'
 
 const TelegramBot = require("node-telegram-bot-api");
 
+export type LogStore = {
+  blockHash: string
+  txIndex: number
+  logIndexes: number[]
+}
 
 export default class NotificationService {
   private readonly bot
   private readonly logger
   private readonly defaultChatId
-  private processed
+  private readonly processed: Map<string, LogStore>
 
-  constructor() {
+  constructor(notificationState: NotificationState) {
     this.logger = Logger(NotificationService.name)
     const botToken = process.env.TELEGRAM_BOT_TOKEN
     this.defaultChatId = process.env.TELEGRAM_CHAT_ID
     this.bot = new TelegramBot(botToken, { polling: false });
-    this.processed = []
+
+    this.processed = new Map()
+
+    try {
+      Object.keys(notificationState.logs).forEach((txHash) => {
+        this.processed.set(txHash, notificationState.logs[txHash])
+      })
+      this.log(`Loaded notification state, processed notifications count: ${this.processed.size}`)
+    } catch (e) { }
   }
 
   async notifyJoin(data: JoinExit) {
@@ -30,7 +45,7 @@ export default class NotificationService {
   }
 
   async toMsg(data: JoinExit, isJoin) {
-    if (!this._shouldNotify((isJoin ? this.notifyJoin.name : this.notifyExit.name) + ' ' +  data.txHash)) return
+    if (!this._shouldNotify(data)) return
 
     let assetAction = '', usdpAction = ''
 
@@ -77,7 +92,7 @@ export default class NotificationService {
   }
 
   async notifyTriggered(data: LiquidationTrigger) {
-    if (!this._shouldNotify(this.notifyTriggered.name + ' ' +  data.txHash)) return
+    if (!this._shouldNotify(data)) return
     const symbol = await getTokenSymbol(data.token)
 
     const text = '#liquidation_trigger'
@@ -91,7 +106,7 @@ export default class NotificationService {
   }
 
   async notifyLiquidated(data: Liquidated) {
-    if (!this._shouldNotify(this.notifyLiquidated.name + ' ' +  data.txHash)) return
+    if (!this._shouldNotify(data)) return
     const symbol = await getTokenSymbol(data.token)
 
     const repaymentFormatted = Number(data.repayment / BigInt(10 ** (18 - 4))) / 1e4
@@ -106,7 +121,7 @@ export default class NotificationService {
   }
 
   async notifyTriggerTx(data: LiquidationTrigger) {
-    if (!this._shouldNotify(this.notifyTriggerTx.name + ' ' +  data.txHash)) return
+    if (!this._shouldNotify(data)) return
     const symbol = await getTokenSymbol(data.token)
 
     const text = `Trying to liquidate CDP with ${symbol} collateral`
@@ -123,15 +138,9 @@ export default class NotificationService {
     });
   }
 
-  private _shouldNotify(id: string): boolean {
-    if (this.processed.includes(id)) {
-      return false
-    }
-    if (this.processed.length >= 100) {
-      this.processed = this.processed.slice(90)
-    }
-    this.processed.push(id)
-    return true
+  private _shouldNotify(n: BasicEvent): boolean {
+    const exists = this._isExists(n)
+    return !exists
   }
 
   private log(...args) {
@@ -140,5 +149,28 @@ export default class NotificationService {
 
   private error(...args) {
     this.logger.error(args)
+  }
+
+  public getState(): NotificationState {
+    return {
+      logs: Object.fromEntries(this.processed.entries())
+    }
+  }
+
+  private _isExists(n: BasicEvent): boolean {
+    if (!this.processed.get(n.txHash)) {
+      this.processed.set(n.txHash, { blockHash: n.blockHash, txIndex: n.txIndex, logIndexes: [n.logIndex] })
+      return false
+    }
+    const logStore = this.processed.get(n.txHash);
+    if (logStore.txIndex === n.txIndex && logStore.blockHash === n.blockHash) {
+      if (logStore.logIndexes.includes(n.logIndex)) {
+        return true
+      }
+      this.processed.set(n.txHash, { blockHash: n.blockHash, txIndex: n.txIndex, logIndexes: [ ...logStore.logIndexes, n.logIndex] })
+      return false
+    } else {
+      return true
+    }
   }
 }

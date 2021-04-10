@@ -17,6 +17,7 @@ const EventProcessor: EventProcessor = (machine: LiquidationMachine) => ({
     machine.synchronizer.syncToBlock(header)
   ],
   SYNCHRONIZER_JOIN_EVENT: join => machine.notificator.notifyJoin(join),
+  SYNCHRONIZER_SAVE_STATE_REQUEST: (synchronizerAppState) => machine.statemanager.saveState(synchronizerAppState),
   SYNCHRONIZER_DUCK_CREATION_EVENT: mint => machine.notificator.notifyDuck(mint),
   SYNCHRONIZER_EXIT_EVENT: exit => machine.notificator.notifyExit(exit),
   SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT: ({tx, blockNumber}) => {
