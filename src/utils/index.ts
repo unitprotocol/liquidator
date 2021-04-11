@@ -114,14 +114,7 @@ export function formatNumber(x: number) {
     return x.toString()
   }
 
-  const y = x.toString()
-  const dotIndex = y.indexOf('.')
-  if (dotIndex !== -1) {
-    const a = y.substr(0, y.indexOf('.'))
-    const b = y.substr(y.indexOf('.'))
-    return a.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + b
-  }
-  return y.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `${Math.floor(x * 10_000) / 10_000}`
 }
 
 export async function getTokenDecimals(token: string) : Promise<number> {
