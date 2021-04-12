@@ -46,7 +46,7 @@ export const LIQUIDATION_TRIGGERED_EVENT = 'liquidationTriggered'
 export const LIQUIDATED_EVENT = 'liquidated'
 export const DUCK_CREATION_EVENT = 'duckMinted'
 export const CONFIRMATIONS_THRESHOLD = 3
-export const LIQUIDATION_CHECK_TIMEOUT = 10
+export const LIQUIDATION_CHECK_TIMEOUT = Number(process.env.LIQUIDATION_CHECK_TIMEOUT) || 100
 
 const vaultManagerStandards = [
   {
