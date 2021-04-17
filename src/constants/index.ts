@@ -96,10 +96,16 @@ export const VAULT_MANAGERS: {
     liquidationTrigger: '0x0e13ab042ec5ab9fc6f43979406088b9028f66fa',
     fromBlock: 12198630,
   },
+  {
+    address: '0xaD3617D11f4c1d30603551eA75e9Ace9CB386e15',
+    liquidationTrigger: '0xad3617d11f4c1d30603551ea75e9ace9cb386e15',
+    fromBlock: 12258922,
+  },
 ]
 
 export const LIQUIDATION_TRIGGERS = [
   '0x0e13ab042eC5AB9Fc6F43979406088B9028F66fA',
+  '0xad3617d11f4c1d30603551ea75e9ace9cb386e15',
 ]
 
 export const NEW_VERSION_OF_LIQUIDATION_TRIGGER = {
