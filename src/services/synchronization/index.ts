@@ -127,7 +127,7 @@ class SynchronizationService extends EventEmitter {
       }, (error, logs ) => {
         logs.forEach(log => {
           if (!error) {
-            if (this.checkAndPersistPosition(log))
+            this.checkAndPersistPosition(log)
             this.emit(SYNCHRONIZER_JOIN_EVENT, parseJoinExit(log))
           } else {
             this.logError(error)
@@ -206,7 +206,7 @@ class SynchronizationService extends EventEmitter {
     }
     const id = positionKey(topics)
     const exist: CDP = this.positions.get(id)
-    const USDP = BigInt('0x' + data.substring(2 + (withCol ? 2 : 1) * 64, (withCol ? 3 : 2) * 64))
+    const USDP = BigInt('0x' + data.substring(2 + (withCol ? 2 : 1) * 64, 2 + (withCol ? 3 : 2) * 64))
     const shouldPersist = !exist && USDP > BigInt(0)
     return [shouldPersist, id, USDP.toString()]
   }
