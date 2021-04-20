@@ -113,7 +113,7 @@ class SynchronizationService extends EventEmitter {
     const toBlock = header.number
     if (this.lastProcessedBlock >= toBlock) return
 
-    const fromBlock = this.lastProcessedBlock - 100;
+    const fromBlock = this.lastProcessedBlock - 1000;
 
     let promises = []
 
@@ -129,6 +129,8 @@ class SynchronizationService extends EventEmitter {
           if (!error) {
             if (this.checkAndPersistPosition(log))
             this.emit(SYNCHRONIZER_JOIN_EVENT, parseJoinExit(log))
+          } else {
+            this.logError(error)
           }
         })
       }))
@@ -145,6 +147,8 @@ class SynchronizationService extends EventEmitter {
             this.emit(SYNCHRONIZER_EXIT_EVENT, exit)
             if (exit.usdp > BigInt(0))
               this.checkPositionStateOnExit(positionKey(log.topics))
+          } else {
+            this.logError(error)
           }
         })
       }))
@@ -162,6 +166,8 @@ class SynchronizationService extends EventEmitter {
         logs.forEach(log => {
           if (!error) {
             this.emit(SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log))
+          } else {
+            this.logError(error)
           }
         })
       }))
@@ -180,6 +186,8 @@ class SynchronizationService extends EventEmitter {
           if (!error) {
             this.emit(SYNCHRONIZER_LIQUIDATED_EVENT, parseLiquidated(log))
             this.checkPositionStateOnExit(positionKey(log.topics))
+          } else {
+            this.logError(error)
           }
         })
       }))
