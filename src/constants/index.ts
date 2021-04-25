@@ -98,7 +98,7 @@ export const VAULT_MANAGERS: {
   },
   {
     address: '0xaD3617D11f4c1d30603551eA75e9Ace9CB386e15',
-    liquidationTrigger: '0xad3617d11f4c1d30603551ea75e9ace9cb386e15',
+    liquidationTrigger: '0x0e13ab042ec5ab9fc6f43979406088b9028f66fa',
     fromBlock: 12258922,
   },
 ]
@@ -117,6 +117,7 @@ export const NEW_VERSION_OF_LIQUIDATION_TRIGGER = {
   '0x88f2ec209b58076db31e4221a737313941be2ef8': '0x0e13ab042ec5ab9fc6f43979406088b9028f66fa',
   '0xb088c78a8e2e454a6145bfba37ca5de129688ff7': '0x0e13ab042ec5ab9fc6f43979406088b9028f66fa',
   '0x97d940afe6cb90bea9e7562d8f3fdc1fc3e691f4': '0x0e13ab042ec5ab9fc6f43979406088b9028f66fa',
+  '0xad3617d11f4c1d30603551ea75e9ace9cb386e15': '0x0e13ab042ec5ab9fc6f43979406088b9028f66fa',
 }
 
 export const AUCTIONS = [
