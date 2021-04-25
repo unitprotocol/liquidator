@@ -103,7 +103,7 @@ class SynchronizationService extends EventEmitter {
   private trackEvents() {
 
     this.web3.eth.subscribe("newBlockHeaders", (error, event) => {
-        this.emit(SYNCHRONIZER_NEW_BLOCK_EVENT, event)
+        event && this.emit(SYNCHRONIZER_NEW_BLOCK_EVENT, event)
     })
 
   }
