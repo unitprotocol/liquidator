@@ -6,6 +6,7 @@ import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 import { Liquidated } from 'src/types/Liquidated'
 import { BasicEvent } from 'src/types/BasicEvent'
 import { NotificationState } from 'src/services/statemanager'
+import BigNumber from 'bignumber.js'
 
 const TelegramBot = require("node-telegram-bot-api");
 
@@ -56,7 +57,7 @@ export default class NotificationService {
     if (assetChange) {
       const assetPrefix = isJoin ? '#deposited' : '#withdrawn'
       const decimals = await getTokenDecimals(data.token)
-      const assetValue = Number(data.main) / 10 ** decimals
+      const assetValue = new BigNumber(data.main.toString()).div(10 ** decimals).toNumber()
 
       const assetPrice = await tryFetchPrice(data.token, data.main, decimals);
 

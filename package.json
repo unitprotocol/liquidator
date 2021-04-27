@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "axios": "^0.21.0",
+    "bignumber.js": "^9.0.1",
     "dotenv": "^8.2.0",
     "events": "^3.2.0",
     "module-alias": "^2.2.2",
