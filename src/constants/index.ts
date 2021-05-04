@@ -19,14 +19,21 @@ export const VAULT_MANAGERS: {
 }[] = [
   {
     address: '0x7Cdefc60Aa5eF145f905b99C999d3ED2883f6d10',
-    liquidationTrigger: '0xfAa71d14458a197DeC85a767B23dA27E33363b9b',
+    liquidationTrigger: '0x1337dac01fc21fa21d17914f96725f7a7b73868f',
     fromBlock: 5_360_793,
+    toBlock: 7_128_099,
+    col: false,
+  },
+  {
+    address: '0x1337dac01fc21fa21d17914f96725f7a7b73868f',
+    liquidationTrigger: '0x1337dac01fc21fa21d17914f96725f7a7b73868f',
+    fromBlock: 7_126_684,
     col: false,
   },
 ]
 
 export const LIQUIDATIONS_TRIGGERS = [
-  '0xfAa71d14458a197DeC85a767B23dA27E33363b9b',
+  '0x1337dac01fc21fa21d17914f96725f7a7b73868f',
 ]
 
 export const AUCTIONS = [
@@ -48,17 +55,11 @@ export const DUCK_CREATION_EVENT = 'duckMinted'
 export const CONFIRMATIONS_THRESHOLD = 3
 export const LIQUIDATION_CHECK_TIMEOUT = Number(process.env.LIQUIDATION_CHECK_TIMEOUT) || 100
 
-const vaultManagerStandards = [
-  {
-    address: '0x7E920256041F77613885A018Fce194409A734bBe',
-    liquidationTrigger: null,
-    fromBlock: 5_311_493,
-    toBlock: undefined,
-    col: false,
-  },
-]
+export const NEW_VERSION_OF_LIQUIDATION_TRIGGER = {
+  '0xfAa71d14458a197DeC85a767B23dA27E33363b9b': '0x1337dac01fc21fa21d17914f96725f7a7b73868f',
+}
 
-export let ACTIVE_VAULT_MANAGERS = [...VAULT_MANAGERS, ...vaultManagerStandards].filter(v => !v.toBlock)
+export let ACTIVE_VAULT_MANAGERS = [...VAULT_MANAGERS].filter(v => !v.toBlock)
 
 export const APP_STATE_FILENAME = 'app.dat'
 export const CHAIN_ID = 56
