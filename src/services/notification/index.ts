@@ -101,9 +101,9 @@ export default class NotificationService {
 
     const text = '#liquidation_trigger'
       + `\nLiquidation auction for ${symbol} just started`
-      + `\nInitial price: ${liquidationPriceFormatted} USDP`
-      + `\nAsset: ${data.token}`
-      + `\nOwner: ${data.user}`
+      + `\nInitial price ${liquidationPriceFormatted} USDP`
+      + `\nAsset ${data.token}`
+      + `\nOwner ${data.user}`
       + `\n<a href="https://liquidation.unit.xyz">Liquidate</a>`
       + `\n<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
 
@@ -126,8 +126,8 @@ export default class NotificationService {
 
     const text = '#liquidated'
       + `\n${formatNumber(assetAmount)} ${symbol} (${assetPrice}) for ${price}`
-      + `\nAsset: ${data.token}`
-      + `\nOwner: ${data.owner}`
+      + `\nAsset ${data.token}`
+      + `\nOwner ${data.owner}`
       + `\nLiquidator ${data.liquidator}`
       + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
 
@@ -139,8 +139,8 @@ export default class NotificationService {
     const symbol = await getTokenSymbol(data.token)
 
     const text = `Trying to liquidate CDP with ${symbol} collateral`
-      + `\nAsset: ${data.token}`
-      + `\nOwner: ${data.user}`
+      + `\nAsset ${data.token}`
+      + `\nOwner ${data.user}`
       + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
 
     return this.sendMessage(text)
