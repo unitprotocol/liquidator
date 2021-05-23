@@ -20,7 +20,7 @@ import {
   JOIN_TOPICS,
   EXIT_TOPICS,
   AUCTIONS,
-  LIQUIDATED_TOPICS,
+  BUYOUT_TOPICS,
   SYNCHRONIZER_LIQUIDATED_EVENT,
   LIQUIDATION_CHECK_TIMEOUT,
   OLD_COL_MOCK,
@@ -30,7 +30,7 @@ import {
 import Logger from 'src/logger'
 import { TxConfig } from 'src/types/TxConfig'
 import { BlockHeader } from 'web3-eth'
-import { getOracleType, parseJoinExit, parseLiquidated, parseLiquidationTrigger } from 'src/utils'
+import { getOracleType, parseJoinExit, parseBuyout, parseLiquidationTrigger } from 'src/utils'
 import { Log } from 'web3-core/types'
 import { Broker } from 'src/broker'
 import { SynchronizerState } from 'src/services/statemanager'
@@ -180,11 +180,11 @@ class SynchronizationService extends EventEmitter {
         address,
         fromBlock,
         toBlock,
-        topics: LIQUIDATED_TOPICS,
+        topics: BUYOUT_TOPICS,
       }, (error, logs ) => {
         logs.forEach(log => {
           if (!error) {
-            this.emit(SYNCHRONIZER_LIQUIDATED_EVENT, parseLiquidated(log))
+            this.emit(SYNCHRONIZER_LIQUIDATED_EVENT, parseBuyout(log))
             this.checkPositionStateOnExit(positionKey(log.topics))
           } else {
             this.logError(error)
@@ -346,7 +346,7 @@ class SynchronizationService extends EventEmitter {
       liquidationPromises.push(this.web3.eth.getPastLogs({
         fromBlock,
         address,
-        topics: LIQUIDATED_TOPICS,
+        topics: BUYOUT_TOPICS,
       }))
 
     });
@@ -370,7 +370,7 @@ class SynchronizationService extends EventEmitter {
 
     const liquidations = (await Promise.all(liquidationPromises)).reduce((acc, curr) => [...acc, ...curr], [])
     liquidations.forEach(log => {
-      notifications.push({ time: log.blockNumber, args: [SYNCHRONIZER_LIQUIDATED_EVENT, parseLiquidated(log as Log)] })
+      notifications.push({ time: log.blockNumber, args: [SYNCHRONIZER_LIQUIDATED_EVENT, parseBuyout(log as Log)] })
     })
 
     notifications

@@ -1,8 +1,10 @@
 import { BasicEvent } from 'src/types/BasicEvent'
 
-export interface Liquidated extends BasicEvent {
+export interface Buyout extends BasicEvent {
   token: string,
   owner: string,
+  liquidator: string,
+  amount: bigint,
   penalty: bigint,
-  repayment: bigint,
+  price: bigint,
 }

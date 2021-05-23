@@ -8,11 +8,11 @@ import {
   JOIN_TOPICS_WITH_COL,
   ORACLE_REGISTRY,
   SUSHISWAP_FACTORY,
-  UNISWAP_FACTORY,
+  UNISWAP_FACTORY, VAULT_ADDRESS,
   WETH,
   ZERO_ADDRESS,
 } from 'src/constants'
-import { Liquidated } from 'src/types/Liquidated'
+import { Buyout } from 'src/types/Buyout'
 import web3 from 'src/provider'
 
 export function parseJoinExit(event: Log): JoinExit {
@@ -57,18 +57,22 @@ export function parseLiquidationTrigger(event: Log): LiquidationTrigger {
   }
 }
 
-export function parseLiquidated(event: Log): Liquidated {
+export function parseBuyout(event: Log): Buyout {
   const token = topicToAddr(event.topics[1])
-  const user = topicToAddr(event.topics[2])
+  const owner = topicToAddr(event.topics[2])
+  const liquidator = topicToAddr(event.topics[3])
   event.data = event.data.substr(2)
-  const repayment = hexToBN(event.data.substr(0, 64))
-  const penalty = hexToBN(event.data.substr(64, 64))
+  const amount = hexToBN(event.data.substr(0, 64))
+  const price = hexToBN(event.data.substr(64, 64))
+  const penalty = hexToBN(event.data.substr(128, 64))
   const txHash = event.transactionHash
   return {
     token,
-    owner: user,
+    owner,
+    liquidator,
+    amount,
+    price,
     penalty,
-    repayment,
     txHash,
     logIndex: event.logIndex,
     txIndex: event.transactionIndex,
@@ -279,6 +283,31 @@ export async function getOracleType(token: string): Promise<number> {
     return Number(web3.eth.abi.decodeParameter('uint', typeRaw))
   } catch (e) {
     return 0
+  }
+}
+
+export async function getLiquidationPrice(asset: string, owner: string): Promise<bigint> {
+  const lpSig = web3.eth.abi.encodeFunctionCall({
+    name: 'liquidationPrice',
+    type: 'function',
+    inputs: [{
+      type: 'address',
+      name: 'asset'
+    }, {
+      type: 'address',
+      name: 'owner'
+    }]
+  }, [asset, owner])
+
+  try {
+    const priceRaw = await web3.eth.call({
+      to: VAULT_ADDRESS,
+      data: lpSig
+    })
+    return BigInt(web3.eth.abi.decodeParameter('uint', priceRaw))
+  } catch (e) {
+    console.log(e)
+    return 0n
   }
 }
 

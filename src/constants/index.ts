@@ -3,7 +3,8 @@ import web3 from 'src/provider'
 export const JOIN_TOPICS_WITH_COL = [web3.utils.sha3('Join(address,address,uint256,uint256,uint256)')]
 export const JOIN_TOPICS = [web3.utils.sha3('Join(address,address,uint256,uint256)')]
 export const LIQUIDATION_TRIGGERED_TOPICS = ["0x5b79a897d30813a62a1f95ba180d3320d3701d96605708b81105e00719a069e4"]
-export const LIQUIDATED_TOPICS = [web3.utils.sha3("Liquidated(address,address,uint256,uint256)")]
+// export const LIQUIDATED_TOPICS = [web3.utils.sha3("Liquidated(address,address,uint256,uint256)")]
+export const BUYOUT_TOPICS = [web3.utils.sha3("Buyout(address,address,address,uint256,uint256,uint256)")]
 export const EXIT_TOPICS = [web3.utils.sha3('Exit(address,address,uint256,uint256)')]
 export const EXIT_TOPICS_WITH_COL = [web3.utils.sha3('Exit(address,address,uint256,uint256,uint256)')]
 export const DUCK_CREATION_TOPICS = ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", "0x0000000000000000000000000000000000000000000000000000000000000000"]
@@ -121,7 +122,7 @@ export const NEW_VERSION_OF_LIQUIDATION_TRIGGER = {
 }
 
 export const AUCTIONS = [
-  '0xa41a3625c02c60Ae932515E7F921ada1811aF6a5',
+  '0xaef1ed4c492bf4c57221be0706def67813d79955',
 ]
 
 export function liquidationTriggerByVaultManagerAddress(vaultMangerAddress) {

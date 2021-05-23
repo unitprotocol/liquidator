@@ -1,9 +1,9 @@
 import { Transfer } from 'src/types/Transfer'
 import Logger from 'src/logger'
 import { JoinExit } from 'src/types/JoinExit'
-import { formatNumber, getTokenDecimals, getTokenSymbol, tryFetchPrice } from 'src/utils'
+import { formatNumber, getLiquidationPrice, getTokenDecimals, getTokenSymbol, tryFetchPrice } from 'src/utils'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
-import { Liquidated } from 'src/types/Liquidated'
+import { Buyout } from 'src/types/Buyout'
 import { BasicEvent } from 'src/types/BasicEvent'
 import { NotificationState } from 'src/services/statemanager'
 import BigNumber from 'bignumber.js'
@@ -96,9 +96,13 @@ export default class NotificationService {
     if (!this._shouldNotify(data)) return
     const symbol = await getTokenSymbol(data.token)
 
+    const liquidationPrice = await getLiquidationPrice(data.token, data.user)
+    const liquidationPriceFormatted = Number(liquidationPrice / BigInt(10 ** (18 - 2))) / 1e2
+
     const text = '#liquidation_trigger'
-      + `\nYou can buyout ${symbol} collateral`
-      + `\nMain asset: ${data.token}`
+      + `\nLiquidation auction for ${symbol} just started`
+      + `\nInitial price: ${liquidationPriceFormatted} USDP`
+      + `\nAsset: ${data.token}`
       + `\nOwner: ${data.user}`
       + `\n<a href="https://liquidation.unit.xyz">Liquidate</a>`
       + `\n<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
@@ -106,16 +110,25 @@ export default class NotificationService {
     return this.sendMessage(text)
   }
 
-  async notifyLiquidated(data: Liquidated) {
+  async notifyLiquidated(data: Buyout) {
     if (!this._shouldNotify(data)) return
     const symbol = await getTokenSymbol(data.token)
 
-    const repaymentFormatted = Number(data.repayment / BigInt(10 ** (18 - 4))) / 1e4
+    const decimals = await getTokenDecimals(data.token)
+
+    const assetPrice = await tryFetchPrice(data.token, data.amount, decimals);
+
+    const usdpPriceFormatted: number | string = Number(data.price / BigInt(10 ** (18 - 2))) / 1e2
+
+    const price = usdpPriceFormatted === 0 ? 'free' : `${usdpPriceFormatted} USDP`
+
+    const assetAmount = new BigNumber(data.amount.toString()).div(10 ** decimals).toNumber()
 
     const text = '#liquidated'
-      + `\n${symbol} collateral has been liquidated for ${repaymentFormatted} USDP`
-      + `\nMain asset: ${data.token}`
+      + `\n${formatNumber(assetAmount)} ${symbol} (${assetPrice}) for ${price}`
+      + `\nAsset: ${data.token}`
       + `\nOwner: ${data.owner}`
+      + `\nLiquidator ${data.liquidator}`
       + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
 
     return this.sendMessage(text)
@@ -126,7 +139,7 @@ export default class NotificationService {
     const symbol = await getTokenSymbol(data.token)
 
     const text = `Trying to liquidate CDP with ${symbol} collateral`
-      + `\nMain asset: ${data.token}`
+      + `\nAsset: ${data.token}`
       + `\nOwner: ${data.user}`
       + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
 
