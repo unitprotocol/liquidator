@@ -3,11 +3,14 @@ import { JoinExit } from 'src/types/JoinExit'
 import { Transfer } from 'src/types/Transfer'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 import {
+  CRV3_UNIT_GAUGE,
   ETH_USD_AGGREGATOR,
   EXIT_TOPICS_WITH_COL,
   JOIN_TOPICS_WITH_COL,
   ORACLE_REGISTRY,
+  PRICE_EXCEPTION_LIST,
   SUSHISWAP_FACTORY,
+  TRI_POOL,
   UNISWAP_FACTORY, VAULT_ADDRESS,
   WETH,
   ZERO_ADDRESS,
@@ -140,6 +143,10 @@ export async function getTokenDecimals(token: string) : Promise<number> {
 
 export async function tryFetchPrice(token: string, amount: bigint, decimals: number) : Promise<string> {
 
+  if (PRICE_EXCEPTION_LIST.includes(token)) {
+    return tryFetchNonStandardAssetPrice(token, amount, decimals)
+  }
+
   const latestAnswerSignature = web3.eth.abi.encodeFunctionSignature({
     name: 'latestAnswer',
     type: 'function',
@@ -247,6 +254,32 @@ export async function tryFetchPrice(token: string, amount: bigint, decimals: num
   }
 }
 
+export async function tryFetchNonStandardAssetPrice(token: string, amount: bigint, decimals: number) : Promise<string> {
+  if (token.toLowerCase() === CRV3_UNIT_GAUGE) {
+    return fetch3crvPrice(amount)
+  }
+  throw new Error(`Unknown non standard asset: ${token}`)
+}
+
+export async function fetch3crvPrice(amount: bigint) : Promise<string> {
+  const virtualPriceSig = web3.eth.abi.encodeFunctionSignature({
+    name: 'get_virtual_price',
+    type: 'function',
+    inputs: []
+  })
+
+  try {
+    const virtualPrice = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
+      to: TRI_POOL,
+      data: virtualPriceSig
+    })))
+
+    return '$' + formatNumber(Number(amount * virtualPrice / 10n ** 34n) / 100)
+  } catch (e) {
+    return 'unknown price'
+  }
+}
+
 async function _getTokenSymbol(token: string) {
   const symbolSignature = web3.eth.abi.encodeFunctionSignature({
     name: 'symbol',
@@ -306,7 +339,30 @@ export async function getLiquidationPrice(asset: string, owner: string): Promise
     })
     return BigInt(web3.eth.abi.decodeParameter('uint', priceRaw))
   } catch (e) {
-    console.log(e)
+    return 0n
+  }
+}
+
+export async function getTotalDebt(asset: string, owner: string): Promise<bigint> {
+  const gtdSig = web3.eth.abi.encodeFunctionCall({
+    name: 'getTotalDebt',
+    type: 'function',
+    inputs: [{
+      type: 'address',
+      name: 'asset'
+    }, {
+      type: 'address',
+      name: 'owner'
+    }]
+  }, [asset, owner])
+
+  try {
+    const raw = await web3.eth.call({
+      to: VAULT_ADDRESS,
+      data: gtdSig
+    })
+    return BigInt(web3.eth.abi.decodeParameter('uint', raw))
+  } catch (e) {
     return 0n
   }
 }

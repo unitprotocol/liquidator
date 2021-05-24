@@ -1,7 +1,13 @@
 import { Transfer } from 'src/types/Transfer'
 import Logger from 'src/logger'
 import { JoinExit } from 'src/types/JoinExit'
-import { formatNumber, getLiquidationPrice, getTokenDecimals, getTokenSymbol, tryFetchPrice } from 'src/utils'
+import {
+  formatNumber,
+  getTokenDecimals,
+  getTokenSymbol,
+  getTotalDebt,
+  tryFetchPrice,
+} from 'src/utils'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 import { Buyout } from 'src/types/Buyout'
 import { BasicEvent } from 'src/types/BasicEvent'
@@ -96,12 +102,12 @@ export default class NotificationService {
     if (!this._shouldNotify(data)) return
     const symbol = await getTokenSymbol(data.token)
 
-    const liquidationPrice = await getLiquidationPrice(data.token, data.user)
-    const liquidationPriceFormatted = Number(liquidationPrice / BigInt(10 ** (18 - 2))) / 1e2
+    const debt = await getTotalDebt(data.token, data.user)
+    const debtFormatted = Number(debt / BigInt(10 ** (18 - 2))) / 1e2
 
     const text = '#liquidation_trigger'
       + `\nLiquidation auction for ${symbol} just started`
-      + `\nInitial price ${liquidationPriceFormatted} USDP`
+      + `\nInitial price ${debtFormatted} USDP`
       + `\nAsset ${data.token}`
       + `\nOwner ${data.user}`
       + `\n<a href="https://liquidation.unit.xyz">Liquidate</a>`

@@ -164,6 +164,10 @@ const vaultManagerStandards = [
   },
 ]
 
+export const CRV3_UNIT_GAUGE = "0x4bfb2fa13097e5312b19585042fdbf3562dc8676"
+export const TRI_POOL = "0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7"
+export const PRICE_EXCEPTION_LIST = [CRV3_UNIT_GAUGE]
+
 export const UNISWAP_FACTORY = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
 export const SUSHISWAP_FACTORY = '0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac'
 export const WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
