@@ -39,6 +39,7 @@ import {
   encodeLiquidationTriggerWithProof,
   getProof,
   getEthPriceInUsd,
+  getLiquidationBlock,
 } from 'src/utils'
 import { Log } from 'web3-core/types'
 import { Broker } from 'src/broker'
@@ -241,11 +242,16 @@ class SynchronizationService extends EventEmitter {
       const txConfigs: TxConfig[] = []
       const txConfigsFallback: TxConfig[] = []
       const oracleTypes = await Promise.all(keys.map(key => getOracleType('0x' + key.substring(24, 64))))
+      const liquidationBlocks = await Promise.all(keys.map(key => getLiquidationBlock('0x' + key.substring(24, 64), '0x' + key.substring(24 + 64))))
       const ethPriceUsd = await getEthPriceInUsd()
 
       let skipped = 0
 
       for (let i = 0; i < keys.length; i++) {
+        if (liquidationBlocks[i] !== 0) {
+          skipped ++
+          continue
+        }
         const key = keys[i]
 
         const v = this.positions.get(key)
@@ -309,7 +315,7 @@ class SynchronizationService extends EventEmitter {
 
       const timeEnd = new Date().getTime()
 
-      this.log(`Checked ${triggerPromises.length} + ${fallbackLiquidatables.length} fb CDPs on block ${header.number} ${header.hash} in ${timeEnd - timeStart}ms`)
+      this.log(`Checked ${triggerPromises.length} + ${fallbackLiquidatables.length} fb CDPs (skipped: ${skipped}) on block ${header.number} ${header.hash} in ${timeEnd - timeStart}ms`)
 
       estimatedGas.forEach((gas, i) => {
         // during synchronization the node may respond with tx data to non-contract address

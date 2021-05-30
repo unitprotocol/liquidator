@@ -356,6 +356,30 @@ export async function getOracleType(token: string): Promise<number> {
   }
 }
 
+export async function getLiquidationBlock(asset: string, owner): Promise<number> {
+  const sig = web3.eth.abi.encodeFunctionCall({
+    name: 'liquidationBlock',
+    type: 'function',
+    inputs: [{
+      type: 'address',
+      name: 'asset'
+    }, {
+      type: 'address',
+      name: 'owner'
+    }]
+  }, [asset, owner])
+
+  try {
+    const raw = await web3.eth.call({
+      to: VAULT_ADDRESS,
+      data: sig
+    })
+    return Number(web3.eth.abi.decodeParameter('uint', raw))
+  } catch (e) {
+    return 0
+  }
+}
+
 export async function isOracleTypeEnabled(type: number, token: string): Promise<boolean> {
   const oracleTypeByAssetSignature = web3.eth.abi.encodeFunctionCall({
     name: 'isOracleTypeEnabled',
