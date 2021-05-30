@@ -3,6 +3,7 @@ import Logger from 'src/logger'
 import { JoinExit } from 'src/types/JoinExit'
 import {
   formatNumber,
+  getLiquidationFee,
   getTokenDecimals,
   getTokenSymbol,
   getTotalDebt,
@@ -104,7 +105,8 @@ export default class NotificationService {
     const symbol = await getTokenSymbol(data.token)
 
     const debt = await getTotalDebt(data.token, data.user)
-    const debtFormatted = Number(debt / BigInt(10 ** (18 - 2))) / 1e2
+    const liquidationFee = await getLiquidationFee(data.token, data.user)
+    const debtFormatted = Number(debt * (100n + liquidationFee) / 10n ** 18n) / 1e2
 
     const text = '#liquidation_trigger'
       + `\nLiquidation auction for ${symbol} just started`

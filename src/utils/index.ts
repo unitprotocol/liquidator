@@ -635,3 +635,27 @@ function parseSymbol(hex): string {
     return web3.utils.toUtf8(hex)
   }
 }
+
+export async function getLiquidationFee(asset: string, owner: string): Promise<bigint> {
+  const sig = web3.eth.abi.encodeFunctionCall({
+    name: 'liquidationFee',
+    type: 'function',
+    inputs: [{
+      type: 'address',
+      name: 'asset'
+    }, {
+      type: 'address',
+      name: 'owner'
+    }]
+  }, [asset, owner])
+
+  try {
+    const raw = await web3.eth.call({
+      to: VAULT_ADDRESS,
+      data: sig
+    })
+    return BigInt(web3.eth.abi.decodeParameter('uint', raw))
+  } catch (e) {
+    return 0n
+  }
+}
