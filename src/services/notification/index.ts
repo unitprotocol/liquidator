@@ -15,11 +15,13 @@ import { BasicEvent } from 'src/types/BasicEvent'
 import { NotificationState } from 'src/services/statemanager'
 import BigNumber from 'bignumber.js'
 import { IS_DEV } from 'src/constants'
+import { web3 } from 'src/provider'
 
 const TelegramBot = require("node-telegram-bot-api");
 
 export type LogStore = {
   blockHash: string
+  blockNumber?: number
   txIndex: number
   logIndexes: number[]
 }
@@ -29,6 +31,8 @@ export default class NotificationService {
   private readonly logger
   private readonly defaultChatId
   private readonly processed: Map<string, LogStore>
+
+  private lastOldLogsCheck
 
   constructor(notificationState: NotificationState) {
     this.logger = Logger(NotificationService.name)
@@ -40,7 +44,8 @@ export default class NotificationService {
 
     try {
       Object.keys(notificationState.logs).forEach((txHash) => {
-        this.processed.set(txHash, notificationState.logs[txHash])
+        const log = notificationState.logs[txHash]
+        this.processed.set(txHash, log)
       })
       this.log(`Loaded notification state, processed notifications count: ${this.processed.size}`)
     } catch (e) { }
@@ -54,7 +59,7 @@ export default class NotificationService {
   }
 
   async toMsg(data: JoinExit, isJoin) {
-    if (!this._shouldNotify(data)) return
+    if (!(await this._shouldNotify(data))) return
 
     let assetAction = '', usdpAction = ''
 
@@ -101,7 +106,7 @@ export default class NotificationService {
   }
 
   async notifyTriggered(data: LiquidationTrigger) {
-    if (!this._shouldNotify(data)) return
+    if (!(await this._shouldNotify(data))) return
     const symbol = await getTokenSymbol(data.token)
 
     const debt = await getTotalDebt(data.token, data.user)
@@ -120,7 +125,7 @@ export default class NotificationService {
   }
 
   async notifyLiquidated(data: Buyout) {
-    if (!this._shouldNotify(data)) return
+    if (!(await this._shouldNotify(data))) return
     const symbol = await getTokenSymbol(data.token)
 
     const decimals = await getTokenDecimals(data.token)
@@ -144,7 +149,7 @@ export default class NotificationService {
   }
 
   async notifyTriggerTx(data: LiquidationTrigger) {
-    if (!this._shouldNotify(data)) return
+    if (!(await this._shouldNotify(data))) return
     const symbol = await getTokenSymbol(data.token)
 
     const text = `Trying to liquidate CDP with ${symbol} collateral`
@@ -166,8 +171,9 @@ export default class NotificationService {
     }
   }
 
-  private _shouldNotify(n: BasicEvent): boolean {
-    const exists = this._isExists(n)
+  private async _shouldNotify(n: BasicEvent): Promise<boolean> {
+    const exists = await this._isExists(n)
+    console.log({exists})
     return !exists
   }
 
@@ -185,9 +191,10 @@ export default class NotificationService {
     }
   }
 
-  private _isExists(n: BasicEvent): boolean {
+  private async _isExists(n: BasicEvent): Promise<boolean> {
+    await this._deleteLogsOlderThan(n.blockNumber - 10_000)
     if (!this.processed.get(n.txHash)) {
-      this.processed.set(n.txHash, { blockHash: n.blockHash, txIndex: n.txIndex, logIndexes: [n.logIndex] })
+      this.processed.set(n.txHash, { blockHash: n.blockHash, txIndex: n.txIndex, logIndexes: [n.logIndex],  blockNumber: n.blockNumber })
       return false
     }
     const logStore = this.processed.get(n.txHash);
@@ -195,10 +202,31 @@ export default class NotificationService {
       if (logStore.logIndexes.includes(n.logIndex)) {
         return true
       }
-      this.processed.set(n.txHash, { blockHash: n.blockHash, txIndex: n.txIndex, logIndexes: [ ...logStore.logIndexes, n.logIndex] })
+      this.processed.set(n.txHash, { blockHash: n.blockHash, blockNumber: n.blockNumber, txIndex: n.txIndex, logIndexes: [ ...logStore.logIndexes, n.logIndex] })
       return false
     } else {
       return true
+    }
+  }
+
+  private async _deleteLogsOlderThan(n: number) {
+    if (this.lastOldLogsCheck && n < this.lastOldLogsCheck + 10_000) return
+    this.lastOldLogsCheck = n
+    let removed = 0
+    for (const txHash of this.processed.keys()) {
+      const log = this.processed.get(txHash)
+      if (!log) continue
+      if (!log.blockNumber && log.blockHash) {
+        log.blockNumber = (await web3.eth.getBlock(log.blockHash, false)).number
+      }
+      const old = log.blockNumber < n
+      if (old) {
+        removed ++
+        this.processed.delete(txHash)
+      }
+    }
+    if (removed) {
+      this.log(`Removed ${removed} old logs`)
     }
   }
 }

@@ -46,6 +46,7 @@ export function parseJoinExit(event: Log): JoinExit {
     usdp,
     txHash,
     blockHash: event.blockHash,
+    blockNumber: event.blockNumber,
     logIndex: event.logIndex,
     txIndex: event.transactionIndex,
   }
@@ -60,6 +61,7 @@ export function parseLiquidationTrigger(event: Log): LiquidationTrigger {
     user,
     txHash,
     logIndex: event.logIndex,
+    blockNumber: event.blockNumber,
     txIndex: event.transactionIndex,
     blockHash: event.blockHash,
   }
@@ -83,6 +85,7 @@ export function parseBuyout(event: Log): Buyout {
     penalty,
     txHash,
     logIndex: event.logIndex,
+    blockNumber: event.blockNumber,
     txIndex: event.transactionIndex,
     blockHash: event.blockHash,
   }
@@ -98,6 +101,7 @@ export function parseTransfer(event: Log): Transfer {
     amount,
     txHash,
     logIndex: event.logIndex,
+    blockNumber: event.blockNumber,
     txIndex: event.transactionIndex,
     blockHash: event.blockHash,
   }
