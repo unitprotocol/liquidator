@@ -19,11 +19,11 @@ const EventBroker: EventBroker = (machine: LiquidationMachine) => ({
   SYNCHRONIZER_SAVE_STATE_REQUEST: (synchronizerAppState) => machine.statemanager.saveState(synchronizerAppState),
   SYNCHRONIZER_DUCK_CREATION_EVENT: mint => machine.notificator.notifyDuck(mint),
   SYNCHRONIZER_EXIT_EVENT: exit => machine.notificator.notifyExit(exit),
-  SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT: ({tx, blockNumber}) => {
+  SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT: (event) => {
 
     // postpone liquidations when service is not yet available
     if (!machine.liquidatorReady) {
-      machine.postponedLiquidationTriggers.push( { tx, blockNumber } )
+      machine.postponedLiquidationTriggers.push(event)
       return
     }
 
@@ -39,7 +39,7 @@ const EventBroker: EventBroker = (machine: LiquidationMachine) => ({
     }
 
     // trigger the liquidation
-    promises.push(machine.liquidator.triggerLiquidation({ tx, blockNumber }))
+    promises.push(machine.liquidator.triggerLiquidation(event))
 
     return promises
   },

@@ -3,6 +3,7 @@ import { JoinExit } from 'src/types/JoinExit'
 import { Transfer } from 'src/types/Transfer'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 import {
+  CHAINLINK_ETH_USD_AGGREGATOR_PROXY,
   CRV3_UNIT_GAUGE,
   ETH_USD_AGGREGATOR,
   EXIT_TOPICS_WITH_COL,
@@ -11,12 +12,16 @@ import {
   PRICE_EXCEPTION_LIST,
   SUSHISWAP_FACTORY,
   TRI_POOL,
-  UNISWAP_FACTORY, VAULT_ADDRESS,
+  UNISWAP_FACTORY,
+  VAULT_ADDRESS,
+  VAULT_MANAGER_PARAMETERS_ADDRESS,
+  VAULT_PARAMETERS_ADDRESS,
   WETH,
   ZERO_ADDRESS,
 } from 'src/constants'
 import { Buyout } from 'src/types/Buyout'
-import web3 from 'src/provider'
+import { web3 } from 'src/provider'
+import { getMerkleProof, lookbackBlocks, ORACLE_TYPES, sushiLPAddress, uniLPAddress } from 'src/utils/oracle'
 
 export function parseJoinExit(event: Log): JoinExit {
   const withCol = event.topics[0] === JOIN_TOPICS_WITH_COL[0] || event.topics[0] === EXIT_TOPICS_WITH_COL[0]
@@ -298,6 +303,38 @@ async function _getTokenSymbol(token: string) {
   }
 }
 
+export function encodeLiquidationTriggerWithProof(asset: string, owner: string, proof: [string, string, string, string]) {
+  return web3.eth.abi.encodeFunctionCall({
+      type: 'function',
+      name: 'triggerLiquidation',
+      inputs: [{
+        type: 'address',
+        name: 'asset',
+      }, {
+        type: 'address',
+        name: 'owner',
+      }, {
+        type: 'tuple',
+        name: 'proof',
+        components: [{
+          type: 'bytes',
+          name: 'block',
+        }, {
+          type: 'bytes',
+          name: 'accountProofNodesRlp',
+        }, {
+          type: 'bytes',
+          name: 'reserveAndTimestampProofNodesRlp',
+        }, {
+          type: 'bytes',
+          name: 'priceAccumulatorProofNodesRlp',
+        }]
+      }]
+    },
+    [asset, owner, proof]
+  );
+}
+
 export async function getOracleType(token: string): Promise<number> {
   const oracleTypeByAssetSignature = web3.eth.abi.encodeFunctionCall({
     name: 'oracleTypeByAsset',
@@ -319,32 +356,66 @@ export async function getOracleType(token: string): Promise<number> {
   }
 }
 
-export async function getLiquidationPrice(asset: string, owner: string): Promise<bigint> {
-  const lpSig = web3.eth.abi.encodeFunctionCall({
-    name: 'liquidationPrice',
+export async function isOracleTypeEnabled(type: number, token: string): Promise<boolean> {
+  const oracleTypeByAssetSignature = web3.eth.abi.encodeFunctionCall({
+    name: 'isOracleTypeEnabled',
     type: 'function',
     inputs: [{
-      type: 'address',
-      name: 'asset'
+      type: 'uint256',
+      name: 'oracleType'
     }, {
       type: 'address',
-      name: 'owner'
+      name: 'asset'
     }]
-  }, [asset, owner])
+  }, [type.toString(), token])
 
   try {
-    const priceRaw = await web3.eth.call({
-      to: VAULT_ADDRESS,
-      data: lpSig
+    const raw = await web3.eth.call({
+      to: VAULT_PARAMETERS_ADDRESS,
+      data: oracleTypeByAssetSignature
     })
-    return BigInt(web3.eth.abi.decodeParameter('uint', priceRaw))
+    return Boolean(web3.eth.abi.decodeParameter('bool', raw))
   } catch (e) {
-    return 0n
+    return false
+  }
+}
+
+export async function getProof(token: string, oracleType: ORACLE_TYPES, blockNumber: number): Promise<[string, string, string,string]> {
+
+  const proofBlockNumber = blockNumber - lookbackBlocks
+  const denominationToken = BigInt(WETH)
+  switch (oracleType) {
+    case ORACLE_TYPES.KEYDONIX_LP:
+      return getMerkleProof(BigInt(token), denominationToken, BigInt(proofBlockNumber))
+    case ORACLE_TYPES.KEYDONIX_UNI:
+      return getMerkleProof(BigInt(uniLPAddress(token, WETH)), denominationToken, BigInt(proofBlockNumber))
+    case ORACLE_TYPES.KEYDONIX_SUSHI:
+      return getMerkleProof(BigInt(sushiLPAddress(token, WETH)), denominationToken, BigInt(proofBlockNumber))
+    default:
+      throw new Error(`Incorrect keydonix oracle type: ${oracleType}`)
+  }
+}
+
+export async function getKeydonixOracleTypes(): Promise<number[]> {
+  const sig = web3.eth.abi.encodeFunctionCall({
+    name: 'getKeydonixOracleTypes',
+    type: 'function',
+    inputs: []
+  }, [])
+
+  try {
+    const raw = await web3.eth.call({
+      to: ORACLE_REGISTRY,
+      data: sig
+    })
+    return web3.eth.abi.decodeParameter('uint[]', raw).map(Number)
+  } catch (e) {
+    return []
   }
 }
 
 export async function getTotalDebt(asset: string, owner: string): Promise<bigint> {
-  const gtdSig = web3.eth.abi.encodeFunctionCall({
+  const sig = web3.eth.abi.encodeFunctionCall({
     name: 'getTotalDebt',
     type: 'function',
     inputs: [{
@@ -359,7 +430,146 @@ export async function getTotalDebt(asset: string, owner: string): Promise<bigint
   try {
     const raw = await web3.eth.call({
       to: VAULT_ADDRESS,
-      data: gtdSig
+      data: sig
+    })
+    return BigInt(web3.eth.abi.decodeParameter('uint', raw))
+  } catch (e) {
+    return 0n
+  }
+}
+
+export async function getCollateralAmount(asset: string, owner: string): Promise<bigint> {
+  const sig = web3.eth.abi.encodeFunctionCall({
+    name: 'collaterals',
+    type: 'function',
+    inputs: [{
+      type: 'address',
+      name: 'asset'
+    }, {
+      type: 'address',
+      name: 'owner'
+    }]
+  }, [asset, owner])
+
+  try {
+    const raw = await web3.eth.call({
+      to: VAULT_ADDRESS,
+      data: sig
+    })
+    return BigInt(web3.eth.abi.decodeParameter('uint', raw))
+  } catch (e) {
+    return 0n
+  }
+}
+
+export async function getLiquidationRatio(asset: string): Promise<bigint> {
+  const sig = web3.eth.abi.encodeFunctionCall({
+    name: 'liquidationRatio',
+    type: 'function',
+    inputs: [{
+      type: 'address',
+      name: 'asset'
+    }]
+  }, [asset])
+
+  try {
+    const raw = await web3.eth.call({
+      to: VAULT_MANAGER_PARAMETERS_ADDRESS,
+      data: sig
+    })
+    return BigInt(web3.eth.abi.decodeParameter('uint', raw))
+  } catch (e) {
+    return 0n
+  }
+}
+
+export async function getEthPriceInUsd(): Promise<bigint> {
+  const sig = web3.eth.abi.encodeFunctionCall({
+    name: 'latestRoundData',
+    type: 'function',
+    inputs: []
+  }, [])
+
+  try {
+    const raw = await web3.eth.call({
+      to: CHAINLINK_ETH_USD_AGGREGATOR_PROXY,
+      data: sig
+    })
+    const res = web3.eth.abi.decodeParameters(['uint80', 'int256', 'uint256', 'uint256', 'uint80'], raw)
+    return BigInt(res[1])
+  } catch (e) {
+    return 0n
+  }
+}
+
+export async function getReserves(pool: string): Promise<[bigint, bigint, bigint]> {
+  const sig = web3.eth.abi.encodeFunctionCall({
+    name: 'getReserves',
+    type: 'function',
+    inputs: []
+  }, [])
+
+  try {
+    const raw = await web3.eth.call({
+      to: pool,
+      data: sig
+    })
+    const res = web3.eth.abi.decodeParameters(['uint112', 'uint112', 'uint32'], raw)
+    return [res[0], res[1], res[2]].map(BigInt) as [bigint, bigint, bigint]
+  } catch (e) {
+    return [0n, 0n, 0n]
+  }
+}
+
+export async function getToken0(pool: string): Promise<string> {
+  const sig = web3.eth.abi.encodeFunctionCall({
+    name: 'token0',
+    type: 'function',
+    inputs: []
+  }, [])
+
+  try {
+    const raw = await web3.eth.call({
+      to: pool,
+      data: sig
+    })
+    return String(web3.eth.abi.decodeParameter('address', raw))
+
+  } catch (e) {
+    return '0x0000000000000000000000000000000000000000'
+  }
+}
+
+export async function getToken1(pool: string): Promise<string> {
+  const sig = web3.eth.abi.encodeFunctionCall({
+    name: 'token1',
+    type: 'function',
+    inputs: []
+  }, [])
+
+  try {
+    const raw = await web3.eth.call({
+      to: pool,
+      data: sig
+    })
+    return String(web3.eth.abi.decodeParameter('address', raw))
+
+  } catch (e) {
+    return '0x0000000000000000000000000000000000000000'
+  }
+}
+
+export async function getSupply(token: string): Promise<bigint> {
+  const sig = web3.eth.abi.encodeFunctionCall({
+    name: 'totalSupply',
+    type: 'function',
+    inputs: []
+  }, [])
+
+  try {
+    const raw = await web3.eth.call({
+      to: token,
+      data: sig
     })
     return BigInt(web3.eth.abi.decodeParameter('uint', raw))
   } catch (e) {

@@ -1,18 +1,22 @@
-import web3 from 'src/provider'
+import { web3 } from 'src/provider'
 
 export const JOIN_TOPICS_WITH_COL = [web3.utils.sha3('Join(address,address,uint256,uint256,uint256)')]
 export const JOIN_TOPICS = [web3.utils.sha3('Join(address,address,uint256,uint256)')]
 export const LIQUIDATION_TRIGGERED_TOPICS = ["0x5b79a897d30813a62a1f95ba180d3320d3701d96605708b81105e00719a069e4"]
-// export const LIQUIDATED_TOPICS = [web3.utils.sha3("Liquidated(address,address,uint256,uint256)")]
 export const BUYOUT_TOPICS = [web3.utils.sha3("Buyout(address,address,address,uint256,uint256,uint256)")]
 export const EXIT_TOPICS = [web3.utils.sha3('Exit(address,address,uint256,uint256)')]
 export const EXIT_TOPICS_WITH_COL = [web3.utils.sha3('Exit(address,address,uint256,uint256,uint256)')]
 export const DUCK_CREATION_TOPICS = ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", "0x0000000000000000000000000000000000000000000000000000000000000000"]
 export const VAULT_ADDRESS = "0xb1cff81b9305166ff1efc49a129ad2afcd7bcf19"
+export const CHAINLINK_ETH_USD_AGGREGATOR_PROXY = "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419"
+export const VAULT_PARAMETERS_ADDRESS = "0xb46f8cf42e504efe8bef895f848741daa55e9f1d"
+export const VAULT_MANAGER_PARAMETERS_ADDRESS = "0x203153522b9eaef4ae17c6e99851ee7b2f7d312e"
 export const GET_TOTAL_DEBT_SIGNATURE = web3.eth.abi.encodeFunctionSignature('getTotalDebt(address,address)')
 export const TRIGGER_LIQUIDATION_SIGNATURE = web3.eth.abi.encodeFunctionSignature('triggerLiquidation(address,address)')
 export const DUCK_ADDRESS = "0x92E187a03B6CD19CB6AF293ba17F2745Fd2357D5"
 export const OLD_COL_MOCK = "0x6aade8a8a6b85921009d2caa25dc69348f4c009e"
+
+export const IS_DEV = process.env.IS_DEV
 
 export const VAULT_MANAGERS: {
   address: string
@@ -98,8 +102,8 @@ export const VAULT_MANAGERS: {
     fromBlock: 12198630,
   },
   {
-    address: '0xaD3617D11f4c1d30603551eA75e9Ace9CB386e15',
-    liquidationTrigger: '0x0e13ab042ec5ab9fc6f43979406088b9028f66fa',
+    address: '0xad3617d11f4c1d30603551ea75e9ace9cb386e15',
+    liquidationTrigger: '0xad3617d11f4c1d30603551ea75e9ace9cb386e15',
     fromBlock: 12258922,
   },
 ]
@@ -125,6 +129,8 @@ export const AUCTIONS = [
   '0xaef1ed4c492bf4c57221be0706def67813d79955',
 ]
 
+export const FALLBACK_LIQUIDATION_TRIGGER = '0xad3617d11f4c1d30603551ea75e9ace9cb386e15'
+
 export function liquidationTriggerByVaultManagerAddress(vaultMangerAddress) {
   return VAULT_MANAGERS.find(m => m.address.toLowerCase() === vaultMangerAddress.toLowerCase()).liquidationTrigger
 }
@@ -133,7 +139,6 @@ export const SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT = 'SYNCHRONIZER_TRIGGER_LIQU
 export const SYNCHRONIZER_NEW_BLOCK_EVENT = 'SYNCHRONIZER_NEW_BLOCK_EVENT'
 export const SYNCHRONIZER_JOIN_EVENT = 'SYNCHRONIZER_JOIN_EVENT'
 export const SYNCHRONIZER_EXIT_EVENT = 'SYNCHRONIZER_EXIT_EVENT'
-export const LIQUIDATOR_LIQUIDATION_TX_SENT = 'LIQUIDATOR_LIQUIDATION_TX_SENT'
 export const SYNCHRONIZER_SAVE_STATE_REQUEST = 'SYNCHRONIZER_SAVE_STATE_REQUEST'
 export const SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT = 'SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT'
 export const SYNCHRONIZER_LIQUIDATED_EVENT = 'SYNCHRONIZER_LIQUIDATED_EVENT'

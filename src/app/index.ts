@@ -3,10 +3,9 @@ import SynchronizationService from 'src/services/synchronization'
 import LiquidationService from 'src/services/liquidation'
 import NotificationService from 'src/services/notification'
 import { Liquidation } from 'src/types/TxConfig'
-import web3 from 'src/provider'
+import { web3 } from 'src/provider'
 import EventBroker from 'src/broker'
 import StateManagerService from 'src/services/statemanager'
-
 
 class LiquidationMachine {
   public readonly synchronizer: SynchronizationService

@@ -7,6 +7,12 @@
     "start": "tsc && ts-node src/app"
   },
   "dependencies": {
+    "@ethersproject/address": "^5.2.0",
+    "@ethersproject/contracts": "^5.2.0",
+    "@ethersproject/providers": "^5.2.0",
+    "@ethersproject/solidity": "^5.2.0",
+    "@keydonix/uniswap-oracle-sdk": "^1.0.6",
+    "@uniswap/sdk": "^3.0.3",
     "axios": "^0.21.0",
     "bignumber.js": "^9.0.1",
     "dotenv": "^8.2.0",

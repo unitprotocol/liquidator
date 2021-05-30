@@ -26,14 +26,25 @@ import {
   OLD_COL_MOCK,
   NEW_VERSION_OF_LIQUIDATION_TRIGGER,
   SYNCHRONIZER_SAVE_STATE_REQUEST,
+  FALLBACK_LIQUIDATION_TRIGGER,
 } from 'src/constants'
 import Logger from 'src/logger'
 import { TxConfig } from 'src/types/TxConfig'
 import { BlockHeader } from 'web3-eth'
-import { getOracleType, parseJoinExit, parseBuyout, parseLiquidationTrigger } from 'src/utils'
+import {
+  getOracleType,
+  parseJoinExit,
+  parseBuyout,
+  parseLiquidationTrigger,
+  encodeLiquidationTriggerWithProof,
+  getProof,
+  getEthPriceInUsd,
+} from 'src/utils'
 import { Log } from 'web3-core/types'
 import { Broker } from 'src/broker'
 import { SynchronizerState } from 'src/services/statemanager'
+import { isLiquidatable_Fallback, ORACLE_TYPES } from 'src/utils/oracle'
+import { inspect } from 'util'
 
 declare interface SynchronizationService {
   on(event: string, listener: Function): this;
@@ -220,50 +231,100 @@ class SynchronizationService extends EventEmitter {
   }
 
   async checkLiquidatable(header: BlockHeader) {
+    this.log(`checkLiquidatable`)
     if (+header.number >= this.lastLiquidationCheck + LIQUIDATION_CHECK_TIMEOUT) {
       this.setLastLiquidationCheck(+header.number)
       const timeStart = new Date().getTime()
       const keys = Array.from(this.positions.keys())
-      const promises = []
-      let oracleTypes = []
-      let skipped = 0
+      const triggerPromises = []
+      const promisesFallback = []
+      const txBuildersFallback = []
       const txConfigs: TxConfig[] = []
-      keys.forEach(key => {
-        const tokenAddr = '0x' + key.substring(24, 64);
-        oracleTypes.push(getOracleType(tokenAddr))
-      })
+      const txConfigsFallback: TxConfig[] = []
+      const oracleTypes = await Promise.all(keys.map(key => getOracleType('0x' + key.substring(24, 64))))
+      const ethPriceUsd = await getEthPriceInUsd()
 
-      oracleTypes = await Promise.all(oracleTypes)
+      let skipped = 0
 
-      keys.forEach((key, i) => {
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i]
+
         const v = this.positions.get(key)
-        if (!v || !oracleTypes[i]) return skipped++
-        const tx: TxConfig = {
-          to: v.liquidationTrigger,
-          data: TRIGGER_LIQUIDATION_SIGNATURE + key,
-          from: process.env.ETHEREUM_ADDRESS,
-          key,
-        }
-        txConfigs.push(tx)
-        promises.push(this.web3.eth.estimateGas(tx))
-      })
-      const gasData = (await Promise.all(promises.map((p, i) => p.catch((e) =>{
-        if (SynchronizationService.isSuspiciousError(e.toString())) {
-          console.log(e.toString())
-          console.log(txConfigs[i])
-        }
-      }))))
-      const timeEnd = new Date().getTime()
-      this.log(`estimated gas for ${keys.length} (skipped: ${skipped}) positions on block ${header.number} ${header.hash} in ${timeEnd - timeStart}ms`)
+        if (!v) return skipped++
 
-      gasData.forEach((gas, i) => {
+        const asset = '0x' + key.substring(24, 64)
+        const owner = '0x' + key.substring(64 + 24)
+
+        // CDPs with onchain oracle
+        if (oracleTypes[i] !== 0) {
+          const tx: TxConfig = {
+            to: v.liquidationTrigger,
+            data: TRIGGER_LIQUIDATION_SIGNATURE + key,
+            from: process.env.ETHEREUM_ADDRESS,
+            key,
+          }
+          const configId = txConfigs.length
+          txConfigs.push(tx)
+          triggerPromises.push(this.web3.eth.estimateGas(tx).catch((e) => {
+            if (SynchronizationService.isSuspiciousError(e.toString())) {
+              this.logError(e)
+              this.logError(txConfigs[configId])
+            }
+          }))
+          continue
+        }
+
+        /* fallback oracle */
+
+        const tx: TxConfig = {
+          data: undefined,
+          to: FALLBACK_LIQUIDATION_TRIGGER,
+          from: process.env.ETHEREUM_ADDRESS,
+          key
+        }
+
+        const buildTx = (fallbackOracleType: ORACLE_TYPES) => async (tx: TxConfig, blockNumber: number): Promise<TxConfig> => {
+          const proof = await getProof(asset, fallbackOracleType, blockNumber)
+          tx.data = encodeLiquidationTriggerWithProof(asset, owner, proof)
+          const gas = await this.web3.eth.estimateGas(tx).catch(e => {
+            this.logError(e)
+            return undefined
+          })
+
+          if (gas && gas > 200_000) {
+            tx.gas = gas
+            return tx
+          } else {
+            this.logError(`Cannot estimate gas for ${inspect(tx)}`)
+            return undefined
+          }
+        }
+        promisesFallback.push(isLiquidatable_Fallback(asset, owner, +header.number, ethPriceUsd))
+        txBuildersFallback.push(buildTx)
+        txConfigsFallback.push(tx)
+      }
+
+      const estimatedGas = await Promise.all(triggerPromises)
+
+      const fallbackLiquidatables = await Promise.all(promisesFallback)
+
+      const timeEnd = new Date().getTime()
+
+      this.log(`Checked ${triggerPromises.length} + ${fallbackLiquidatables.length} fb CDPs on block ${header.number} ${header.hash} in ${timeEnd - timeStart}ms`)
+
+      estimatedGas.forEach((gas, i) => {
         // during synchronization the node may respond with tx data to non-contract address
         // so check gas limit to prevent incorrect behaviour
         if (gas && +gas > 30_000) {
           const tx = txConfigs[i]
-          tx.gas = gas
+          tx.gas = gas as number
           this.emit(SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT, { tx, blockNumber: +header.number })
         }
+      })
+
+      fallbackLiquidatables.forEach(([fallbackOracleType, isLiquidatable], i) => {
+        if (!isLiquidatable) return
+        this.emit(SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT, { tx: txConfigsFallback[i], blockNumber: +header.number, buildTx: txBuildersFallback[i](fallbackOracleType) })
       })
     }
   }

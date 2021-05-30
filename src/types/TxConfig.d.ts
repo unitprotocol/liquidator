@@ -3,7 +3,7 @@ export type TxConfig = {
   data: string,
   key: string,
   from: string,
-  gas?: string,
+  gas?: number,
   txHash?: string,
   sentAt?: number,
   nonce?: number,
@@ -12,4 +12,5 @@ export type TxConfig = {
 export interface Liquidation {
   tx: TxConfig
   blockNumber: number
+  buildTx?: (tx: TxConfig, blockNumber: number) => TxConfig
 }

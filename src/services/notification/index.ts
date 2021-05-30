@@ -13,6 +13,7 @@ import { Buyout } from 'src/types/Buyout'
 import { BasicEvent } from 'src/types/BasicEvent'
 import { NotificationState } from 'src/services/statemanager'
 import BigNumber from 'bignumber.js'
+import { IS_DEV } from 'src/constants'
 
 const TelegramBot = require("node-telegram-bot-api");
 
@@ -153,9 +154,14 @@ export default class NotificationService {
   }
 
   private async sendMessage(text, chatId = this.defaultChatId, form = { parse_mode: 'HTML', disable_web_page_preview: true }) {
-    return this.bot.sendMessage(chatId, text, form).catch((e) => {
-      this.error('error', e);
-    });
+    if (IS_DEV) {
+      console.log(text);
+    } else {
+      return this.bot.sendMessage(chatId, text, form).catch((e) => {
+        this.error('error', e);
+        setTimeout(() => this.sendMessage(text, chatId, form), 5_000)
+      });
+    }
   }
 
   private _shouldNotify(n: BasicEvent): boolean {

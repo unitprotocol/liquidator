@@ -2,9 +2,9 @@ import { EventEmitter } from 'events'
 import Web3 from 'web3'
 import Logger from 'src/logger'
 import { Liquidation, TxConfig } from 'src/types/TxConfig'
-import { CONFIRMATIONS_THRESHOLD, LIQUIDATOR_LIQUIDATION_TX_SENT } from 'src/constants'
+import { CONFIRMATIONS_THRESHOLD, IS_DEV } from 'src/constants'
 import axios from 'axios'
-import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
+import { inspect } from 'util'
 
 declare interface LiquidationService {
   on(event: string, listener: Function): this;
@@ -37,7 +37,7 @@ class LiquidationService extends EventEmitter {
   }
 
   async triggerLiquidation(liquidation: Liquidation) {
-    const { tx, blockNumber } = liquidation
+    const { tx, blockNumber, buildTx } = liquidation
     this.log('.triggerLiquidation', tx.key)
 
     this._processPostponedRemovals(blockNumber)
@@ -51,7 +51,7 @@ class LiquidationService extends EventEmitter {
       })
       this.log(`.triggerLiquidation: collecting ${CONFIRMATIONS_THRESHOLD} confirmations for ${tx.key} current: 1`);
       return
-    } else if (prepared.confirmations < CONFIRMATIONS_THRESHOLD) {
+    } else if (prepared.confirmations < CONFIRMATIONS_THRESHOLD - 1) {
       if (blockNumber > prepared.lastSeenBlockNumber) {
         prepared.lastSeenBlockNumber = blockNumber
         prepared.confirmations++
@@ -60,18 +60,31 @@ class LiquidationService extends EventEmitter {
       return
     }
 
-    this.log(`.triggerLiquidation: collected ${CONFIRMATIONS_THRESHOLD} confirmations for ${tx.key} sending tx`);
+    this.log(`.triggerLiquidation: collected ${CONFIRMATIONS_THRESHOLD} confirmations for ${tx.key}, sending tx`);
 
     let nonce
 
-    const sentTx = this.transactions.get(tx.key)
+    let trx
+
+    if (buildTx) {
+      trx = await buildTx(tx, blockNumber);
+      console.log(trx)
+    } else {
+      trx = tx
+    }
+
+    if (!trx) {
+      this.logError(`Cannot perform liquidation: ${inspect(tx)}`)
+    }
+
+    const sentTx = this.transactions.get(trx.key)
     const now = new Date().getTime() / 1000
     if (sentTx) {
       if (now - sentTx.sentAt > 60) {
         // load nonce of sent tx
         nonce = sentTx.nonce
       } else {
-        this.log('.triggerLiquidation: already exists', this.transactions.get(tx.key).txHash);
+        this.log('.triggerLiquidation: already exists', this.transactions.get(trx.key).txHash);
         return
       }
     } else {
@@ -81,8 +94,8 @@ class LiquidationService extends EventEmitter {
       this.nonce++
     }
 
-    this.transactions.set(tx.key, tx)
-    this.log('.triggerLiquidation: buildingTx for', tx.key);
+    this.transactions.set(trx.key, trx)
+    this.log('.triggerLiquidation: buildingTx for', trx.key);
 
     const gasPriceResp = await axios.get("https://gasprice.poa.network/")
     let gasPrice
@@ -94,47 +107,39 @@ class LiquidationService extends EventEmitter {
       gasPrice = gasPriceResp.data.instant * 1e9
     }
 
-    const trx = {
-      to: tx.to,
-      data: tx.data,
-      gas: +tx.gas + 200_000,
+    const txConfig = {
+      to: trx.to,
+      data: trx.data,
+      gas: +trx.gas + 200_000,
       chainId: 1,
       gasPrice,
       nonce,
     }
 
-    const signedTransaction = await this.web3.eth.accounts.signTransaction(trx, this.privateKey)
+    const signedTransaction = await this.web3.eth.accounts.signTransaction(txConfig, this.privateKey)
 
     // set sending params
-    tx.txHash = signedTransaction.transactionHash
-    tx.nonce = nonce
-    tx.sentAt = now
-    this.log('.triggerLiquidation: sending transaction', trx, signedTransaction.transactionHash);
+    trx.txHash = signedTransaction.transactionHash
+    trx.nonce = nonce
+    trx.sentAt = now
+    this.log('.triggerLiquidation: sending transaction', txConfig, signedTransaction.transactionHash);
 
-    const result = await this.web3.eth.sendSignedTransaction(signedTransaction.rawTransaction).catch(async (e) => {
-      if (e.toString().includes("nonce too low")) {
-        this.log('.triggerLiquidation: nonce too low, updating', e)
-        await this.updateNonce()
-        this.transactions.delete(tx.key)
-      } else {
-        this.log('.triggerLiquidation: tx sending error', e)
+    if (!IS_DEV) {
+
+      const result = await this.web3.eth.sendSignedTransaction(signedTransaction.rawTransaction).catch(async (e) => {
+        if (e.toString().includes("nonce too low")) {
+          this.log('.triggerLiquidation: nonce too low, updating', e)
+          await this.updateNonce()
+          this.transactions.delete(trx.key)
+        } else {
+          this.log('.triggerLiquidation: tx sending error', e)
+        }
+      })
+
+      if (result) {
+        this._postponeRemoval(trx.key, blockNumber + 20)
+        this.log('.triggerLiquidation: tx sending result', result)
       }
-    })
-
-    if (result) {
-
-      // const tokenAddress = '0x' + tx.key.substr(24, 40);
-      // const ownerAddress = '0x' + tx.key.substr(88);
-
-      // const payload: LiquidationTrigger = {
-      //   txHash: signedTransaction.transactionHash,
-      //   token: tokenAddress,
-      //   user: ownerAddress,
-      // }
-
-      this._postponeRemoval(tx.key, blockNumber + 20)
-      // this.emit(LIQUIDATION_TRIGGER_TX, payload)
-      this.log('.triggerLiquidation: tx sending result', result)
     }
   }
 
@@ -164,6 +169,10 @@ class LiquidationService extends EventEmitter {
 
   private log(...args) {
     this.logger.info(args)
+  }
+
+  private logError(...args) {
+    this.logger.error(args)
   }
 }
 
