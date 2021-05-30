@@ -231,7 +231,6 @@ class SynchronizationService extends EventEmitter {
   }
 
   async checkLiquidatable(header: BlockHeader) {
-    this.log(`checkLiquidatable`)
     if (+header.number >= this.lastLiquidationCheck + LIQUIDATION_CHECK_TIMEOUT) {
       this.setLastLiquidationCheck(+header.number)
       const timeStart = new Date().getTime()
