@@ -68,7 +68,6 @@ class LiquidationService extends EventEmitter {
 
     if (buildTx) {
       trx = await buildTx(tx, blockNumber);
-      console.log(trx)
     } else {
       trx = tx
     }

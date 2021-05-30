@@ -173,7 +173,6 @@ export default class NotificationService {
 
   private async _shouldNotify(n: BasicEvent): Promise<boolean> {
     const exists = await this._isExists(n)
-    console.log({exists})
     return !exists
   }
 
