@@ -43,7 +43,7 @@ class LiquidationService extends EventEmitter {
     this._processPostponedRemovals(blockNumber)
 
     const prepared = this.preparing.get(tx.key)
-    if (!prepared) {
+    if (!prepared || blockNumber > prepared.lastSeenBlockNumber + 10) {
       this.preparing.set(tx.key, {
         lastSeenBlockNumber: blockNumber,
         confirmations: 1,
