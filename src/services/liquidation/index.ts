@@ -78,7 +78,7 @@ class LiquidationService extends EventEmitter {
 
     const sentTx = this.transactions.get(trx.key)
     const now = new Date().getTime() / 1000
-    if (sentTx) {
+    if (sentTx && sentTx.sentAt) {
       if (now - sentTx.sentAt > 60) {
         // load nonce of sent tx
         nonce = sentTx.nonce
@@ -96,9 +96,9 @@ class LiquidationService extends EventEmitter {
     this.transactions.set(trx.key, trx)
     this.log('.triggerLiquidation: buildingTx for', trx.key);
 
-    const gasPriceResp = await axios.get("https://gasprice.poa.network/")
+    const gasPriceResp = await axios.get("https://gasprice.poa.network/").catch(() => undefined)
     let gasPrice
-    if (!gasPriceResp.data.health) {
+    if (!gasPriceResp || !gasPriceResp.data || !gasPriceResp.data.health) {
       gasPrice = await this.web3.eth.getGasPrice()
       gasPrice = String(Number(gasPrice) * 120)
       gasPrice = gasPrice.substr(0, gasPrice.length - 2)
