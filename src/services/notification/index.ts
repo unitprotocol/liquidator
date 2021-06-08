@@ -30,6 +30,7 @@ export default class NotificationService {
   private readonly bot
   private readonly logger
   private readonly defaultChatId
+  private readonly liquidationChannel
   private readonly processed: Map<string, LogStore>
 
   private lastOldLogsCheck
@@ -38,6 +39,7 @@ export default class NotificationService {
     this.logger = Logger(NotificationService.name)
     const botToken = process.env.TELEGRAM_BOT_TOKEN
     this.defaultChatId = process.env.TELEGRAM_CHAT_ID
+    this.liquidationChannel = process.env.LIQUIDATION_TELEGRAM_CHAT_ID || this.defaultChatId
     this.bot = new TelegramBot(botToken, { polling: false });
 
     this.processed = new Map()
@@ -121,7 +123,7 @@ export default class NotificationService {
       + `\n<a href="https://liquidation.unit.xyz">Liquidate</a>`
       + `\n<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
 
-    return this.sendMessage(text)
+    return this.sendMessage(text, this.liquidationChannel)
   }
 
   async notifyLiquidated(data: Buyout) {
@@ -145,7 +147,7 @@ export default class NotificationService {
       + `\nLiquidator ${data.liquidator}`
       + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
 
-    return this.sendMessage(text)
+    return this.sendMessage(text, this.liquidationChannel)
   }
 
   async notifyTriggerTx(data: LiquidationTrigger) {
