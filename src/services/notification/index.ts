@@ -13,12 +13,14 @@ export default class NotificationService {
   private readonly bot
   private readonly logger
   private readonly defaultChatId
+  private readonly liquidationChannel
   private processed
 
   constructor() {
     this.logger = Logger(NotificationService.name)
     const botToken = process.env.TELEGRAM_BOT_TOKEN
     this.defaultChatId = process.env.TELEGRAM_CHAT_ID
+    this.liquidationChannel = process.env.LIQUIDATION_TELEGRAM_CHAT_ID || this.defaultChatId
     this.bot = new TelegramBot(botToken, { polling: false });
     this.processed = []
   }
@@ -83,7 +85,7 @@ export default class NotificationService {
       + `\n<a href="https://bsc.liquidation.unit.xyz">Liquidate</a>`
       + `\n<a href="https://bscscan.com/tx/${data.txHash}">Explorer</a>`
 
-    this.sendMessage(text)
+    this.sendMessage(text, this.liquidationChannel)
   }
 
   async notifyLiquidated(data: Liquidated) {
@@ -99,7 +101,7 @@ export default class NotificationService {
       + `\nOwner: ${data.owner}`
       + '\n' + `<a href="https://bscscan.com/tx/${data.txHash}">Explorer</a>`
 
-    this.sendMessage(text)
+    this.sendMessage(text, this.liquidationChannel)
   }
 
   async notifyTriggerTx(data: LiquidationTrigger) {
