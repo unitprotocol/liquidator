@@ -17,7 +17,7 @@ import BigNumber from 'bignumber.js'
 import { IS_DEV } from 'src/constants'
 import { web3 } from 'src/provider'
 
-const TelegramBot = require("node-telegram-bot-api");
+const TelegramBot = require("node-telegram-bot-api")
 
 export type LogStore = {
   blockHash: string
@@ -31,6 +31,8 @@ export default class NotificationService {
   private readonly logger
   private readonly defaultChatId
   private readonly liquidationChannel
+  private readonly logsChannel
+  private readonly sentryChannel
   private readonly processed: Map<string, LogStore>
 
   private lastOldLogsCheck
@@ -39,6 +41,8 @@ export default class NotificationService {
     this.logger = Logger(NotificationService.name)
     const botToken = process.env.TELEGRAM_BOT_TOKEN
     this.defaultChatId = process.env.TELEGRAM_CHAT_ID
+    this.logsChannel = process.env.LOGS_TELEGRAM_CHAT_ID
+    this.sentryChannel = process.env.SENTRY_TELEGRAM_CHAT_ID
     this.liquidationChannel = process.env.LIQUIDATION_TELEGRAM_CHAT_ID || this.defaultChatId
     this.bot = new TelegramBot(botToken, { polling: false });
 
@@ -171,6 +175,20 @@ export default class NotificationService {
         setTimeout(() => this.sendMessage(text, chatId, form), 5_000)
       });
     }
+  }
+
+  public async logAction(text, chatId = this.logsChannel, form = { parse_mode: 'HTML', disable_web_page_preview: true }) {
+    return this.bot.sendMessage(chatId, text, form).catch((e) => {
+      this.error('error', e);
+      setTimeout(() => this.logAction(text, chatId, form), 5_000)
+    });
+  }
+
+  public async logAlarm(text, chatId = this.sentryChannel, form = { parse_mode: 'HTML', disable_web_page_preview: true }) {
+    return this.bot.sendMessage(chatId, text, form).catch((e) => {
+      this.error('error', e);
+      setTimeout(() => this.logAction(text, chatId, form), 5_000)
+    });
   }
 
   private async _shouldNotify(n: BasicEvent): Promise<boolean> {

@@ -46,6 +46,7 @@ import { Broker } from 'src/broker'
 import { SynchronizerState } from 'src/services/statemanager'
 import { isLiquidatable_Fallback, ORACLE_TYPES } from 'src/utils/oracle'
 import { inspect } from 'util'
+import NotificationService from 'src/services/notification'
 
 declare interface SynchronizationService {
   on(event: string, listener: Function): this;
@@ -58,15 +59,17 @@ class SynchronizationService extends EventEmitter {
   private readonly logger
   private lastLiquidationCheck: number
   private lastProcessedBlock: number
-  private broker: Broker
+  private readonly broker: Broker
+  private readonly notificator: NotificationService
 
-  constructor(web3, broker: Broker, appState: SynchronizerState) {
+  constructor(web3, broker: Broker, appState: SynchronizerState, notificator: NotificationService) {
     super();
     this.positions = new Map<string, CDP>()
     this.lastLiquidationCheck = 0
     this.lastProcessedBlock = 0
     this.web3 = web3
     this.broker = broker
+    this.notificator = notificator
     this.logger = Logger(SynchronizationService.name)
     this.fetchInitialData(appState)
   }
@@ -109,6 +112,7 @@ class SynchronizationService extends EventEmitter {
     console.timeEnd('Fetched in')
     this.log('Tracking events...')
     this.emit('ready', this)
+    await this.logOnline('Started')
     this.trackEvents()
   }
 
@@ -272,8 +276,8 @@ class SynchronizationService extends EventEmitter {
           txConfigs.push(tx)
           triggerPromises.push(this.web3.eth.estimateGas(tx).catch((e) => {
             if (SynchronizationService.isSuspiciousError(e.toString())) {
-              this.logError(e)
-              this.logError(txConfigs[configId])
+              this.alarm(e.toString())
+              this.alarm(txConfigs[configId])
             }
           }))
           continue
@@ -292,7 +296,7 @@ class SynchronizationService extends EventEmitter {
           const proof = await getProof(asset, fallbackOracleType, blockNumber)
           tx.data = encodeLiquidationTriggerWithProof(asset, owner, proof)
           const gas = await this.web3.eth.estimateGas(tx).catch(e => {
-            this.logError(e)
+            this.alarm(e.toString())
             return undefined
           })
 
@@ -300,7 +304,7 @@ class SynchronizationService extends EventEmitter {
             tx.gas = gas
             return tx
           } else {
-            this.logError(`Cannot estimate gas for ${inspect(tx)}`)
+            await this.alarm(`Cannot estimate gas for ${inspect(tx)}`)
             return undefined
           }
         }
@@ -315,7 +319,7 @@ class SynchronizationService extends EventEmitter {
 
       const timeEnd = new Date().getTime()
 
-      this.log(`Checked ${triggerPromises.length} + ${fallbackLiquidatables.length} fb CDPs (skipped: ${skipped}) on block ${header.number} ${header.hash} in ${timeEnd - timeStart}ms`)
+      await this.logOnline(`Checked ${triggerPromises.length} + ${fallbackLiquidatables.length} fb CDPs (skipped: ${skipped}) on block ${header.number} ${header.hash} in ${timeEnd - timeStart}ms`)
 
       estimatedGas.forEach((gas, i) => {
         // during synchronization the node may respond with tx data to non-contract address
@@ -513,8 +517,16 @@ class SynchronizationService extends EventEmitter {
     this.logger.info(args)
   }
 
+  private logOnline(...args) {
+    return this.notificator.logAction(this.logger.format(args, true))
+  }
+
   private logError(...args) {
     this.logger.error(args)
+  }
+
+  private alarm(...args) {
+    return this.notificator.logAlarm(this.logger.format(args, true))
   }
 }
 

@@ -20,8 +20,8 @@ class LiquidationMachine {
     this.statemanager = new StateManagerService(this)
     let loadedAppState = this.statemanager.loadState()
 
-    this.synchronizer = new SynchronizationService(web3, broker, loadedAppState)
     this.notificator = new NotificationService(loadedAppState)
+    this.synchronizer = new SynchronizationService(web3, broker, loadedAppState, this.notificator)
     this.liquidatorReady = false
     this.postponedLiquidationTriggers = []
 
