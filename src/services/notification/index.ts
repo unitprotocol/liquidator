@@ -178,17 +178,25 @@ export default class NotificationService {
   }
 
   public async logAction(text, chatId = this.logsChannel, form = { parse_mode: 'HTML', disable_web_page_preview: true }) {
-    return this.bot.sendMessage(chatId, text, form).catch((e) => {
-      this.error('error', e);
-      setTimeout(() => this.logAction(text, chatId, form), 5_000)
-    });
+    if (IS_DEV) {
+      console.log(text);
+    } else {
+      return this.bot.sendMessage(chatId, text, form).catch((e) => {
+        this.error('error', e);
+        setTimeout(() => this.logAction(text, chatId, form), 5_000)
+      });
+    }
   }
 
   public async logAlarm(text, chatId = this.sentryChannel, form = { parse_mode: 'HTML', disable_web_page_preview: true }) {
-    return this.bot.sendMessage(chatId, text, form).catch((e) => {
-      this.error('error', e);
-      setTimeout(() => this.logAction(text, chatId, form), 5_000)
-    });
+    if (IS_DEV) {
+      console.log(text);
+    } else {
+      return this.bot.sendMessage(chatId, text, form).catch((e) => {
+        this.error('error', e);
+        setTimeout(() => this.logAction(text, chatId, form), 5_000)
+      });
+    }
   }
 
   private async _shouldNotify(n: BasicEvent): Promise<boolean> {

@@ -4,7 +4,7 @@ require('dotenv').config()
 const websocketOptions = {
   clientConfig: {
     keepalive: true,
-    keepaliveInterval: 500
+    keepaliveInterval: 5_000
   }
 }
 

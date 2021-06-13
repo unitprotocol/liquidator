@@ -458,15 +458,23 @@ class SynchronizationService extends EventEmitter {
     this.log('Bootstrapping from scratch...')
 
     const promises = []
+    const block = await this.web3.eth.getBlockNumber()
 
     VAULT_MANAGERS.forEach(({ address, fromBlock, toBlock, col }) => {
-      if (toBlock > toBlock) return
-      promises.push(this.web3.eth.getPastLogs({
-        fromBlock,
-        toBlock,
-        address,
-        topics: col ? JOIN_TOPICS_WITH_COL : JOIN_TOPICS
-      }))
+
+      toBlock = toBlock ?? block
+      let _toBlock = fromBlock
+
+      while (_toBlock < toBlock) {
+        _toBlock = fromBlock + 5_000
+        promises.push(this.web3.eth.getPastLogs({
+          fromBlock,
+          toBlock: _toBlock,
+          address,
+          topics: col ? JOIN_TOPICS_WITH_COL : JOIN_TOPICS
+        }))
+        fromBlock += 5_000
+      }
     })
 
     const logsArray = await Promise.all(promises);

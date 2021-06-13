@@ -101,9 +101,9 @@ class LiquidationService extends EventEmitter {
     if (!gasPriceResp || !gasPriceResp.data || !gasPriceResp.data.health) {
       gasPrice = await this.web3.eth.getGasPrice()
       gasPrice = String(Number(gasPrice) * 120)
-      gasPrice = gasPrice.substr(0, gasPrice.length - 2)
+      gasPrice = Math.ceil(gasPrice.substr(0, gasPrice.length - 2))
     } else {
-      gasPrice = gasPriceResp.data.instant * 1e9
+      gasPrice = Math.ceil(gasPriceResp.data.instant * 1e9)
     }
 
     const txConfig = {
