@@ -25,7 +25,7 @@ class LiquidationMachine {
     this.liquidatorReady = false
     this.postponedLiquidationTriggers = []
 
-    this.liquidator = new LiquidationService(web3)
+    this.liquidator = new LiquidationService(web3, this.notificator)
     this.liquidator.on('ready', () => { this.liquidatorReady = true })
 
     const events = Object.keys(broker)

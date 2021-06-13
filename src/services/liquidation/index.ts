@@ -5,6 +5,7 @@ import { Liquidation, TxConfig } from 'src/types/TxConfig'
 import { CONFIRMATIONS_THRESHOLD, IS_DEV } from 'src/constants'
 import axios from 'axios'
 import { inspect } from 'util'
+import NotificationService from 'src/services/notification'
 
 declare interface LiquidationService {
   on(event: string, listener: Function): this;
@@ -17,12 +18,13 @@ class LiquidationService extends EventEmitter {
   private readonly preparing: Map<string, PreparingLiquidation>
   private readonly postponedRemovals: Removal[]
   private readonly logger
+  private readonly notificator: NotificationService
   private readonly senderAddress: string
   private readonly privateKey: string
 
   private nonce: number
 
-  constructor(web3) {
+  constructor(web3: Web3, notificator: NotificationService) {
     super()
     this.web3 = web3
     this.transactions = new Map()
@@ -31,6 +33,7 @@ class LiquidationService extends EventEmitter {
     this.senderAddress = process.env.ETHEREUM_ADDRESS
     this.privateKey = process.env.ETHEREUM_PRIVATE_KEY
     this.postponedRemovals = []
+    this.notificator = notificator
     if (!this.privateKey.startsWith('0x'))
       this.privateKey = '0x' + this.privateKey
     this.updateNonce()
@@ -45,22 +48,26 @@ class LiquidationService extends EventEmitter {
     const prepared = this.preparing.get(tx.key)
     if (!prepared || blockNumber > prepared.lastSeenBlockNumber + 50) {
       this.preparing.set(tx.key, {
-        lastSeenBlockNumber: blockNumber,
-        confirmations: 1,
         tx,
+        lastSeenBlockNumber: blockNumber,
+        confirmations: 1
       })
-      this.log(`.triggerLiquidation: collecting ${CONFIRMATIONS_THRESHOLD} confirmations for ${tx.key} current: 1`);
+      await this.logOnline(`.triggerLiquidation: 1/${CONFIRMATIONS_THRESHOLD} confirmations collected for ${tx.key}`);
       return
     } else if (prepared.confirmations < CONFIRMATIONS_THRESHOLD - 1) {
       if (blockNumber > prepared.lastSeenBlockNumber) {
-        prepared.lastSeenBlockNumber = blockNumber
-        prepared.confirmations++
+        this.preparing.set(tx.key, {
+          tx,
+          lastSeenBlockNumber: blockNumber,
+          confirmations: prepared.confirmations + 1
+        })
       }
-      this.log(`.triggerLiquidation: collecting ${CONFIRMATIONS_THRESHOLD} confirmations for ${tx.key} current: ${prepared.confirmations}`);
+
+      await this.logOnline(`.triggerLiquidation: ${prepared.confirmations + 1}/${CONFIRMATIONS_THRESHOLD} confirmations collected for ${tx.key}`);
       return
     }
 
-    this.log(`.triggerLiquidation: collected ${CONFIRMATIONS_THRESHOLD} confirmations for ${tx.key}, sending tx`);
+    await this.logOnline(`.triggerLiquidation: collected ${CONFIRMATIONS_THRESHOLD} confirmations for ${tx.key}, sending tx`);
 
     let nonce
 
@@ -121,7 +128,9 @@ class LiquidationService extends EventEmitter {
     trx.txHash = signedTransaction.transactionHash
     trx.nonce = nonce
     trx.sentAt = now
-    this.log('.triggerLiquidation: sending transaction', txConfig, signedTransaction.transactionHash);
+    this.log('.triggerLiquidation: sending transaction', signedTransaction.transactionHash);
+
+    this.transactions.set(trx.key, trx)
 
     if (!IS_DEV) {
 
@@ -131,7 +140,7 @@ class LiquidationService extends EventEmitter {
           await this.updateNonce()
           this.transactions.delete(trx.key)
         } else {
-          this.log('.triggerLiquidation: tx sending error', e)
+          await this.alarm('.triggerLiquidation: tx sending error', e.toString())
         }
       })
 
@@ -172,6 +181,14 @@ class LiquidationService extends EventEmitter {
 
   private logError(...args) {
     this.logger.error(args)
+  }
+
+  private logOnline(...args) {
+    return this.notificator.logAction(this.logger.format(args, true))
+  }
+
+  private alarm(...args) {
+    return this.notificator.logAlarm(this.logger.format(args, true))
   }
 }
 
