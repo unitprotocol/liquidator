@@ -92,7 +92,7 @@ export default class NotificationService {
 
       const collateralInfo = assetChange ? '' : `(${symbol}) `
 
-      usdpAction = `${usdpPrefix} ${formatNumber(usdp)} USDP ${collateralInfo}${'🦆'.repeat(duckCount)}`
+      usdpAction = `${usdpPrefix} ${formatNumber(usdp)} USDP ${collateralInfo}${duckCount > 100 ? '🐋' : '🦆'.repeat(duckCount)}`
     }
 
     return assetAction + usdpAction + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
