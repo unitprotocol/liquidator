@@ -152,8 +152,10 @@ export async function getTokenDecimals(token: string) : Promise<number> {
 
 export async function tryFetchPrice(token: string, amount: bigint, decimals: number) : Promise<string> {
 
-  if (PRICE_EXCEPTION_LIST.includes(token)) {
-    return tryFetchNonStandardAssetPrice(token, amount, decimals)
+  const oracleType = await getOracleType(token)
+
+  if (PRICE_EXCEPTION_LIST.includes(token) || oracleType === 15) {
+    return tryFetchNonStandardAssetPrice(token, amount, decimals, oracleType)
   }
 
   const latestAnswerSignature = web3.eth.abi.encodeFunctionSignature({
@@ -263,7 +265,10 @@ export async function tryFetchPrice(token: string, amount: bigint, decimals: num
   }
 }
 
-export async function tryFetchNonStandardAssetPrice(token: string, amount: bigint, decimals: number) : Promise<string> {
+export async function tryFetchNonStandardAssetPrice(token: string, amount: bigint, decimals: number, oracleType: number) : Promise<string> {
+  if (oracleType === 15) {
+    return fetchYearnAssetPrice(token, amount, decimals)
+  }
   if (token.toLowerCase() === CRV3_UNIT_GAUGE) {
     return fetch3crvPrice(amount)
   }
@@ -284,6 +289,36 @@ export async function fetch3crvPrice(amount: bigint) : Promise<string> {
     })))
 
     return '$' + formatNumber(Number(amount * virtualPrice / 10n ** 34n) / 100)
+  } catch (e) {
+    return 'unknown price'
+  }
+}
+
+export async function fetchYearnAssetPrice(token: string, amount: bigint, decimals: number) : Promise<string> {
+  const pricePerShareSig = web3.eth.abi.encodeFunctionSignature({
+    name: 'pricePerShare',
+    type: 'function',
+    inputs: []
+  })
+  const tokenSig = web3.eth.abi.encodeFunctionSignature({
+    name: 'token',
+    type: 'function',
+    inputs: []
+  })
+
+  try {
+    const pricePerShare = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
+      to: token,
+      data: pricePerShareSig
+    })))
+    const underlyingToken = String(web3.eth.abi.decodeParameter('address', await web3.eth.call({
+      to: token,
+      data: tokenSig
+    })))
+
+    const underlyingAmount = amount * pricePerShare / BigInt(10 ** decimals)
+
+    return tryFetchPrice(underlyingToken, underlyingAmount, decimals)
   } catch (e) {
     return 'unknown price'
   }
