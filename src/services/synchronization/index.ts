@@ -59,8 +59,11 @@ class SynchronizationService extends EventEmitter {
 
     let currentBlock
     try {
-      this.log('Connecting to rpc...')
-      currentBlock = await this.web3.eth.getBlockNumber()
+      this.log('Connecting to the rpc...')
+      currentBlock = await Promise.race([this.web3.eth.getBlockNumber(), sleep(5_000)])
+      if (!currentBlock) {
+        throw new Error()
+      }
     } catch (e) { this.logError('broken RPC'); process.exit() }
 
     try {
@@ -428,6 +431,10 @@ class SynchronizationService extends EventEmitter {
 
 function positionKey(topics) {
   return topics[1].substr(2) + topics[2].substr(2);
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 export default SynchronizationService
