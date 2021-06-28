@@ -154,7 +154,7 @@ export async function tryFetchPrice(token: string, amount: bigint, decimals: num
 
   const oracleType = await getOracleType(token)
 
-  if (PRICE_EXCEPTION_LIST.includes(token) || oracleType === 15) {
+  if (PRICE_EXCEPTION_LIST.includes(token.toLowerCase()) || oracleType === 15) {
     return tryFetchNonStandardAssetPrice(token, amount, decimals, oracleType)
   }
 
