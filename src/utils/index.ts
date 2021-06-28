@@ -4,7 +4,7 @@ import { Transfer } from 'src/types/Transfer'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 import {
   CHAINLINK_ETH_USD_AGGREGATOR_PROXY,
-  CRV3_UNIT_GAUGE,
+  CRV3_REPRESENTATIONS,
   ETH_USD_AGGREGATOR,
   EXIT_TOPICS_WITH_COL,
   JOIN_TOPICS_WITH_COL,
@@ -269,7 +269,7 @@ export async function tryFetchNonStandardAssetPrice(token: string, amount: bigin
   if (oracleType === 15) {
     return fetchYearnAssetPrice(token, amount, decimals)
   }
-  if (token.toLowerCase() === CRV3_UNIT_GAUGE) {
+  if (CRV3_REPRESENTATIONS.includes(token.toLowerCase())) {
     return fetch3crvPrice(amount)
   }
   throw new Error(`Unknown non standard asset: ${token}`)
