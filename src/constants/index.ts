@@ -37,7 +37,7 @@ export const LIQUIDATIONS_TRIGGERS = [
 ]
 
 export const AUCTIONS = [
-  '0x754106b2f312c987Dd34161F8b4735392fa93F06',
+  '0x852de08f3cD5b92dD8b3B92b321363D04EeEc39E',
 ]
 
 export function liquidationTriggerByVaultManagerAddress(vaultMangerAddress) {
