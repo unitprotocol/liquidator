@@ -27,6 +27,9 @@ import {
   NEW_VERSION_OF_LIQUIDATION_TRIGGER,
   SYNCHRONIZER_SAVE_STATE_REQUEST,
   FALLBACK_LIQUIDATION_TRIGGER,
+  SYNCHRONIZATION_BATCH_SIZE,
+  SYNCHRONIZATION_BATCH_LIMIT,
+  MAIN_LIQUIDATION_TRIGGER,
 } from 'src/constants'
 import Logger from 'src/logger'
 import { TxConfig } from 'src/types/TxConfig'
@@ -79,8 +82,12 @@ class SynchronizationService extends EventEmitter {
     console.time('Fetched in')
     let currentBlock
     try {
-      this.log('Connecting to rpc...')
-      currentBlock = await this.web3.eth.getBlockNumber()
+      this.log('Connecting to the rpc...')
+      currentBlock = await Promise.race([this.web3.eth.getBlockNumber(), timeout(5_000)])
+      if (!currentBlock) {
+        this.logError('Timeout');
+        process.exit()
+      }
     } catch (e) { this.logError('broken RPC'); process.exit() }
 
     try {
@@ -267,7 +274,7 @@ class SynchronizationService extends EventEmitter {
         // CDPs with onchain oracle
         if (oracleTypes[i] !== 0) {
           const tx: TxConfig = {
-            to: v.liquidationTrigger,
+            to: MAIN_LIQUIDATION_TRIGGER,
             data: TRIGGER_LIQUIDATION_SIGNATURE + key,
             from: process.env.ETHEREUM_ADDRESS,
             key,
@@ -443,9 +450,7 @@ class SynchronizationService extends EventEmitter {
       notifications.push({ time: log.blockNumber, args: [SYNCHRONIZER_LIQUIDATED_EVENT, parseBuyout(log as Log)] })
     })
 
-    notifications
-      .sort((a, b) => a.time > b.time ? 1 : -1)
-
+    notifications.sort((a, b) => a.time > b.time ? 1 : -1)
 
     for (const { args } of notifications) {
       await this.broker[args[0]](args[1]);
@@ -457,28 +462,45 @@ class SynchronizationService extends EventEmitter {
 
     this.log('Bootstrapping from scratch...')
 
-    const promises = []
     const block = await this.web3.eth.getBlockNumber()
 
-    VAULT_MANAGERS.forEach(({ address, fromBlock, toBlock, col }) => {
+    let logs = []
+
+    let promises = []
+
+    for (let { address, fromBlock, toBlock, col } of VAULT_MANAGERS) {
 
       toBlock = toBlock ?? block
-      let _toBlock = fromBlock
+      let start = new Date().getTime()
 
-      while (_toBlock < toBlock) {
-        _toBlock = fromBlock + 5_000
-        promises.push(this.web3.eth.getPastLogs({
-          fromBlock,
-          toBlock: _toBlock,
+      for (let startBatchBlock = fromBlock; startBatchBlock < toBlock; startBatchBlock += SYNCHRONIZATION_BATCH_SIZE) {
+        const l = promises.push(this.web3.eth.getPastLogs({
+          fromBlock: startBatchBlock,
+          toBlock: startBatchBlock + SYNCHRONIZATION_BATCH_SIZE,
           address,
           topics: col ? JOIN_TOPICS_WITH_COL : JOIN_TOPICS
         }))
-        fromBlock += 5_000
-      }
-    })
 
-    const logsArray = await Promise.all(promises);
-    const logs = logsArray.reduce((acc, curr) => [...acc, ...curr], [])
+        const isLastBatch = toBlock - SYNCHRONIZATION_BATCH_SIZE >= startBatchBlock
+        const shouldWaitResponse = l === SYNCHRONIZATION_BATCH_LIMIT || isLastBatch
+
+        if (shouldWaitResponse) {
+          const _logs = (await Promise.all(promises)).reduce((acc, curr) => acc.concat(curr), [])
+          console.log({
+            toBlock: fromBlock + SYNCHRONIZATION_BATCH_SIZE,
+            count: _logs.length,
+            time: (new Date().getTime() - start) / 1000
+          })
+          promises = []
+          start = new Date().getTime()
+          logs = logs.concat(_logs)
+        }
+      }
+    }
+
+    console.log('Total logs: ', logs.length)
+
+    // const logs = logsArray.reduce((acc, curr) => acc.concat(curr), [])
     logs.forEach(log => this.checkAndPersistPosition(log))
 
   }
@@ -540,6 +562,10 @@ class SynchronizationService extends EventEmitter {
 
 function positionKey(topics) {
   return topics[1].substr(2) + topics[2].substr(2);
+}
+
+function timeout(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 export default SynchronizationService

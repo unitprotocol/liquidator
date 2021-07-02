@@ -2,7 +2,7 @@ import { EventEmitter } from 'events'
 import Web3 from 'web3'
 import Logger from 'src/logger'
 import { Liquidation, TxConfig } from 'src/types/TxConfig'
-import { CONFIRMATIONS_THRESHOLD, IS_DEV } from 'src/constants'
+import { CONFIRMATIONS_THRESHOLD, IS_DEV, LIQUIDATION_CHECK_TIMEOUT } from 'src/constants'
 import axios from 'axios'
 import { inspect } from 'util'
 import NotificationService from 'src/services/notification'
@@ -46,7 +46,7 @@ class LiquidationService extends EventEmitter {
     this._processPostponedRemovals(blockNumber)
 
     const prepared = this.preparing.get(tx.key)
-    if (!prepared || blockNumber > prepared.lastSeenBlockNumber + 50) {
+    if (!prepared || blockNumber > prepared.lastSeenBlockNumber + LIQUIDATION_CHECK_TIMEOUT * 1.5) {
       this.preparing.set(tx.key, {
         tx,
         lastSeenBlockNumber: blockNumber,
@@ -117,7 +117,7 @@ class LiquidationService extends EventEmitter {
       to: trx.to,
       data: trx.data,
       gas: +trx.gas + 200_000,
-      chainId: 1,
+      chainId: 56,
       gasPrice,
       nonce,
     }

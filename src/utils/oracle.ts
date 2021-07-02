@@ -7,7 +7,9 @@ import {
   getCollateralAmount,
   getLiquidationRatio,
   getReserves,
-  getSupply, getToken0, getToken1,
+  getSupply,
+  getToken0,
+  getToken1,
   getTotalDebt,
   isOracleTypeEnabled,
 } from 'src/utils/index'

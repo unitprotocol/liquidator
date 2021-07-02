@@ -14,7 +14,7 @@ import { Buyout } from 'src/types/Buyout'
 import { BasicEvent } from 'src/types/BasicEvent'
 import { NotificationState } from 'src/services/statemanager'
 import BigNumber from 'bignumber.js'
-import { IS_DEV } from 'src/constants'
+import { EXPLORER_URL, IS_BSC, IS_DEV, LIQUIDATION_URL } from 'src/constants'
 import { web3 } from 'src/provider'
 
 const TelegramBot = require("node-telegram-bot-api")
@@ -25,6 +25,8 @@ export type LogStore = {
   txIndex: number
   logIndexes: number[]
 }
+
+const HASHTAG_PREFIX = IS_BSC ? "bsc_" : ''
 
 export default class NotificationService {
   private readonly bot
@@ -74,7 +76,7 @@ export default class NotificationService {
     const symbol = await getTokenSymbol(data.token)
 
     if (assetChange) {
-      const assetPrefix = isJoin ? '#deposited' : '#withdrawn'
+      const assetPrefix = isJoin ? `#${HASHTAG_PREFIX}deposited` : `#${HASHTAG_PREFIX}withdrawn`
       const decimals = await getTokenDecimals(data.token)
       const assetValue = new BigNumber(data.main.toString()).div(10 ** decimals).toNumber()
 
@@ -86,7 +88,7 @@ export default class NotificationService {
     const usdpChange = data.usdp > 0
 
     if (usdpChange) {
-      const usdpPrefix = (assetChange ? '\n' : '') + (isJoin ? '#minted' : '#burned')
+      const usdpPrefix = (assetChange ? '\n' : '') + (isJoin ? `#${HASHTAG_PREFIX}minted` : `#${HASHTAG_PREFIX}burned`)
       const usdp = Number(data.usdp / BigInt(10 ** 15)) / 1000
       const duckCount = isJoin ? usdp < 1_000 ? 1 : (usdp < 5_000 ? 2 : (Math.round(usdp / 5_000) + 2)) : 0
 
@@ -95,7 +97,7 @@ export default class NotificationService {
       usdpAction = `${usdpPrefix} ${formatNumber(usdp)} USDP ${collateralInfo}${duckCount > 100 ? '🐋' : '🦆'.repeat(duckCount)}`
     }
 
-    return assetAction + usdpAction + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
+    return assetAction + usdpAction + '\n' + `<a href="${EXPLORER_URL}/tx/${data.txHash}">Explorer</a>`
   }
 
   async notifyExit(data: JoinExit) {
@@ -107,7 +109,7 @@ export default class NotificationService {
 
   async notifyDuck(data: Transfer) {
     const amountFormatted = Number(data.amount / BigInt(10 ** (18 - 4))) / 1e4
-    const text = `${amountFormatted} DUCK minted\n` + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan 🦆</a>`
+    const text = `${amountFormatted} DUCK minted\n` + `<a href="https://bscscan.com/tx/${data.txHash}">Explorer 🦆</a>`
     return this.sendMessage(text)
   }
 
@@ -119,13 +121,13 @@ export default class NotificationService {
     const liquidationFee = await getLiquidationFee(data.token, data.user)
     const debtFormatted = Number(debt * (100n + liquidationFee) / 10n ** 18n) / 1e2
 
-    const text = '#liquidation_trigger'
+    const text = `#${HASHTAG_PREFIX}liquidation_trigger`
       + `\nLiquidation auction for ${symbol} just started`
       + `\nInitial price ${debtFormatted} USDP`
       + `\nAsset ${data.token}`
       + `\nOwner ${data.user}`
-      + `\n<a href="https://liquidation.unit.xyz">Liquidate</a>`
-      + `\n<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
+      + `\n<a href="${LIQUIDATION_URL}">Liquidate</a>`
+      + `\n<a href="${EXPLORER_URL}/tx/${data.txHash}">Explorer</a>`
 
     return this.sendMessage(text, this.liquidationChannel)
   }
@@ -144,12 +146,12 @@ export default class NotificationService {
 
     const assetAmount = new BigNumber(data.amount.toString()).div(10 ** decimals).toNumber()
 
-    const text = '#liquidated'
+    const text = `#${HASHTAG_PREFIX}liquidated`
       + `\n${formatNumber(assetAmount)} ${symbol} (${assetPrice}) for ${price}`
       + `\nAsset ${data.token}`
       + `\nOwner ${data.owner}`
       + `\nLiquidator ${data.liquidator}`
-      + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
+      + '\n' + `<a href="${EXPLORER_URL}/tx/${data.txHash}">Explorer</a>`
 
     return this.sendMessage(text, this.liquidationChannel)
   }
@@ -161,7 +163,7 @@ export default class NotificationService {
     const text = `Trying to liquidate CDP with ${symbol} collateral`
       + `\nAsset ${data.token}`
       + `\nOwner ${data.user}`
-      + '\n' + `<a href="https://etherscan.io/tx/${data.txHash}">Etherscan</a>`
+      + '\n' + `<a href="https://bscscan.com/tx/${data.txHash}">Explorer</a>`
 
     return this.sendMessage(text)
   }
