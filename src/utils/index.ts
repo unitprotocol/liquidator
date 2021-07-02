@@ -3,7 +3,6 @@ import { JoinExit } from 'src/types/JoinExit'
 import { Transfer } from 'src/types/Transfer'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 import {
-  CHAINLINK_ETH_USD_AGGREGATOR_PROXY,
   CRV3_REPRESENTATIONS,
   ETH_USD_AGGREGATOR,
   EXIT_TOPICS_WITH_COL,
@@ -222,10 +221,10 @@ export async function tryFetchPrice(token: string, amount: bigint, decimals: num
       }]
     }, [token, WETH])
 
-    const uniPool = web3.eth.abi.decodeParameter('address', await web3.eth.call({
+    const uniPool = UNISWAP_FACTORY ? web3.eth.abi.decodeParameter('address', await web3.eth.call({
       to: UNISWAP_FACTORY,
       data: getPairSignature
-    })) as string
+    })) as string : ZERO_ADDRESS
 
     const sushiPool = web3.eth.abi.decodeParameter('address', await web3.eth.call({
       to: SUSHISWAP_FACTORY,
@@ -555,7 +554,7 @@ export async function getEthPriceInUsd(): Promise<bigint> {
 
   try {
     const raw = await web3.eth.call({
-      to: CHAINLINK_ETH_USD_AGGREGATOR_PROXY,
+      to: ETH_USD_AGGREGATOR,
       data: sig
     })
     const res = web3.eth.abi.decodeParameters(['uint80', 'int256', 'uint256', 'uint256', 'uint80'], raw)

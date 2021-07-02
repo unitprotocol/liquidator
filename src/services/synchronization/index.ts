@@ -217,7 +217,7 @@ class SynchronizationService extends EventEmitter {
 
   private parseJoinData(topics, data): [boolean, string, string] {
     const withCol = topics[0] === JOIN_TOPICS_WITH_COL[0]
-    if ('0x' + topics[1].substr(26) === OLD_COL_MOCK) {
+    if (OLD_COL_MOCK && '0x' + topics[1].substr(26) === OLD_COL_MOCK) {
       return [false, null, null]
     }
     const id = positionKey(topics)
