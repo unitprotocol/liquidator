@@ -180,6 +180,7 @@ export default class NotificationService {
   }
 
   public async logAction(text, chatId = this.logsChannel, form = { parse_mode: 'HTML', disable_web_page_preview: true }) {
+    text = `[${IS_BSC ? 'BSC' : 'ETH'}]${text}`
     if (IS_DEV) {
       console.log(text);
     } else {
@@ -191,6 +192,7 @@ export default class NotificationService {
   }
 
   public async logAlarm(text, chatId = this.sentryChannel, form = { parse_mode: 'HTML', disable_web_page_preview: true }) {
+    text = `[${IS_BSC ? 'BSC' : 'ETH'}]${text}`
     if (IS_DEV) {
       console.log(text);
     } else {
