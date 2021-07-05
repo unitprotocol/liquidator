@@ -85,11 +85,12 @@ mainnet:
   main_liquidation_trigger: '0x0e13ab042ec5ab9fc6f43979406088b9028f66fa'
   crv3_representations:
     - '0x4bfb2fa13097e5312b19585042fdbf3562dc8676'
-    - '0x6c3f90f043a72fa612cbac8115ee7e52bde6e490'
+  crv3: '0x6c3f90f043a72fa612cbac8115ee7e52bde6e490'
   tri_pool: '0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7'
   liquidation_check_timeout: 10
   liquidation_confirmations_threshold: 3
   synchronization_batch_size: 100000
+  curve_provider: '0x0000000022D53366457F9d5E68Ec105046FC4383'
 bsc:
   oracle_registry: '0xbea721ACe12e881cb44Dbe9361ffEd9141CE547F'
   cdp_registry: '0xE8372dcef80189c0F88631507f6466b3f60E24A4'
@@ -119,7 +120,9 @@ bsc:
   fallback_liquidation_trigger: ''
   main_liquidation_trigger: '0x1337dac01fc21fa21d17914f96725f7a7b73868f'
   crv3_representations: ''
+  crv3: ''
   tri_pool: ''
   liquidation_check_timeout: 100
   liquidation_confirmations_threshold: 3
   synchronization_batch_size: 1000
+  curve_provider: ''

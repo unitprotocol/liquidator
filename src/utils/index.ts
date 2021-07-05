@@ -3,14 +3,15 @@ import { JoinExit } from 'src/types/JoinExit'
 import { Transfer } from 'src/types/Transfer'
 import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
 import {
+  CRV3,
   CRV3_REPRESENTATIONS,
+  CURVE_PROVIDER,
   ETH_USD_AGGREGATOR,
   EXIT_TOPICS_WITH_COL,
   JOIN_TOPICS_WITH_COL,
   ORACLE_REGISTRY,
   PRICE_EXCEPTION_LIST,
   SUSHISWAP_FACTORY,
-  TRI_POOL,
   UNISWAP_FACTORY,
   VAULT_ADDRESS,
   VAULT_MANAGER_PARAMETERS_ADDRESS,
@@ -153,7 +154,7 @@ export async function tryFetchPrice(token: string, amount: bigint, decimals: num
 
   const oracleType = await getOracleType(token)
 
-  if (PRICE_EXCEPTION_LIST.includes(token.toLowerCase()) || oracleType === 15) {
+  if (PRICE_EXCEPTION_LIST.includes(token.toLowerCase()) || [10, 15].includes(oracleType)) {
     return tryFetchNonStandardAssetPrice(token, amount, decimals, oracleType)
   }
 
@@ -269,21 +270,50 @@ export async function tryFetchNonStandardAssetPrice(token: string, amount: bigin
     return fetchYearnAssetPrice(token, amount, decimals)
   }
   if (CRV3_REPRESENTATIONS.includes(token.toLowerCase())) {
-    return fetch3crvPrice(amount)
+    return fetchCurveLPPrice(CRV3, amount)
+  }
+  if (oracleType === 10) {
+    return fetchCurveLPPrice(token, amount)
   }
   throw new Error(`Unknown non standard asset: ${token}`)
 }
 
-export async function fetch3crvPrice(amount: bigint) : Promise<string> {
-  const virtualPriceSig = web3.eth.abi.encodeFunctionSignature({
-    name: 'get_virtual_price',
+export async function fetchCurveLPPrice(token: string, amount: bigint) : Promise<string> {
+  const registrySig = web3.eth.abi.encodeFunctionSignature({
+    name: 'get_registry',
     type: 'function',
     inputs: []
   })
 
   try {
+
+    const curveRegistry = String(web3.eth.abi.decodeParameter('address', await web3.eth.call({
+      to: CURVE_PROVIDER,
+      data: registrySig
+    })))
+
+    const poolFromLPSig = web3.eth.abi.encodeFunctionCall({
+      name: 'get_pool_from_lp_token',
+      type: 'function',
+      inputs: [{
+        type: 'address',
+        name: 'asset'
+      }],
+    }, [token])
+
+    const pool = String(web3.eth.abi.decodeParameter('address', await web3.eth.call({
+      to: curveRegistry,
+      data: poolFromLPSig
+    })))
+
+    const virtualPriceSig = web3.eth.abi.encodeFunctionSignature({
+      name: 'get_virtual_price',
+      type: 'function',
+      inputs: []
+    })
+
     const virtualPrice = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
-      to: TRI_POOL,
+      to: pool,
       data: virtualPriceSig
     })))
 
