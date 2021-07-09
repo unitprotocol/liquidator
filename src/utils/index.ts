@@ -154,7 +154,7 @@ export async function tryFetchPrice(token: string, amount: bigint, decimals: num
 
   const oracleType = await getOracleType(token)
 
-  if (PRICE_EXCEPTION_LIST.includes(token.toLowerCase()) || [10, 15].includes(oracleType)) {
+  if (PRICE_EXCEPTION_LIST.includes(token.toLowerCase()) || [10, 14, 15].includes(oracleType)) {
     return tryFetchNonStandardAssetPrice(token, amount, decimals, oracleType)
   }
 
@@ -269,6 +269,9 @@ export async function tryFetchNonStandardAssetPrice(token: string, amount: bigin
   if (oracleType === 15) {
     return fetchYearnAssetPrice(token, amount, decimals)
   }
+  if (oracleType === 14) {
+    return fetchCompoundAssetPrice(token, amount, decimals)
+  }
   if (CRV3_REPRESENTATIONS.includes(token.toLowerCase())) {
     return fetchCurveLPPrice(CRV3, amount)
   }
@@ -346,6 +349,36 @@ export async function fetchYearnAssetPrice(token: string, amount: bigint, decima
     })))
 
     const underlyingAmount = amount * pricePerShare / BigInt(10 ** decimals)
+
+    return tryFetchPrice(underlyingToken, underlyingAmount, decimals)
+  } catch (e) {
+    return 'unknown price'
+  }
+}
+
+export async function fetchCompoundAssetPrice(token: string, amount: bigint, decimals: number) : Promise<string> {
+  const exchangeRateStoredSig = web3.eth.abi.encodeFunctionSignature({
+    name: 'exchangeRateStored',
+    type: 'function',
+    inputs: []
+  })
+  const underlyingSig = web3.eth.abi.encodeFunctionSignature({
+    name: 'underlying',
+    type: 'function',
+    inputs: []
+  })
+
+  try {
+    const exchangeRateStored = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
+      to: token,
+      data: exchangeRateStoredSig
+    })))
+    const underlyingToken = String(web3.eth.abi.decodeParameter('address', await web3.eth.call({
+      to: token,
+      data: underlyingSig
+    })))
+
+    const underlyingAmount = amount * exchangeRateStored / BigInt(10 ** 18)
 
     return tryFetchPrice(underlyingToken, underlyingAmount, decimals)
   } catch (e) {
