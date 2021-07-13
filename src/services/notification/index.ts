@@ -186,7 +186,7 @@ export default class NotificationService {
     } else {
       return this.bot.sendMessage(chatId, text, form).catch((e) => {
         this.error('error', e);
-        setTimeout(() => this.logAction(text, chatId, form), 5_000)
+        setTimeout(() => this.sendMessage(text, chatId, form), 5_000)
       });
     }
   }
@@ -198,7 +198,7 @@ export default class NotificationService {
     } else {
       return this.bot.sendMessage(chatId, text, form).catch((e) => {
         this.error('error', e);
-        setTimeout(() => this.logAction(text, chatId, form), 5_000)
+        setTimeout(() => this.sendMessage(text, chatId, form), 5_000)
       });
     }
   }
