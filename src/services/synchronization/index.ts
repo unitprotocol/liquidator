@@ -487,7 +487,7 @@ class SynchronizationService extends EventEmitter {
         if (shouldWaitResponse) {
           const _logs = (await Promise.all(promises)).reduce((acc, curr) => acc.concat(curr), [])
           console.log({
-            toBlock: fromBlock + SYNCHRONIZATION_BATCH_SIZE,
+            toBlock: startBatchBlock + SYNCHRONIZATION_BATCH_SIZE,
             count: _logs.length,
             time: (new Date().getTime() - start) / 1000
           })
