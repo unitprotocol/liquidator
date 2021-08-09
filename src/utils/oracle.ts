@@ -245,6 +245,7 @@ function rlpEncodeBlock(block) {
     stripLeadingZeros(block.extraData),
     ...(block.mixHash !== undefined ? [unsignedIntegerToUint8Array(block.mixHash, 32)] : []),
     ...(block.nonce !== null && block.nonce !== undefined ? [unsignedIntegerToUint8Array(block.nonce, 8)] : []),
+    ...(block.baseFeePerGas ? [stripLeadingZeros(unsignedIntegerToUint8Array(block.baseFeePerGas, 32))] : []),
   ])
 }
 
@@ -482,6 +483,7 @@ async function getBlockByNumber(blockNumber: bigint | string) {
     extraData: stringToByteArray(block.extraData),
     mixHash: stringToBigint(block.mixHash),
     nonce: stringToBigint(block.nonce),
+    baseFeePerGas: block.baseFeePerGas ? BigInt(block.baseFeePerGas) : null,
   }
 }
 
