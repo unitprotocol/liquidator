@@ -283,6 +283,9 @@ class SynchronizationService extends EventEmitter {
           txConfigs.push(tx)
           triggerPromises.push(this.web3.eth.estimateGas(tx).catch((e) => {
             if (SynchronizationService.isSuspiciousError(e.toString())) {
+              if (SynchronizationService.isConnectionError(String(e))) {
+                process.exit(1);
+              }
               this.alarm(e.toString())
               this.alarm(txConfigs[configId])
             }
@@ -512,6 +515,10 @@ class SynchronizationService extends EventEmitter {
         return false
     }
     return true
+  }
+
+  private static isConnectionError(errMsg) {
+    return errMsg.includes('CONNECTION ERROR')
   }
 
   private getAppState(): SynchronizerState {
