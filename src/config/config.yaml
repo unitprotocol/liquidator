@@ -80,7 +80,7 @@ mainnet:
     '0x97d940afe6cb90bea9e7562d8f3fdc1fc3e691f4': '0x0e13ab042ec5ab9fc6f43979406088b9028f66fa'
     '0xad3617d11f4c1d30603551ea75e9ace9cb386e15': '0x0e13ab042ec5ab9fc6f43979406088b9028f66fa'
   auctions:
-    - '0xaef1ed4c492bf4c57221be0706def67813d79955'
+    - '0xc6733b8bb1ef64ef450e8fcd8682f6bec0a5099a'
   fallback_liquidation_trigger: '0xad3617d11f4c1d30603551ea75e9ace9cb386e15'
   main_liquidation_trigger: '0x0e13ab042ec5ab9fc6f43979406088b9028f66fa'
   crv3_representations:
