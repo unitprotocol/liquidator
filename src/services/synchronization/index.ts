@@ -47,7 +47,7 @@ import {
 import { Log } from 'web3-core/types'
 import { Broker } from 'src/broker'
 import { SynchronizerState } from 'src/services/statemanager'
-import { isLiquidatable_Fallback, ORACLE_TYPES } from 'src/utils/oracle'
+import { isLiquidatable_Fallback, KEYDONIX_ORACLE_TYPES, ORACLE_TYPES } from 'src/utils/oracle'
 import { inspect } from 'util'
 import NotificationService from 'src/services/notification'
 
@@ -272,7 +272,7 @@ class SynchronizationService extends EventEmitter {
         const owner = '0x' + key.substring(64 + 24)
 
         // CDPs with onchain oracle
-        if (oracleTypes[i] !== 0) {
+        if (oracleTypes[i] !== 0 && !KEYDONIX_ORACLE_TYPES.includes(oracleTypes[i])) { // for assets with keydonix oracles oracleType was 0 earlier
           const tx: TxConfig = {
             to: MAIN_LIQUIDATION_TRIGGER,
             data: TRIGGER_LIQUIDATION_SIGNATURE + key,
