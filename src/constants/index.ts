@@ -12,11 +12,34 @@ export const EXIT_TOPICS_WITH_COL = [web3.utils.sha3('Exit(address,address,uint2
 export const GET_TOTAL_DEBT_SIGNATURE = web3.eth.abi.encodeFunctionSignature('getTotalDebt(address,address)')
 export const TRIGGER_LIQUIDATION_SIGNATURE = web3.eth.abi.encodeFunctionSignature('triggerLiquidation(address,address)')
 
+export const CHAIN_CONF = {
+  1: {
+    name: 'mainnet',
+    explorerUrl: 'https://etherscan.io',
+    liquidationUrl: 'https://liquidation.unit.xyz',
+    chainId: 1,
+    hashTagPrefix: '',
+    mainSymbol: 'ETH'
+  },
+  56: {
+    name: 'bsc',
+    explorerUrl: 'https://bscscan.com',
+    liquidationUrl: 'https://bsc.liquidation.unit.xyz',
+    chainId: 56,
+    hashTagPrefix: 'bsc_',
+    mainSymbol: 'BSC'
+  },
+  250: {
+    name: 'fantom',
+    explorerUrl: 'https://ftmscan.com',
+    liquidationUrl: 'https://ftm.liquidation.unit.xyz',
+    chainId: 250,
+    hashTagPrefix: 'ftm_',
+    mainSymbol: 'FTM'
+  }
+}[+process.env.CHAIN_ID]
 
-export const IS_BSC = +process.env.CHAIN_ID === 56
-
-const chainName = IS_BSC ? 'bsc' : 'mainnet'
-const conf = config[chainName]
+const conf = config[CHAIN_CONF.name]
 
 export const VAULT_ADDRESS = conf.vault
 export const VAULT_PARAMETERS_ADDRESS = conf.vault_parameters
@@ -64,8 +87,8 @@ export const SYNCHRONIZER_LIQUIDATED_EVENT = 'SYNCHRONIZER_LIQUIDATED_EVENT'
 export const CONFIRMATIONS_THRESHOLD = 3
 export const LIQUIDATION_CHECK_TIMEOUT = Number(conf.liquidation_check_timeout)
 
-export const EXPLORER_URL = IS_BSC ? 'https://bscscan.com' : 'https://etherscan.io'
-export const LIQUIDATION_URL = IS_BSC ? 'https://bsc.liquidation.unit.xyz' : 'https://liquidation.unit.xyz'
+export const EXPLORER_URL = CHAIN_CONF.explorerUrl
+export const LIQUIDATION_URL = CHAIN_CONF.liquidationUrl
 
 export const ZERO_ADDRESS = '0x' + '0'.repeat(40)
 
