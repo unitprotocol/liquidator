@@ -25,6 +25,12 @@ export enum ORACLE_TYPES {
   KEYDONIX_SUSHI = 13,
 }
 
+export const KEYDONIX_ORACLE_TYPES = [
+    ORACLE_TYPES.KEYDONIX_UNI,
+    ORACLE_TYPES.KEYDONIX_LP,
+    ORACLE_TYPES.KEYDONIX_SUSHI,
+]
+
 export function sqrt(value: bigint) {
   if (value < 0n) {
     throw new Error('square root of negative numbers is not supported')
@@ -70,7 +76,7 @@ export async function _getProof(address: bigint, positions: readonly bigint[], b
 
 export async function isLiquidatable_Fallback(asset: string, owner: string, blockNumber: number, ethPriceUsd: bigint): Promise<[ORACLE_TYPES, boolean]> {
 
-  const fallbackOracleType = await selectOracle(asset)
+  const fallbackOracleType = await selectKeydonixOracle(asset)
   if (!fallbackOracleType) {
     return [undefined, false]
   }
@@ -165,7 +171,7 @@ async function getKeydonixPrice_Eth_Q112(assetAddress: string, oracleType: ORACL
     tokenReserve = BigInt(reserve0)
     ethReserve = BigInt(reserve1)
   }
-  const avgPriceInEth = await _getKeydonixPrice(underlyingToken, await selectOracle(underlyingToken), blockNumber)
+  const avgPriceInEth = await _getKeydonixPrice(underlyingToken, await selectKeydonixOracle(underlyingToken), blockNumber)
   const currPriceInEth = (ethReserve * Q112) / tokenReserve
   let ethReserveCalc: bigint
 
@@ -186,7 +192,8 @@ async function getKeydonixPrice_Eth_Q112(assetAddress: string, oracleType: ORACL
   return (ethReserveCalc * BigInt(2) * Q112) / lpSupply
 }
 
-export async function selectOracle(tokenAddr: string): Promise<ORACLE_TYPES> {
+export async function selectKeydonixOracle(tokenAddr: string): Promise<ORACLE_TYPES> {
+  // todo at least use KEYDONIX_ORACLE_TYPES, at most use getOracleType everywhere (need to contracts config update)
   const [uni, lp, sushi] = await Promise.all([
     isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_UNI, tokenAddr),
     isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_LP, tokenAddr),
