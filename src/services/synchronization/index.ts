@@ -32,7 +32,6 @@ import {
   encodeLiquidationTriggerWithProof,
   getProof,
   getEthPriceInUsd,
-  getLiquidationBlock,
   getAllCdpsData,
   getTriggerLiquidationSignature,
 } from 'src/utils'
@@ -199,8 +198,8 @@ class SynchronizationService extends EventEmitter {
       return
 
     this.setLastLiquidationCheck(+header.number)
-    const positions: Map<string, CDP> = await getAllCdpsData(header.number)
     const timeStart = new Date().getTime()
+    const positions: Map<string, CDP> = await getAllCdpsData(header.number)
     const triggerPromises = []
     const promisesFallback = []
     const txBuildersFallback = []
@@ -214,7 +213,10 @@ class SynchronizationService extends EventEmitter {
         skipped++
         continue
       }
-      if (!position) return skipped++ // TODO:?
+      if (!position) { // TODO:?
+        console.log(`checkLiquidatable return ${position} ${key}`)
+        return skipped++
+      }
 
       // CDPs with onchain oracle
       if (!position.isFallback) { // for assets with keydonix oracles oracleType was 0 earlier

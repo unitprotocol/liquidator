@@ -131,15 +131,12 @@ fantom:
   sushiswap_init_code_hash: ''
   eth_usd_aggregator: '0xf4766552D15AE4d256Ad41B6cf2933482B0680dc'
   weth: '0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83'
-  old_col_mock: ''
   vault_managers:
     - address: '0xD12d6082811709287AE8b6d899Ab841659075FC3'
       liquidationTrigger: '0xD12d6082811709287AE8b6d899Ab841659075FC3'
       fromBlock: 21546889
   liquidation_triggers:
     - '0xD12d6082811709287AE8b6d899Ab841659075FC3'
-  new_version_of_liquidation_trigger:
-    '0xfAa71d14458a197DeC85a767B23dA27E33363b9b ??': '0xD12d6082811709287AE8b6d899Ab841659075FC3'
   auctions:
     - '0x1F18FAc6A422cF4a8D18369F017a100C77b49DeF'
   fallback_liquidation_trigger: ''
