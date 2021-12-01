@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events'
 import Logger from 'src/logger'
-import { CDP } from 'src/types/Position'
 import fs from 'fs'
 import { APP_STATE_FILENAME } from 'src/constants'
 import LiquidationMachine from 'src/app'
@@ -8,10 +7,7 @@ import { LogStore } from 'src/services/notification'
 
 export type SynchronizerState = {
   lastProcessedBlock: number,
-  lastLiquidationCheck: number,
-  positions: {
-    [key: string]: CDP
-  },
+  lastLiquidationCheck: number
 }
 
 export type NotificationState = {

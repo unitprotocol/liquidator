@@ -1,4 +1,7 @@
 export type CDP = {
-  USDP: string,
-  liquidationTrigger: string
+  asset: string,
+  owner: string,
+  isFallback: boolean,
+  liquidationTrigger: string,
+  liquidationBlock: number
 }
