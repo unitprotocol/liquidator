@@ -116,7 +116,7 @@ class LiquidationService extends EventEmitter {
     const txConfig = {
       to: trx.to,
       data: trx.data,
-      gas: +trx.gas + 200_000,
+      [CHAIN_CONF.chainId === 250 ? 'gasLimit' : 'gas']: +trx.gas + 200_000,
       chainId: CHAIN_CONF.chainId,
       gasPrice,
       nonce,

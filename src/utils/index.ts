@@ -815,7 +815,7 @@ export async function getAllCdpsData (blockNumber: number): Promise<Map<string, 
   )
   console.timeEnd(`getAllCdpsData in ${blockNumber}`)
   return new Map<string, CDP>(
-      Object.entries(positions.reduce((acc, cdp: CDP) => ({...acc, [cdp.asset + cdp.owner]: cdp}), {}))
+      Object.entries(positions.reduce((acc, cdp: CDP) => ({...acc, [`${cdp.asset}_${cdp.owner}`]: cdp}), {}))
   )
 }
 
