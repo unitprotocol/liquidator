@@ -256,6 +256,8 @@ class SynchronizationService extends EventEmitter {
       const liquidationBlocks = await Promise.all(keys.map(key => getLiquidationBlock('0x' + key.substring(24, 64), '0x' + key.substring(24 + 64))))
       const ethPriceUsd = await getEthPriceInUsd()
 
+      const ignorePositions = process.env.IGNORE_POSITIONS.split(",").map(x => x.toLowerCase())
+
       let skipped = 0
 
       for (let i = 0; i < keys.length; i++) {
@@ -270,6 +272,11 @@ class SynchronizationService extends EventEmitter {
 
         const asset = '0x' + key.substring(24, 64)
         const owner = '0x' + key.substring(64 + 24)
+
+        if (ignorePositions.includes(`${asset}:${owner}`)) {
+          skipped ++
+          continue
+        }
 
         // CDPs with onchain oracle
         if (oracleTypes[i] !== 0 && !KEYDONIX_ORACLE_TYPES.includes(oracleTypes[i])) { // for assets with keydonix oracles oracleType was 0 earlier
