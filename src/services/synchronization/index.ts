@@ -208,7 +208,10 @@ class SynchronizationService extends EventEmitter {
     const txConfigsFallback: TxConfig[] = []
     const ethPriceUsd = await getEthPriceInUsd()
 
-    const ignorePositions = new Set(process.env.IGNORE_POSITIONS.split(",").map(x => x.toLowerCase()))
+    let ignorePositions = new Set()
+    if (!!(process.env.IGNORE_POSITIONS))
+      ignorePositions = new Set(process.env.IGNORE_POSITIONS.split(",").map(x => x.toLowerCase()))
+
     let skipped = 0
     for (const [key, position] of positions.entries()) {
       if (!position) {
