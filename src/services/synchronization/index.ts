@@ -208,15 +208,19 @@ class SynchronizationService extends EventEmitter {
     const txConfigsFallback: TxConfig[] = []
     const ethPriceUsd = await getEthPriceInUsd()
 
-    const ignorePositions = process.env.IGNORE_POSITIONS.split(",").map(x => x.toLowerCase())
+    const ignorePositions = new Set(process.env.IGNORE_POSITIONS.split(",").map(x => x.toLowerCase()))
     let skipped = 0
     for (const [key, position] of positions.entries()) {
-      if (position.liquidationBlock !== 0) {
+      if (!position) {
+        this.logError(`checkLiquidatable empty position ${position} ${key}`)
         skipped++
         continue
       }
-      if (!position) {
-        this.logError(`checkLiquidatable empty position ${position} ${key}`)
+      if (ignorePositions.has(`${position.asset}:${position.owner}`.toLowerCase())) {
+        skipped++
+        continue
+      }
+      if (position.liquidationBlock !== 0) {
         skipped++
         continue
       }
