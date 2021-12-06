@@ -1,4 +1,9 @@
 mainnet:
+  explorer_url: 'https://etherscan.io'
+  liquidation_url: 'https://liquidation.unit.xyz'
+  chain_id: 1
+  hash_tag_prefix: ''
+  main_symbol: 'ETH'
   oracle_registry: '0x75fBFe26B21fd3EA008af0C764949f8214150C8f'
   cdp_registry: '0x1a5Ff58BC3246Eb233fEA20D32b79B5F01eC650c'
   vault: '0xb1cFF81b9305166ff1EFc49A129ad2AfCd7BCf19'
@@ -10,70 +15,6 @@ mainnet:
   eth_usd_aggregator: '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419'
   weth: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
   vault_managers:
-    - address: '0x7f50d78062304B6f523f20E9bACa8F3C72197424'
-      liquidationTrigger: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-      fromBlock: 11316117
-      toBlock: 11351816
-      col: true
-    - address: '0x78727A77028d9130D2772713d570780231E64ECf'
-      liquidationTrigger: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-      fromBlock: 11354460
-      toBlock: 11378571
-      col: true
-    - address: '0x754106b2f312c987Dd34161F8b4735392fa93F06'
-      liquidationTrigger: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-      fromBlock: 11320948
-      toBlock: 11329829
-      col: true
-    - address: '0x3052764f1af2f8B7a887dEAfA42153530676079B'
-      liquidationTrigger: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-      fromBlock: 11373663
-      toBlock: 12072495
-      col: true
-    - address: '0x211a6d4d4f49c0c5814451589d6378fda614adb9'
-      liquidationTrigger: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-      fromBlock: 11373662
-      toBlock: 12198630
-      col: true
-    - address: '0x2637D65912660e527C998824b8933d1A1bD7daA3'
-      liquidationTrigger: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-      fromBlock: 12101566
-      toBlock: 12198630
-    - address: '0x54ba276a62e7e3e76d362f672f00ed31a983067b'
-      liquidationTrigger: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-      fromBlock: 11609549
-      toBlock: 12198630
-    - address: '0xD90332DB0FE0e5eA1A195A5Ba6fc8949EaB8AB4E'
-      liquidationTrigger: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-      fromBlock: 11610755
-      toBlock: 12058830
-    - address: '0x18A2381d318EE56D19316f4a7D39a2a7996e8390'
-      liquidationTrigger: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-      fromBlock: 12101763
-      toBlock: 12198630
-    - address: '0xB82c6D510B3a0Dc9f198dE0ad2a3839973c6783c'
-      liquidationTrigger: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-      fromBlock: 11888275
-      toBlock: 12198630
-    - address: '0x7a646c42b64d21E6b871EfD85f54d707aCe1f9D1'
-      liquidationTrigger: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-      fromBlock: 12070783
-      toBlock: 12198630
-    - address: '0x0e13ab042ec5ab9fc6f43979406088b9028f66fa'
-      liquidationTrigger: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-      fromBlock: 12198630
-      toBlock: 13614480
-    - address: '0xad3617d11f4c1d30603551ea75e9ace9cb386e15'
-      liquidationTrigger: '0x3bb1c7dfd879c1e21d28e3b18189463c375c9679'
-      fromBlock: 12258922
-      toBlock: 13614480
-    - address: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-      liquidationTrigger: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-      fromBlock: 13614480
-    - address: '0x3bb1c7dfd879c1e21d28e3b18189463c375c9679'
-      liquidationTrigger: '0x3bb1c7dfd879c1e21d28e3b18189463c375c9679'
-      fromBlock: 13614480
-  liquidation_triggers:
     - '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
     - '0x3bb1c7dfd879c1e21d28e3b18189463c375c9679'
   auctions:
@@ -83,12 +24,15 @@ mainnet:
   crv3_representations:
     - '0x4bfb2fa13097e5312b19585042fdbf3562dc8676'
   crv3: '0x6c3f90f043a72fa612cbac8115ee7e52bde6e490'
-  tri_pool: '0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7'
   liquidation_check_timeout: 10
   liquidation_confirmations_threshold: 3
-  synchronization_batch_size: 100000
   curve_provider: '0x0000000022D53366457F9d5E68Ec105046FC4383'
 bsc:
+  explorer_url: 'https://bscscan.com'
+  liquidation_url: 'https://bsc.liquidation.unit.xyz'
+  chain_id: 56
+  hash_tag_prefix: 'bsc_'
+  main_symbol: 'BSC'
   oracle_registry: '0xbea721ACe12e881cb44Dbe9361ffEd9141CE547F'
   cdp_registry: '0xE8372dcef80189c0F88631507f6466b3f60E24A4'
   vault: '0xdacfeed000e12c356fb72ab5089e7dd80ff4dd93'
@@ -100,14 +44,6 @@ bsc:
   eth_usd_aggregator: '0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE'
   weth: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
   vault_managers:
-    - address: '0x7Cdefc60Aa5eF145f905b99C999d3ED2883f6d10'
-      liquidationTrigger: '0x1337dac01fc21fa21d17914f96725f7a7b73868f'
-      fromBlock: 5360793
-      toBlock: 7128099
-    - address: '0x1337dac01fc21fa21d17914f96725f7a7b73868f'
-      liquidationTrigger: '0x1337dac01fc21fa21d17914f96725f7a7b73868f'
-      fromBlock: 7126684
-  liquidation_triggers:
     - '0x1337dac01fc21fa21d17914f96725f7a7b73868f'
   auctions:
     - '0x852de08f3cD5b92dD8b3B92b321363D04EeEc39E'
@@ -115,12 +51,15 @@ bsc:
   main_liquidation_trigger: '0x1337dac01fc21fa21d17914f96725f7a7b73868f'
   crv3_representations: ''
   crv3: ''
-  tri_pool: ''
   liquidation_check_timeout: 100
   liquidation_confirmations_threshold: 3
-  synchronization_batch_size: 1000
   curve_provider: ''
 fantom:
+  explorer_url: 'https://ftmscan.com'
+  liquidation_url: 'https://ftm.liquidation.unit.xyz'
+  chain_id: 250
+  hash_tag_prefix: 'ftm_'
+  main_symbol: 'FTM'
   oracle_registry: '0x0058aB54d4405D8084e8D71B8AB36B3091b21c7D'
   cdp_registry: '0x1442bC024a92C2F96c3c1D2E9274bC4d8119d97e'
   vault: '0xD7A9b0D75e51bfB91c843b23FB2C19aa3B8D958e'
@@ -132,10 +71,6 @@ fantom:
   eth_usd_aggregator: '0xf4766552D15AE4d256Ad41B6cf2933482B0680dc'
   weth: '0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83'
   vault_managers:
-    - address: '0xD12d6082811709287AE8b6d899Ab841659075FC3'
-      liquidationTrigger: '0xD12d6082811709287AE8b6d899Ab841659075FC3'
-      fromBlock: 21546889
-  liquidation_triggers:
     - '0xD12d6082811709287AE8b6d899Ab841659075FC3'
   auctions:
     - '0x1F18FAc6A422cF4a8D18369F017a100C77b49DeF'
@@ -143,8 +78,6 @@ fantom:
   main_liquidation_trigger: '0xD12d6082811709287AE8b6d899Ab841659075FC3'
   crv3_representations: ''
   crv3: ''
-  tri_pool: ''
   liquidation_check_timeout: 100
   liquidation_confirmations_threshold: 3
-  synchronization_batch_size: 1000
   curve_provider: ''

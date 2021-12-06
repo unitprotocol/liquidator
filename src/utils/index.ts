@@ -800,7 +800,10 @@ export async function getAllCdpsData (blockNumber: number): Promise<Map<string, 
   const cdps = await getAllCdps(blockNumber)
   const assets = [...(new Set(cdps.map(cdp => cdp.asset)))]
   const oracles = await Promise.all(assets.map(getOracleType))
-  const assetToOracleTypeMap = assets.reduce((acc, asset, idx) => ({...acc, [asset]: oracles[idx]}), {})
+  const assetToOracleTypeMap = {}
+  for (const [idx, asset] of assets.entries())
+    assetToOracleTypeMap[asset] = oracles[idx]
+
   const keydonixOracleTypes = new Set([...await getKeydonixOracleTypes(), 0])
 
   const positions: CDP[] = await Promise.all(
@@ -813,10 +816,13 @@ export async function getAllCdpsData (blockNumber: number): Promise<Map<string, 
         } as CDP)
     )
   )
+
+  const result = new Map<string, CDP>()
+  for (const cdp of positions)
+    result.set(`${cdp.asset}_${cdp.owner}`, cdp)
+
   console.timeEnd(`getAllCdpsData in ${blockNumber}`)
-  return new Map<string, CDP>(
-      Object.entries(positions.reduce((acc, cdp: CDP) => ({...acc, [`${cdp.asset}_${cdp.owner}`]: cdp}), {}))
-  )
+  return result
 }
 
 export function getTriggerLiquidationSignature(position: CDP): string {

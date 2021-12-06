@@ -14,7 +14,7 @@ import { Buyout } from 'src/types/Buyout'
 import { BasicEvent } from 'src/types/BasicEvent'
 import { NotificationState } from 'src/services/statemanager'
 import BigNumber from 'bignumber.js'
-import {CHAIN_CONF, EXPLORER_URL, IS_DEV, LIQUIDATION_URL} from 'src/constants'
+import {HASHTAG_PREFIX, EXPLORER_URL, IS_DEV, LIQUIDATION_URL, MAIN_SYMBOL} from 'src/constants'
 import { web3 } from 'src/provider'
 
 const TelegramBot = require("node-telegram-bot-api")
@@ -26,7 +26,6 @@ export type LogStore = {
   logIndexes: number[]
 }
 
-const HASHTAG_PREFIX = CHAIN_CONF.hashTagPrefix
 
 export default class NotificationService {
   private readonly bot
@@ -180,7 +179,7 @@ export default class NotificationService {
   }
 
   public async logAction(text, chatId = this.logsChannel, form = { parse_mode: 'HTML', disable_web_page_preview: true }) {
-    text = `[${CHAIN_CONF.mainSymbol}]${text}`
+    text = `[${MAIN_SYMBOL}]${text}`
     if (IS_DEV) {
       console.log(text);
     } else {
@@ -192,7 +191,7 @@ export default class NotificationService {
   }
 
   public async logAlarm(text, chatId = this.sentryChannel, form = { parse_mode: 'HTML', disable_web_page_preview: true }) {
-    text = `[${CHAIN_CONF.mainSymbol}]${text}`
+    text = `[${MAIN_SYMBOL}]${text}`
     if (IS_DEV) {
       console.log(text);
     } else {

@@ -2,7 +2,7 @@ import { EventEmitter } from 'events'
 import Web3 from 'web3'
 import Logger from 'src/logger'
 import { Liquidation, TxConfig } from 'src/types/TxConfig'
-import { CONFIRMATIONS_THRESHOLD, CHAIN_CONF, IS_DEV, LIQUIDATION_CHECK_TIMEOUT } from 'src/constants'
+import {CONFIRMATIONS_THRESHOLD, IS_DEV, LIQUIDATION_CHECK_TIMEOUT, CHAIN_ID} from 'src/constants'
 import axios from 'axios'
 import { inspect } from 'util'
 import NotificationService from 'src/services/notification'
@@ -116,8 +116,9 @@ class LiquidationService extends EventEmitter {
     const txConfig = {
       to: trx.to,
       data: trx.data,
-      [CHAIN_CONF.chainId === 250 ? 'gasLimit' : 'gas']: +trx.gas + 200_000,
-      chainId: CHAIN_CONF.chainId,
+      gasLimit: +trx.gas + 200_000,
+      gas: +trx.gas + 200_000,
+      chainId: CHAIN_ID,
       gasPrice,
       nonce,
     }

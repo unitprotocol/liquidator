@@ -5,11 +5,8 @@ import {
   ACTIVE_VAULT_MANAGERS,
   SYNCHRONIZER_JOIN_EVENT,
   SYNCHRONIZER_NEW_BLOCK_EVENT,
-  JOIN_TOPICS_WITH_COL,
   SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT,
-  EXIT_TOPICS_WITH_COL,
   SYNCHRONIZER_EXIT_EVENT,
-  LIQUIDATION_TRIGGERS,
   LIQUIDATION_TRIGGERED_TOPICS,
   SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT,
   JOIN_TOPICS,
@@ -115,14 +112,16 @@ class SynchronizationService extends EventEmitter {
 
     let promises = []
 
-    ACTIVE_VAULT_MANAGERS.forEach(({ address, col}) => {
+    ACTIVE_VAULT_MANAGERS.forEach((address: string) => {
 
       promises.push(this.web3.eth.getPastLogs({
         address,
         fromBlock,
         toBlock,
-        topics: col ? JOIN_TOPICS_WITH_COL : JOIN_TOPICS
+        topics: JOIN_TOPICS
       }, (error, logs ) => {
+        if (!this.checkPastLogsResult(error, logs))
+          return
         logs.forEach(log => {
           if (!error) {
             this.emit(SYNCHRONIZER_JOIN_EVENT, parseJoinExit(log))
@@ -136,8 +135,10 @@ class SynchronizationService extends EventEmitter {
         address,
         fromBlock,
         toBlock,
-        topics: col ? EXIT_TOPICS_WITH_COL : EXIT_TOPICS
+        topics: EXIT_TOPICS
       }, (error, logs ) => {
+        if (!this.checkPastLogsResult(error, logs))
+          return
         logs.forEach(log => {
           if (!error) {
             const exit = parseJoinExit(log)
@@ -148,16 +149,14 @@ class SynchronizationService extends EventEmitter {
         })
       }))
 
-    });
-
-    LIQUIDATION_TRIGGERS.forEach((address) => {
-
       promises.push(this.web3.eth.getPastLogs({
         address,
         fromBlock,
         toBlock,
         topics: LIQUIDATION_TRIGGERED_TOPICS,
       }, (error, logs ) =>{
+        if (!this.checkPastLogsResult(error, logs))
+          return
         logs.forEach(log => {
           if (!error) {
             this.emit(SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log))
@@ -177,6 +176,8 @@ class SynchronizationService extends EventEmitter {
         toBlock,
         topics: BUYOUT_TOPICS,
       }, (error, logs ) => {
+        if (!this.checkPastLogsResult(error, logs))
+          return
         logs.forEach(log => {
           if (!error) {
             this.emit(SYNCHRONIZER_LIQUIDATED_EVENT, parseBuyout(log))
@@ -213,9 +214,10 @@ class SynchronizationService extends EventEmitter {
         skipped++
         continue
       }
-      if (!position) { // TODO:?
-        console.log(`checkLiquidatable return ${position} ${key}`)
-        return skipped++
+      if (!position) {
+        this.logError(`checkLiquidatable empty position ${position} ${key}`)
+        skipped++
+        continue
       }
 
       // CDPs with onchain oracle
@@ -308,23 +310,19 @@ class SynchronizationService extends EventEmitter {
     const triggerPromises = []
     const liquidationPromises = []
 
-    ACTIVE_VAULT_MANAGERS.forEach(({ address, col}) => {
+    ACTIVE_VAULT_MANAGERS.forEach((address: string) => {
 
       joinPromises.push(this.web3.eth.getPastLogs({
         fromBlock,
         address,
-        topics: col ? JOIN_TOPICS_WITH_COL : JOIN_TOPICS
+        topics: JOIN_TOPICS
       }))
 
       exitPromises.push(this.web3.eth.getPastLogs({
         fromBlock,
         address,
-        topics: col ? EXIT_TOPICS_WITH_COL : EXIT_TOPICS
+        topics: EXIT_TOPICS
       }))
-
-    });
-
-    LIQUIDATION_TRIGGERS.forEach((address) => {
 
       triggerPromises.push(this.web3.eth.getPastLogs({
         fromBlock,
@@ -423,6 +421,15 @@ class SynchronizationService extends EventEmitter {
 
   private alarm(...args) {
     return this.notificator.logAlarm(this.logger.format(args, true))
+  }
+
+  private checkPastLogsResult(error, logs): boolean {
+    if (typeof logs !== 'undefined')
+      return true
+
+    if (!!error)
+      this.logError(error)
+    return false
   }
 }
 
