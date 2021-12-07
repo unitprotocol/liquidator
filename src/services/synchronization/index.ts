@@ -148,6 +148,8 @@ class SynchronizationService extends EventEmitter {
         toBlock,
         topics: col ? JOIN_TOPICS_WITH_COL : JOIN_TOPICS
       }, (error, logs ) => {
+        if (!this.checkPastLogsResult(error, logs))
+          return
         logs.forEach(log => {
           if (!error) {
             this.checkAndPersistPosition(log)
@@ -164,6 +166,8 @@ class SynchronizationService extends EventEmitter {
         toBlock,
         topics: col ? EXIT_TOPICS_WITH_COL : EXIT_TOPICS
       }, (error, logs ) => {
+        if (!this.checkPastLogsResult(error, logs))
+          return
         logs.forEach(log => {
           if (!error) {
             const exit = parseJoinExit(log)
@@ -186,6 +190,8 @@ class SynchronizationService extends EventEmitter {
         toBlock,
         topics: LIQUIDATION_TRIGGERED_TOPICS,
       }, (error, logs ) =>{
+        if (!this.checkPastLogsResult(error, logs))
+          return
         logs.forEach(log => {
           if (!error) {
             this.emit(SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT, parseLiquidationTrigger(log))
@@ -205,6 +211,8 @@ class SynchronizationService extends EventEmitter {
         toBlock,
         topics: BUYOUT_TOPICS,
       }, (error, logs ) => {
+        if (!this.checkPastLogsResult(error, logs))
+          return
         logs.forEach(log => {
           if (!error) {
             this.emit(SYNCHRONIZER_LIQUIDATED_EVENT, parseBuyout(log))
@@ -572,6 +580,16 @@ class SynchronizationService extends EventEmitter {
   private alarm(...args) {
     return this.notificator.logAlarm(this.logger.format(args, true))
   }
+
+  private checkPastLogsResult(error, logs): boolean {
+    if (typeof logs !== 'undefined')
+      return true
+
+    if (!!error)
+      this.logError(error)
+    return false
+  }
+
 }
 
 function positionKey(topics) {
