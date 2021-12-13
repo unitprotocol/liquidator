@@ -25,12 +25,6 @@ export enum ORACLE_TYPES {
   KEYDONIX_SUSHI = 13,
 }
 
-export const KEYDONIX_ORACLE_TYPES = [
-    ORACLE_TYPES.KEYDONIX_UNI,
-    ORACLE_TYPES.KEYDONIX_LP,
-    ORACLE_TYPES.KEYDONIX_SUSHI,
-]
-
 export function sqrt(value: bigint) {
   if (value < 0n) {
     throw new Error('square root of negative numbers is not supported')

@@ -18,10 +18,14 @@ import {
   VAULT_PARAMETERS_ADDRESS,
   WETH,
   ZERO_ADDRESS,
+  CDP_REGISTRY,
+  FALLBACK_LIQUIDATION_TRIGGER,
+  MAIN_LIQUIDATION_TRIGGER
 } from 'src/constants'
 import { Buyout } from 'src/types/Buyout'
 import { web3 } from 'src/provider'
 import { getMerkleProof, lookbackBlocks, ORACLE_TYPES, sushiLPAddress, uniLPAddress } from 'src/utils/oracle'
+import {CDP} from "src/types/Position";
 
 export function parseJoinExit(event: Log): JoinExit {
   const withCol = event.topics[0] === JOIN_TOPICS_WITH_COL[0] || event.topics[0] === EXIT_TOPICS_WITH_COL[0]
@@ -457,7 +461,7 @@ export async function getOracleType(token: string): Promise<number> {
   }
 }
 
-export async function getLiquidationBlock(asset: string, owner): Promise<number> {
+export async function getLiquidationBlock(asset: string, owner: string): Promise<number> {
   const sig = web3.eth.abi.encodeFunctionCall({
     name: 'liquidationBlock',
     type: 'function',
@@ -759,4 +763,79 @@ export async function getLiquidationFee(asset: string, owner: string): Promise<b
   } catch (e) {
     return 0n
   }
+}
+
+export async function getAllCdps (blockNumber: number): Promise<{asset: string, owner: string}[]> {
+  const sig = web3.eth.abi.encodeFunctionCall({
+    "inputs": [],
+    "name": "getAllCdps",
+    "stateMutability": "view",
+    "type": "function"
+  }, [])
+  const raw = await web3.eth.call({
+      to: CDP_REGISTRY,
+      data: sig
+  }, blockNumber)
+  return web3.eth.abi.decodeParameter({
+    "components": [
+      {
+        "internalType": "address",
+        "name": "asset",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "internalType": "struct CDPRegistry.CDP[]",
+    "name": "r",
+    "type": "tuple[]"
+  }, raw).map((x) => ({owner: x['owner'], asset: x['asset']}))
+}
+
+export async function getAllCdpsData (blockNumber: number): Promise<Map<string, CDP>> {
+  console.time(`getAllCdpsData in ${blockNumber}`)
+  const cdps = await getAllCdps(blockNumber)
+  const assets = [...(new Set(cdps.map(cdp => cdp.asset)))]
+  const oracles = await Promise.all(assets.map(getOracleType))
+  const assetToOracleTypeMap = {}
+  for (const [idx, asset] of assets.entries())
+    assetToOracleTypeMap[asset] = oracles[idx]
+
+  const keydonixOracleTypes = new Set([...await getKeydonixOracleTypes(), 0])
+
+  const positions: CDP[] = await Promise.all(
+      cdps.map(
+        async (cdp) => ({
+          ...cdp,
+          isFallback: keydonixOracleTypes.has(assetToOracleTypeMap[cdp.asset]),
+          liquidationTrigger: keydonixOracleTypes.has(assetToOracleTypeMap[cdp.asset]) ? FALLBACK_LIQUIDATION_TRIGGER : MAIN_LIQUIDATION_TRIGGER,
+          liquidationBlock: await getLiquidationBlock(cdp.asset, cdp.owner)
+        } as CDP)
+    )
+  )
+
+  const result = new Map<string, CDP>()
+  for (const cdp of positions)
+    result.set(`${cdp.asset}_${cdp.owner}`, cdp)
+
+  console.timeEnd(`getAllCdpsData in ${blockNumber}`)
+  return result
+}
+
+export function getTriggerLiquidationSignature(position: CDP): string {
+  return web3.eth.abi.encodeFunctionCall({
+      name: 'triggerLiquidation',
+      type: 'function',
+      inputs: [{
+        type: 'address',
+        name: 'asset'
+      }, {
+        type: 'address',
+        name: 'owner'
+      }]
+    }, [position.asset, position.owner]
+  )
 }
