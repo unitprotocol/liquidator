@@ -809,15 +809,18 @@ export async function getAllCdpsData (blockNumber: number): Promise<Map<string, 
 
   const positions: CDP[] = await Promise.all(
       cdps.map(
-        async (cdp) => ({
-          ...cdp,
-          isDebtsEnoughForLiquidationSpends: (new BigNumber((await getTotalDebt(cdp.asset, cdp.owner)).toString())).div(10**18).gte(
-              keydonixOracleTypes.has(assetToOracleTypeMap[cdp.asset]) ? LIQUIDATION_DEBT_THRESHOLD_KEYDONIX : LIQUIDATION_DEBT_THRESHOLD
-          ),
-          isFallback: keydonixOracleTypes.has(assetToOracleTypeMap[cdp.asset]),
-          liquidationTrigger: keydonixOracleTypes.has(assetToOracleTypeMap[cdp.asset]) ? FALLBACK_LIQUIDATION_TRIGGER : MAIN_LIQUIDATION_TRIGGER,
-          liquidationBlock: await getLiquidationBlock(cdp.asset, cdp.owner)
-        } as CDP)
+        async (cdp) => {
+          const isKeydonix = keydonixOracleTypes.has(assetToOracleTypeMap[cdp.asset])
+          const totalDebt = (new BigNumber((await getTotalDebt(cdp.asset, cdp.owner)).toString())).div(10**18)
+          const debtThreshold = isKeydonix ? LIQUIDATION_DEBT_THRESHOLD_KEYDONIX : LIQUIDATION_DEBT_THRESHOLD
+          return {
+            ...cdp,
+            isDebtsEnoughForLiquidationSpends: totalDebt.gte(debtThreshold),
+            isFallback: isKeydonix,
+            liquidationTrigger: isKeydonix ? FALLBACK_LIQUIDATION_TRIGGER : MAIN_LIQUIDATION_TRIGGER,
+            liquidationBlock: await getLiquidationBlock(cdp.asset, cdp.owner)
+          } as CDP
+        }
     )
   )
 
