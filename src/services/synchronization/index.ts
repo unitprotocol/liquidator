@@ -227,6 +227,10 @@ class SynchronizationService extends EventEmitter {
         skipped++
         continue
       }
+      if (!position.isDebtsEnoughForLiquidationSpends) {
+        skipped++
+        continue
+      }
 
       // CDPs with onchain oracle
       if (!position.isFallback) { // for assets with keydonix oracles oracleType was 0 earlier

@@ -45,6 +45,8 @@ export const SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT = 'SYNCHRONIZER_LIQUIDATIO
 export const SYNCHRONIZER_LIQUIDATED_EVENT = 'SYNCHRONIZER_LIQUIDATED_EVENT'
 export const CONFIRMATIONS_THRESHOLD = Number(conf.liquidation_confirmations_threshold)
 export const LIQUIDATION_CHECK_TIMEOUT = Number(conf.liquidation_check_timeout)
+export const LIQUIDATION_DEBT_THRESHOLD = Number(conf.liquidation_debt_threshold)
+export const LIQUIDATION_DEBT_THRESHOLD_KEYDONIX = Number(conf.liquidation_debt_threshold_keydonix)
 
 export const EXPLORER_URL = conf.explorer_url
 export const LIQUIDATION_URL = conf.liquidation_url

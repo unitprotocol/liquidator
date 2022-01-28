@@ -20,12 +20,13 @@ import {
   ZERO_ADDRESS,
   CDP_REGISTRY,
   FALLBACK_LIQUIDATION_TRIGGER,
-  MAIN_LIQUIDATION_TRIGGER
+  MAIN_LIQUIDATION_TRIGGER, LIQUIDATION_DEBT_THRESHOLD, LIQUIDATION_DEBT_THRESHOLD_KEYDONIX
 } from 'src/constants'
 import { Buyout } from 'src/types/Buyout'
 import { web3 } from 'src/provider'
 import { getMerkleProof, lookbackBlocks, ORACLE_TYPES, sushiLPAddress, uniLPAddress } from 'src/utils/oracle'
 import {CDP} from "src/types/Position";
+import BigNumber from "bignumber.js";
 
 export function parseJoinExit(event: Log): JoinExit {
   const withCol = event.topics[0] === JOIN_TOPICS_WITH_COL[0] || event.topics[0] === EXIT_TOPICS_WITH_COL[0]
@@ -808,12 +809,18 @@ export async function getAllCdpsData (blockNumber: number): Promise<Map<string, 
 
   const positions: CDP[] = await Promise.all(
       cdps.map(
-        async (cdp) => ({
-          ...cdp,
-          isFallback: keydonixOracleTypes.has(assetToOracleTypeMap[cdp.asset]),
-          liquidationTrigger: keydonixOracleTypes.has(assetToOracleTypeMap[cdp.asset]) ? FALLBACK_LIQUIDATION_TRIGGER : MAIN_LIQUIDATION_TRIGGER,
-          liquidationBlock: await getLiquidationBlock(cdp.asset, cdp.owner)
-        } as CDP)
+        async (cdp) => {
+          const isKeydonix = keydonixOracleTypes.has(assetToOracleTypeMap[cdp.asset])
+          const totalDebt = (new BigNumber((await getTotalDebt(cdp.asset, cdp.owner)).toString())).div(10**18)
+          const debtThreshold = isKeydonix ? LIQUIDATION_DEBT_THRESHOLD_KEYDONIX : LIQUIDATION_DEBT_THRESHOLD
+          return {
+            ...cdp,
+            isDebtsEnoughForLiquidationSpends: totalDebt.gte(debtThreshold),
+            isFallback: isKeydonix,
+            liquidationTrigger: isKeydonix ? FALLBACK_LIQUIDATION_TRIGGER : MAIN_LIQUIDATION_TRIGGER,
+            liquidationBlock: await getLiquidationBlock(cdp.asset, cdp.owner)
+          } as CDP
+        }
     )
   )
 
