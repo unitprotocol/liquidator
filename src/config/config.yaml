@@ -9,9 +9,15 @@ mainnet:
   vault: '0xb1cFF81b9305166ff1EFc49A129ad2AfCd7BCf19'
   vault_manager_parameters: '0x203153522B9EAef4aE17c6e99851EE7b2F7D312E'
   vault_parameters: '0xB46F8CF42e504Efe8BEf895f848741daA55e9f1D'
-  sushiswap_factory: '0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac'
+
   uniswap_factory: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
+
+  sushiswap_factory: '0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac'
   sushiswap_init_code_hash: '0xe18a34eb0e04b04f7a0ac29a6e80748dca96319b42c54d679cb821dca90c6303'
+
+  shibaswap_factory: '0x115934131916c8b277dd010ee02de363c09d037c'
+  shibaswap_init_code_hash: '0x65d1a3b1e46c6e4f1be1ad5f99ef14dc488ae0549dc97db9b30afe2241ce1c7a'
+
   eth_usd_aggregator: '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419'
   weth: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
   vault_managers:

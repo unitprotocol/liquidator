@@ -23,7 +23,13 @@ export const VAULT_ADDRESS = conf.vault
 export const VAULT_PARAMETERS_ADDRESS = conf.vault_parameters
 export const VAULT_MANAGER_PARAMETERS_ADDRESS = conf.vault_manager_parameters
 export const UNISWAP_FACTORY = conf.uniswap_factory
+
 export const SUSHISWAP_FACTORY = conf.sushiswap_factory
+export const SUSHISWAP_PAIR_INIT_CODE_HASH = conf.sushiswap_init_code_hash
+
+export const SHIBASWAP_FACTORY = conf.shibaswap_factory
+export const SHIBASWAP_PAIR_INIT_CODE_HASH = conf.shibaswap_init_code_hash
+
 export const WETH = conf.weth
 export const ETH_USD_AGGREGATOR = conf.eth_usd_aggregator
 export const CRV3_REPRESENTATIONS = conf.crv3_representations
