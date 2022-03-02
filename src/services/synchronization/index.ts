@@ -35,7 +35,7 @@ import {
 import { Log } from 'web3-core/types'
 import { Broker } from 'src/broker'
 import { SynchronizerState } from 'src/services/statemanager'
-import { isLiquidatable_Fallback, ORACLE_TYPES } from 'src/utils/oracle'
+import {isLiquidatable_Fallback, ORACLE_TYPES} from 'src/utils/oracle'
 import { inspect } from 'util'
 import NotificationService from 'src/services/notification'
 

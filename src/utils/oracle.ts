@@ -2,7 +2,13 @@ import { web3, web3Proof } from 'src/provider'
 import { Pair, Token } from '@uniswap/sdk'
 import { getCreate2Address } from '@ethersproject/address'
 import { keccak256, pack } from '@ethersproject/solidity'
-import { WETH } from 'src/constants'
+import {
+  SHIBASWAP_FACTORY,
+  SHIBASWAP_PAIR_INIT_CODE_HASH,
+  SUSHISWAP_FACTORY,
+  SUSHISWAP_PAIR_INIT_CODE_HASH,
+  WETH
+} from 'src/constants'
 import {
   getCollateralAmount,
   getLiquidationRatio,
@@ -23,6 +29,7 @@ export enum ORACLE_TYPES {
   KEYDONIX_UNI = 1,
   KEYDONIX_LP = 2,
   KEYDONIX_SUSHI = 13,
+  KEYDONIX_SHIBA = 18,
 }
 
 export function sqrt(value: bigint) {
@@ -188,12 +195,13 @@ async function getKeydonixPrice_Eth_Q112(assetAddress: string, oracleType: ORACL
 
 export async function selectKeydonixOracle(tokenAddr: string): Promise<ORACLE_TYPES> {
   // todo at least use KEYDONIX_ORACLE_TYPES, at most use getOracleType everywhere (need to contracts config update)
-  const [uni, lp, sushi] = await Promise.all([
+  const [uni, lp, sushi, shiba] = await Promise.all([
     isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_UNI, tokenAddr),
     isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_LP, tokenAddr),
     isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_SUSHI, tokenAddr),
+    isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_SHIBA, tokenAddr),
   ])
-  return uni ? ORACLE_TYPES.KEYDONIX_UNI : lp ? ORACLE_TYPES.KEYDONIX_LP : sushi ? ORACLE_TYPES.KEYDONIX_SUSHI : undefined
+  return uni ? ORACLE_TYPES.KEYDONIX_UNI : lp ? ORACLE_TYPES.KEYDONIX_LP : sushi ? ORACLE_TYPES.KEYDONIX_SUSHI : shiba ? ORACLE_TYPES.KEYDONIX_SHIBA : undefined
 }
 
 async function _getKeydonixPrice(assetAddress: string, oracleType: ORACLE_TYPES, blockNumber: number): Promise<bigint> {
@@ -208,6 +216,13 @@ async function _getKeydonixPrice(assetAddress: string, oracleType: ORACLE_TYPES,
   } else if (oracleType === ORACLE_TYPES.KEYDONIX_SUSHI) {
     uniswapPoolAddress = BigInt(
       getSushiSwapAddress(
+        new Token(1, web3.utils.toChecksumAddress(WETH), 18),
+        new Token(1, web3.utils.toChecksumAddress(assetAddress), 18),
+      ),
+    )
+  } else if (oracleType === ORACLE_TYPES.KEYDONIX_SHIBA) {
+    uniswapPoolAddress = BigInt(
+      getShibaSwapAddress(
         new Token(1, web3.utils.toChecksumAddress(WETH), 18),
         new Token(1, web3.utils.toChecksumAddress(assetAddress), 18),
       ),
@@ -496,6 +511,7 @@ function stringToBigint(hex: string): bigint {
   return BigInt(`0x${normalized}`)
 }
 
+// todo: refactor this
 export function uniLPAddress(asset1: string, asset2: string): string {
   return Pair.getAddress(
     new Token(1, web3.utils.toChecksumAddress(asset1), 18),
@@ -510,13 +526,34 @@ export function sushiLPAddress(asset1: string, asset2: string): string {
   ).toLowerCase()
 }
 
+export function shibaLPAddress(asset1: string, asset2: string): string {
+  return getShibaSwapAddress(
+    new Token(1, web3.utils.toChecksumAddress(asset1), 18),
+    new Token(1, web3.utils.toChecksumAddress(asset2), 18),
+  ).toLowerCase()
+}
+
+// https://docs.uniswap.org/sdk/2.0.0/guides/getting-pair-addresses
+// initCodeHash = keccak256(init code of pair)
+// init code of pair could be got from etherscan, for example for sushi pair https://etherscan.io/address/0x06da0fd433C1A5d7a4faa01111c044910A184553#code
+// keccak256(Contract Creation Code from etherscan) = 0xe18a34eb0e04b04f7a0ac29a6e80748dca96319b42c54d679cb821dca90c6303
 function getSushiSwapAddress(tokenA: Token, tokenB: Token): string {
   const tokens = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA] // does safety checks
 
   return getCreate2Address(
-    '0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac',
+    SUSHISWAP_FACTORY,
     keccak256(['bytes'], [pack(['address', 'address'], [tokens[0].address, tokens[1].address])]),
-    '0xe18a34eb0e04b04f7a0ac29a6e80748dca96319b42c54d679cb821dca90c6303'
+    SUSHISWAP_PAIR_INIT_CODE_HASH
+  )
+}
+
+function getShibaSwapAddress(tokenA: Token, tokenB: Token): string {
+  const tokens = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA] // does safety checks
+
+  return getCreate2Address(
+    SHIBASWAP_FACTORY,
+    keccak256(['bytes'], [pack(['address', 'address'], [tokens[0].address, tokens[1].address])]),
+    SHIBASWAP_PAIR_INIT_CODE_HASH
   )
 }
 

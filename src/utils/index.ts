@@ -24,7 +24,14 @@ import {
 } from 'src/constants'
 import { Buyout } from 'src/types/Buyout'
 import { web3 } from 'src/provider'
-import { getMerkleProof, lookbackBlocks, ORACLE_TYPES, sushiLPAddress, uniLPAddress } from 'src/utils/oracle'
+import {
+  getMerkleProof,
+  lookbackBlocks,
+  ORACLE_TYPES,
+  shibaLPAddress,
+  sushiLPAddress,
+  uniLPAddress
+} from 'src/utils/oracle'
 import {CDP} from "src/types/Position";
 import BigNumber from "bignumber.js";
 
@@ -510,6 +517,7 @@ export async function isOracleTypeEnabled(type: number, token: string): Promise<
   }
 }
 
+// todo refactor this
 export async function getProof(token: string, oracleType: ORACLE_TYPES, blockNumber: number): Promise<[string, string, string,string]> {
 
   const proofBlockNumber = blockNumber - lookbackBlocks
@@ -521,6 +529,8 @@ export async function getProof(token: string, oracleType: ORACLE_TYPES, blockNum
       return getMerkleProof(BigInt(uniLPAddress(token, WETH)), denominationToken, BigInt(proofBlockNumber))
     case ORACLE_TYPES.KEYDONIX_SUSHI:
       return getMerkleProof(BigInt(sushiLPAddress(token, WETH)), denominationToken, BigInt(proofBlockNumber))
+    case ORACLE_TYPES.KEYDONIX_SHIBA:
+      return getMerkleProof(BigInt(shibaLPAddress(token, WETH)), denominationToken, BigInt(proofBlockNumber))
     default:
       throw new Error(`Incorrect keydonix oracle type: ${oracleType}`)
   }
