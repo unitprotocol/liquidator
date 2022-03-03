@@ -21,12 +21,12 @@ mainnet:
   eth_usd_aggregator: '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419'
   weth: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
   vault_managers:
-    - '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
-    - '0x3bb1c7dfd879c1e21d28e3b18189463c375c9679'
+    - '0x69FB4D4e3404Ea023F940bbC547851681e893a91'
+    - '0xC681556aC563359511BA569E1DbfE8E2F1C139e6'
   auctions:
-    - '0xaef1ed4c492bf4c57221be0706def67813d79955'
-  fallback_liquidation_trigger: '0x3bb1c7dfd879c1e21d28e3b18189463c375c9679'
-  main_liquidation_trigger: '0xee84f58ee39c6122c76c1fa54f0b6f33da1642ec'
+    - '0x9cCbb2F03184720Eef5f8fA768425AF06604Daf4'
+  fallback_liquidation_trigger: '0xC681556aC563359511BA569E1DbfE8E2F1C139e6'
+  main_liquidation_trigger: '0x69FB4D4e3404Ea023F940bbC547851681e893a91'
   crv3_representations:
     - '0x4bfb2fa13097e5312b19585042fdbf3562dc8676'
   crv3: '0x6c3f90f043a72fa612cbac8115ee7e52bde6e490'
