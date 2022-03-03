@@ -162,6 +162,7 @@ export async function getTokenDecimals(token: string) : Promise<number> {
   }
 }
 
+// todo refactor for using oracles
 export async function tryFetchPrice(token: string, amount: bigint, decimals: number) : Promise<string> {
 
   const oracleType = await getOracleType(token)
@@ -258,7 +259,12 @@ export async function tryFetchPrice(token: string, amount: bigint, decimals: num
       data: balanceOfSignature(sushiPool)
     })))
 
-    const quotingPool = uniWethBalance > sushiWethBalance ? uniPool : sushiPool
+    let quotingPool;
+    if (uniWethBalance > sushiWethBalance) {
+      quotingPool = uniPool != ZERO_ADDRESS ? uniPool : sushiPool;
+    } else {
+      quotingPool = sushiPool != ZERO_ADDRESS ? sushiPool : uniPool;
+    }
 
     const tokenAmountInLP = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
       to: token,
