@@ -25,7 +25,8 @@ import {
 import { Buyout } from 'src/types/Buyout'
 import { web3 } from 'src/provider'
 import {
-  getMerkleProof,
+  getLPAddressByOracle,
+  getMerkleProof, getMerkleProofForLp,
   lookbackBlocks,
   ORACLE_TYPES,
   shibaLPAddress,
@@ -530,13 +531,11 @@ export async function getProof(token: string, oracleType: ORACLE_TYPES, blockNum
   const denominationToken = BigInt(WETH)
   switch (oracleType) {
     case ORACLE_TYPES.KEYDONIX_LP:
-      return getMerkleProof(BigInt(token), denominationToken, BigInt(proofBlockNumber))
+      return getMerkleProofForLp(token, BigInt(proofBlockNumber))
     case ORACLE_TYPES.KEYDONIX_UNI:
-      return getMerkleProof(BigInt(uniLPAddress(token, WETH)), denominationToken, BigInt(proofBlockNumber))
     case ORACLE_TYPES.KEYDONIX_SUSHI:
-      return getMerkleProof(BigInt(sushiLPAddress(token, WETH)), denominationToken, BigInt(proofBlockNumber))
     case ORACLE_TYPES.KEYDONIX_SHIBA:
-      return getMerkleProof(BigInt(shibaLPAddress(token, WETH)), denominationToken, BigInt(proofBlockNumber))
+      return getMerkleProof(BigInt(getLPAddressByOracle(oracleType, token, WETH)), denominationToken, BigInt(proofBlockNumber))
     default:
       throw new Error(`Incorrect keydonix oracle type: ${oracleType}`)
   }

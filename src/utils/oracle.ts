@@ -11,7 +11,7 @@ import {
 } from 'src/constants'
 import {
   getCollateralAmount,
-  getLiquidationRatio,
+  getLiquidationRatio, getOracleType,
   getReserves,
   getSupply,
   getToken0,
@@ -115,6 +115,29 @@ function stringToByteArray(hex: string): Uint8Array {
     bytes.push(n)
   }
   return new Uint8Array(bytes)
+}
+
+export async function getMerkleProofForLp(
+  exchangeAddress: string,
+  blockNumber: bigint,
+): Promise<[string, string, string, string]> {
+  const [token0Address, token1Address] = await Promise.all([
+    getToken0(exchangeAddress),
+    getToken1(exchangeAddress),
+  ])
+
+  let token;
+  if (token0Address.toLowerCase() === WETH.toLowerCase()) {
+    token = token1Address.toLowerCase();
+  } else if (token1Address.toLowerCase() === WETH.toLowerCase()) {
+    token = token0Address.toLowerCase();
+  } else {
+    throw new Error(`Unsupported pair ${token0Address} ${token1Address}`)
+  }
+
+  const oracleType = await getOracleType(token);
+
+  return getMerkleProof(BigInt(getLPAddressByOracle(oracleType, token, WETH)), BigInt(WETH), blockNumber)
 }
 
 export async function getMerkleProof(
@@ -509,6 +532,19 @@ function stringToBigint(hex: string): bigint {
     throw new Error(`Expected a hex string encoded number with an optional '0x' prefix but received ${hex}`)
   const normalized = match[1]
   return BigInt(`0x${normalized}`)
+}
+
+export function getLPAddressByOracle(oracleType: ORACLE_TYPES, asset1: string, asset2: string): string {
+  switch (oracleType) {
+    case ORACLE_TYPES.KEYDONIX_UNI:
+      return uniLPAddress(asset1, asset2);
+    case ORACLE_TYPES.KEYDONIX_SUSHI:
+      return sushiLPAddress(asset1, asset2)
+    case ORACLE_TYPES.KEYDONIX_SHIBA:
+      return shibaLPAddress(asset1, asset2)
+    default:
+      throw new Error(`Incorrect keydonix oracle type: ${oracleType}`)
+  }
 }
 
 // todo: refactor this
