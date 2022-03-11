@@ -1,6 +1,6 @@
 mainnet:
   explorer_url: 'https://etherscan.io'
-  liquidation_url: 'https://liquidation.unit.xyz'
+  liquidation_url: 'https://unit.xyz/liquidations'
   chain_id: 1
   hash_tag_prefix: ''
   main_symbol: 'ETH'
@@ -9,6 +9,7 @@ mainnet:
   vault: '0xb1cFF81b9305166ff1EFc49A129ad2AfCd7BCf19'
   vault_manager_parameters: '0x203153522B9EAef4aE17c6e99851EE7b2F7D312E'
   vault_parameters: '0xB46F8CF42e504Efe8BEf895f848741daA55e9f1D'
+  wrapped_to_underlying_oracle_keydonix: '0xfF536BB145177D3E8E9A84fFF148B0e42282BF40'
 
   uniswap_factory: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
 
@@ -46,6 +47,8 @@ bsc:
   vault: '0xdacfeed000e12c356fb72ab5089e7dd80ff4dd93'
   vault_manager_parameters: '0x99f2B13C28A4183a5d5e0fe02B1B5aeEe85FAF5A'
   vault_parameters: '0x56c7CA666d192332F72a5842E72eED5f59F0fb48'
+  wrapped_to_underlying_oracle_keydonix: ''
+
   sushiswap_factory: '0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73'
   uniswap_factory: ''
   sushiswap_init_code_hash: '0x00fb7f630766e6a796048ea87d01acd3068e8ff67d078148a3fa3f4a84f69bd5'
@@ -75,6 +78,8 @@ fantom:
   vault: '0xD7A9b0D75e51bfB91c843b23FB2C19aa3B8D958e'
   vault_manager_parameters: '0x1c7aEA8B6498F0854D1fCE542a27ed6a10D71d2f'
   vault_parameters: '0xa8F0b5758041158Cf0375b7AdC8AC175ff031B6C'
+  wrapped_to_underlying_oracle_keydonix: ''
+
   sushiswap_factory: ''
   uniswap_factory: ''
   sushiswap_init_code_hash: ''

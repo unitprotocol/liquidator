@@ -7,7 +7,7 @@ import {
   SHIBASWAP_PAIR_INIT_CODE_HASH,
   SUSHISWAP_FACTORY,
   SUSHISWAP_PAIR_INIT_CODE_HASH,
-  WETH
+  WETH, WRAPPED_TO_UNDERLYING_ORACLE_KEYDONIX
 } from 'src/constants'
 import {
   getCollateralAmount,
@@ -16,7 +16,7 @@ import {
   getSupply,
   getToken0,
   getToken1,
-  getTotalDebt,
+  getTotalDebt, getUnderlyingToken,
   isOracleTypeEnabled,
 } from 'src/utils/index'
 
@@ -30,6 +30,7 @@ export enum ORACLE_TYPES {
   KEYDONIX_LP = 2,
   KEYDONIX_SUSHI = 13,
   KEYDONIX_SHIBA = 18,
+  KEYDONIX_WRAPPED = 19,
 }
 
 export function sqrt(value: bigint) {
@@ -177,7 +178,11 @@ async function getKeydonixPrice_Eth_Q112(assetAddress: string, oracleType: ORACL
   if (assetAddress === WETH)
     return BigInt('0x10000000000000000000000000000')
 
-  if (oracleType !== ORACLE_TYPES.KEYDONIX_LP) {
+  if (oracleType === ORACLE_TYPES.KEYDONIX_WRAPPED) {
+    const underlying = await getUnderlyingToken(WRAPPED_TO_UNDERLYING_ORACLE_KEYDONIX, assetAddress);
+    const underlyingOracleType = await getOracleType(underlying);
+    return getKeydonixPrice_Eth_Q112(underlying, underlyingOracleType, blockNumber);
+  } else if (oracleType !== ORACLE_TYPES.KEYDONIX_LP) {
     return _getKeydonixPrice(assetAddress, oracleType, blockNumber)
   }
 
@@ -218,13 +223,19 @@ async function getKeydonixPrice_Eth_Q112(assetAddress: string, oracleType: ORACL
 
 export async function selectKeydonixOracle(tokenAddr: string): Promise<ORACLE_TYPES> {
   // todo at least use KEYDONIX_ORACLE_TYPES, at most use getOracleType everywhere (need to contracts config update)
-  const [uni, lp, sushi, shiba] = await Promise.all([
+  const [uni, lp, sushi, shiba, wrapped] = await Promise.all([
     isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_UNI, tokenAddr),
     isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_LP, tokenAddr),
     isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_SUSHI, tokenAddr),
     isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_SHIBA, tokenAddr),
+    isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_WRAPPED, tokenAddr),
   ])
-  return uni ? ORACLE_TYPES.KEYDONIX_UNI : lp ? ORACLE_TYPES.KEYDONIX_LP : sushi ? ORACLE_TYPES.KEYDONIX_SUSHI : shiba ? ORACLE_TYPES.KEYDONIX_SHIBA : undefined
+  return uni ? ORACLE_TYPES.KEYDONIX_UNI
+      : lp ? ORACLE_TYPES.KEYDONIX_LP
+      : sushi ? ORACLE_TYPES.KEYDONIX_SUSHI
+      : shiba ? ORACLE_TYPES.KEYDONIX_SHIBA
+      : wrapped ? ORACLE_TYPES.KEYDONIX_WRAPPED
+      : undefined
 }
 
 async function _getKeydonixPrice(assetAddress: string, oracleType: ORACLE_TYPES, blockNumber: number): Promise<bigint> {

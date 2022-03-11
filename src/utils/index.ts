@@ -1,14 +1,19 @@
-import { Log } from 'web3-core/types'
-import { JoinExit } from 'src/types/JoinExit'
-import { Transfer } from 'src/types/Transfer'
-import { LiquidationTrigger } from 'src/types/LiquidationTrigger'
+import {Log} from 'web3-core/types'
+import {JoinExit} from 'src/types/JoinExit'
+import {Transfer} from 'src/types/Transfer'
+import {LiquidationTrigger} from 'src/types/LiquidationTrigger'
 import {
+  CDP_REGISTRY,
   CRV3,
   CRV3_REPRESENTATIONS,
   CURVE_PROVIDER,
   ETH_USD_AGGREGATOR,
   EXIT_TOPICS_WITH_COL,
+  FALLBACK_LIQUIDATION_TRIGGER,
   JOIN_TOPICS_WITH_COL,
+  LIQUIDATION_DEBT_THRESHOLD,
+  LIQUIDATION_DEBT_THRESHOLD_KEYDONIX,
+  MAIN_LIQUIDATION_TRIGGER,
   ORACLE_REGISTRY,
   PRICE_EXCEPTION_LIST,
   SUSHISWAP_FACTORY,
@@ -17,10 +22,8 @@ import {
   VAULT_MANAGER_PARAMETERS_ADDRESS,
   VAULT_PARAMETERS_ADDRESS,
   WETH,
-  ZERO_ADDRESS,
-  CDP_REGISTRY,
-  FALLBACK_LIQUIDATION_TRIGGER,
-  MAIN_LIQUIDATION_TRIGGER, LIQUIDATION_DEBT_THRESHOLD, LIQUIDATION_DEBT_THRESHOLD_KEYDONIX
+  WRAPPED_TO_UNDERLYING_ORACLE_KEYDONIX,
+  ZERO_ADDRESS
 } from 'src/constants'
 import { Buyout } from 'src/types/Buyout'
 import { web3 } from 'src/provider'
@@ -28,10 +31,7 @@ import {
   getLPAddressByOracle,
   getMerkleProof, getMerkleProofForLp,
   lookbackBlocks,
-  ORACLE_TYPES,
-  shibaLPAddress,
-  sushiLPAddress,
-  uniLPAddress
+  ORACLE_TYPES
 } from 'src/utils/oracle'
 import {CDP} from "src/types/Position";
 import BigNumber from "bignumber.js";
@@ -168,7 +168,7 @@ export async function tryFetchPrice(token: string, amount: bigint, decimals: num
 
   const oracleType = await getOracleType(token)
 
-  if (PRICE_EXCEPTION_LIST.includes(token.toLowerCase()) || [10, 14, 15].includes(oracleType)) {
+  if (PRICE_EXCEPTION_LIST.includes(token.toLowerCase()) || [10, 14, 15, ORACLE_TYPES.KEYDONIX_WRAPPED].includes(oracleType)) {
     return tryFetchNonStandardAssetPrice(token, amount, decimals, oracleType)
   }
 
@@ -204,7 +204,7 @@ export async function tryFetchPrice(token: string, amount: bigint, decimals: num
   })
 
   try {
-    if (['UNI-V2', 'SLP'].includes(symbol)) {
+    if (['UNI-V2', 'SLP', 'SSLP'].includes(symbol)) {
 
       const wethBalance = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
         to: WETH,
@@ -296,6 +296,10 @@ export async function tryFetchNonStandardAssetPrice(token: string, amount: bigin
   }
   if (oracleType === 10) {
     return fetchCurveLPPrice(token, amount)
+  }
+  if (oracleType == ORACLE_TYPES.KEYDONIX_WRAPPED) {
+    const underlying = await getUnderlyingToken(WRAPPED_TO_UNDERLYING_ORACLE_KEYDONIX, token);
+    return tryFetchPrice(underlying, amount, decimals);
   }
   throw new Error(`Unknown non standard asset: ${token}`)
 }
@@ -530,6 +534,8 @@ export async function getProof(token: string, oracleType: ORACLE_TYPES, blockNum
   const proofBlockNumber = blockNumber - lookbackBlocks
   const denominationToken = BigInt(WETH)
   switch (oracleType) {
+    case ORACLE_TYPES.KEYDONIX_WRAPPED:
+      return getProofForWrapped(token, blockNumber)
     case ORACLE_TYPES.KEYDONIX_LP:
       return getMerkleProofForLp(token, BigInt(proofBlockNumber))
     case ORACLE_TYPES.KEYDONIX_UNI:
@@ -539,6 +545,13 @@ export async function getProof(token: string, oracleType: ORACLE_TYPES, blockNum
     default:
       throw new Error(`Incorrect keydonix oracle type: ${oracleType}`)
   }
+}
+
+export async function getProofForWrapped(token: string, blockNumber: number): Promise<[string, string, string,string]> {
+  const underlying = await getUnderlyingToken(WRAPPED_TO_UNDERLYING_ORACLE_KEYDONIX, token);
+  const oracleType = await getOracleType(underlying);
+
+  return getProof(underlying, oracleType, blockNumber);
 }
 
 export async function getKeydonixOracleTypes(): Promise<number[]> {
@@ -556,6 +569,28 @@ export async function getKeydonixOracleTypes(): Promise<number[]> {
     return web3.eth.abi.decodeParameter('uint[]', raw).map(Number)
   } catch (e) {
     return []
+  }
+}
+
+export async function getUnderlyingToken(oracleAddress: string, asset: string): Promise<string> {
+  const sig = web3.eth.abi.encodeFunctionCall({
+    name: 'assetToUnderlying',
+    type: 'function',
+    inputs: [{
+      type: 'address',
+      name: 'asset'
+    }]
+  }, [asset])
+
+  try {
+    const raw = await web3.eth.call({
+      to: oracleAddress,
+      data: sig
+    })
+    return String(web3.eth.abi.decodeParameter('address', raw))
+
+  } catch (e) {
+    return '0x0000000000000000000000000000000000000000'
   }
 }
 
