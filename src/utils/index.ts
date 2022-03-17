@@ -21,7 +21,7 @@ import {
   VAULT_ADDRESS,
   VAULT_MANAGER_PARAMETERS_ADDRESS,
   VAULT_PARAMETERS_ADDRESS,
-  WETH,
+  WETH, WRAPPED_TO_UNDERLYING_ORACLE,
   WRAPPED_TO_UNDERLYING_ORACLE_KEYDONIX,
   ZERO_ADDRESS
 } from 'src/constants'
@@ -168,7 +168,7 @@ export async function tryFetchPrice(token: string, amount: bigint, decimals: num
 
   const oracleType = await getOracleType(token)
 
-  if (PRICE_EXCEPTION_LIST.includes(token.toLowerCase()) || [10, 14, 15, ORACLE_TYPES.KEYDONIX_WRAPPED].includes(oracleType)) {
+  if (PRICE_EXCEPTION_LIST.includes(token.toLowerCase()) || [10, 14, 15, ORACLE_TYPES.KEYDONIX_WRAPPED, ORACLE_TYPES.WRAPPED].includes(oracleType)) {
     return tryFetchNonStandardAssetPrice(token, amount, decimals, oracleType)
   }
 
@@ -299,6 +299,10 @@ export async function tryFetchNonStandardAssetPrice(token: string, amount: bigin
   }
   if (oracleType == ORACLE_TYPES.KEYDONIX_WRAPPED) {
     const underlying = await getUnderlyingToken(WRAPPED_TO_UNDERLYING_ORACLE_KEYDONIX, token);
+    return tryFetchPrice(underlying, amount, decimals);
+  }
+  if (oracleType == ORACLE_TYPES.WRAPPED) {
+    const underlying = await getUnderlyingToken(WRAPPED_TO_UNDERLYING_ORACLE, token);
     return tryFetchPrice(underlying, amount, decimals);
   }
   throw new Error(`Unknown non standard asset: ${token}`)

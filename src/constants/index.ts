@@ -23,6 +23,7 @@ export const VAULT_ADDRESS = conf.vault
 export const VAULT_PARAMETERS_ADDRESS = conf.vault_parameters
 export const VAULT_MANAGER_PARAMETERS_ADDRESS = conf.vault_manager_parameters
 export const WRAPPED_TO_UNDERLYING_ORACLE_KEYDONIX = conf.wrapped_to_underlying_oracle_keydonix
+export const WRAPPED_TO_UNDERLYING_ORACLE = conf.wrapped_to_underlying_oracle
 
 export const UNISWAP_FACTORY = conf.uniswap_factory
 

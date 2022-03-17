@@ -10,6 +10,7 @@ mainnet:
   vault_manager_parameters: '0x203153522B9EAef4aE17c6e99851EE7b2F7D312E'
   vault_parameters: '0xB46F8CF42e504Efe8BEf895f848741daA55e9f1D'
   wrapped_to_underlying_oracle_keydonix: '0xfF536BB145177D3E8E9A84fFF148B0e42282BF40'
+  wrapped_to_underlying_oracle: '0x220Ea780a484c18fd0Ab252014c58299759a1Fbd'
 
   uniswap_factory: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
 
@@ -48,6 +49,7 @@ bsc:
   vault_manager_parameters: '0x99f2B13C28A4183a5d5e0fe02B1B5aeEe85FAF5A'
   vault_parameters: '0x56c7CA666d192332F72a5842E72eED5f59F0fb48'
   wrapped_to_underlying_oracle_keydonix: ''
+  wrapped_to_underlying_oracle: ''
 
   sushiswap_factory: '0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73'
   uniswap_factory: ''
@@ -79,6 +81,7 @@ fantom:
   vault_manager_parameters: '0x1c7aEA8B6498F0854D1fCE542a27ed6a10D71d2f'
   vault_parameters: '0xa8F0b5758041158Cf0375b7AdC8AC175ff031B6C'
   wrapped_to_underlying_oracle_keydonix: ''
+  wrapped_to_underlying_oracle: ''
 
   sushiswap_factory: ''
   uniswap_factory: ''

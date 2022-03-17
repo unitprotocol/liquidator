@@ -28,6 +28,7 @@ const ethUsdDenominator = 10n ** 8n
 export enum ORACLE_TYPES {
   KEYDONIX_UNI = 1,
   KEYDONIX_LP = 2,
+  WRAPPED = 11,
   KEYDONIX_SUSHI = 13,
   KEYDONIX_SHIBA = 18,
   KEYDONIX_WRAPPED = 19,
