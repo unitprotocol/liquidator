@@ -140,7 +140,7 @@ export function formatNumber(x: number) {
   }
 
   if (x < 0.0001) {
-    return x.toString()
+    return Number(x).toFixed(22).replace(/\.?0+$/, "")
   }
 
   return `${Math.floor(x * 10_000) / 10_000}`
