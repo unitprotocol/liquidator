@@ -10,7 +10,7 @@ export const BUYOUT_TOPICS = [web3.utils.sha3("Buyout(address,address,address,ui
 export const EXIT_TOPICS = [web3.utils.sha3('Exit(address,address,uint256,uint256)')]
 export const EXIT_TOPICS_WITH_COL = [web3.utils.sha3('Exit(address,address,uint256,uint256,uint256)')]
 
-if (!(['mainnet', 'bsc', 'fantom'].includes(process.env.CHAIN_NAME)))
+if (!(['mainnet', 'bsc', 'fantom', 'gnosis'].includes(process.env.CHAIN_NAME)))
   throw new Error(`Unsupported chain name: ${process.env.CHAIN_NAME}`)
 
 const conf = config[process.env.CHAIN_NAME]
