@@ -128,7 +128,7 @@ gnosis:
   main_liquidation_trigger: '0xCa5d2E0961fe43eAE4bf07FA961B3CA8Cc0f50f6'
   crv3_representations: ''
   crv3: ''
-  liquidation_check_timeout: 100
+  liquidation_check_timeout: 20
   liquidation_confirmations_threshold: 3
   curve_provider: ''
   liquidation_debt_threshold: 2
