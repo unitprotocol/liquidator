@@ -28,15 +28,12 @@ import {
   parseLiquidationTrigger,
   encodeLiquidationTriggerWithProof,
   getProof,
-  getEthPriceInUsd,
   getAllCdpsData,
   getTriggerLiquidationSignature,
 } from 'src/utils'
 import { Log } from 'web3-core/types'
 import { Broker } from 'src/broker'
 import { SynchronizerState } from 'src/services/statemanager'
-import {isLiquidatable_Fallback, ORACLE_TYPES} from 'src/utils/oracle'
-import { inspect } from 'util'
 import NotificationService from 'src/services/notification'
 
 declare interface SynchronizationService {
@@ -202,11 +199,8 @@ class SynchronizationService extends EventEmitter {
     const timeStart = new Date().getTime()
     const positions: Map<string, CDP> = await getAllCdpsData(header.number)
     const triggerPromises = []
-    const promisesFallback = []
-    const txBuildersFallback = []
     const txConfigs: TxConfig[] = []
-    const txConfigsFallback: TxConfig[] = []
-    const ethPriceUsd = await getEthPriceInUsd()
+    const txConfigBuilders = {}
 
     let ignorePositions = new Set()
     if (!!(process.env.IGNORE_POSITIONS))
@@ -232,65 +226,46 @@ class SynchronizationService extends EventEmitter {
         continue
       }
 
-      // CDPs with onchain oracle
-      if (!position.isFallback) { // for assets with keydonix oracles oracleType was 0 earlier
-        const tx: TxConfig = {
+      let tx: TxConfig;
+      const configId = txConfigs.length
+      if (position.isFallback) {
+        const buildTx = async (blockNumber: number): Promise<TxConfig> => {
+          const proof = await getProof(position.asset, position.oracleType, blockNumber)
+          return {
+            to: FALLBACK_LIQUIDATION_TRIGGER,
+            data: encodeLiquidationTriggerWithProof(position.asset, position.owner, proof),
+            from: process.env.ETHEREUM_ADDRESS,
+            key
+          }
+        }
+
+        tx = await buildTx(+header.number);
+        txConfigBuilders[configId] = buildTx;
+      } else {
+         tx = {
           to: MAIN_LIQUIDATION_TRIGGER,
           data: getTriggerLiquidationSignature(position),
           from: process.env.ETHEREUM_ADDRESS,
           key,
         }
-        const configId = txConfigs.length
-        txConfigs.push(tx)
-        triggerPromises.push(this.web3.eth.estimateGas(tx).catch((e) => {
-          if (SynchronizationService.isSuspiciousError(e.toString())) {
-            if (SynchronizationService.isConnectionError(String(e))) {
-              process.exit(1);
-            }
-            this.alarm(e.toString())
-            this.alarm(txConfigs[configId])
+      }
+
+      txConfigs.push(tx)
+      triggerPromises.push(this.web3.eth.estimateGas(tx).catch((e) => {
+        if (SynchronizationService.isSuspiciousError(e.toString())) {
+          if (SynchronizationService.isConnectionError(String(e))) {
+            process.exit(1);
           }
-        }))
-        continue
-      }
-
-      /* fallback oracle */
-
-      const tx: TxConfig = {
-        data: undefined,
-        to: FALLBACK_LIQUIDATION_TRIGGER,
-        from: process.env.ETHEREUM_ADDRESS,
-        key
-      }
-
-      const buildTx = (fallbackOracleType: ORACLE_TYPES) => async (tx: TxConfig, blockNumber: number): Promise<TxConfig> => {
-        const proof = await getProof(position.asset, fallbackOracleType, blockNumber)
-        tx.data = encodeLiquidationTriggerWithProof(position.asset, position.owner, proof)
-        const gas = await this.web3.eth.estimateGas(tx).catch(e => {
           this.alarm(e.toString())
-          return undefined
-        })
-
-        if (gas && gas > 200_000) {
-          tx.gas = gas
-          return tx
-        } else {
-          await this.alarm(`Cannot estimate gas for ${inspect(tx)}`)
-          return undefined
+          this.alarm(txConfigs[configId])
         }
-      }
-      promisesFallback.push(isLiquidatable_Fallback(position.asset, position.owner, +header.number, ethPriceUsd))
-      txBuildersFallback.push(buildTx)
-      txConfigsFallback.push(tx)
+      }))
     }
 
     const estimatedGas = await Promise.all(triggerPromises)
 
-    const fallbackLiquidatables = await Promise.all(promisesFallback)
-
     const timeEnd = new Date().getTime()
-
-    await this.logOnline(`Checked ${triggerPromises.length} + ${fallbackLiquidatables.length} fb CDPs (skipped: ${skipped}) on block ${header.number} ${header.hash} in ${timeEnd - timeStart}ms`)
+    await this.logOnline(`Checked ${txConfigs.length - Object.keys(txConfigBuilders).length} + ${Object.keys(txConfigBuilders).length} fb CDPs (skipped: ${skipped}) on block ${header.number} ${header.hash} in ${timeEnd - timeStart}ms`)
 
     estimatedGas.forEach((gas, i) => {
       // during synchronization the node may respond with tx data to non-contract address
@@ -298,13 +273,8 @@ class SynchronizationService extends EventEmitter {
       if (gas && +gas > 30_000) {
         const tx = txConfigs[i]
         tx.gas = gas as number
-        this.emit(SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT, { tx, blockNumber: +header.number })
+        this.emit(SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT, { tx, blockNumber: +header.number, buildTx: txConfigBuilders[i]  })
       }
-    })
-
-    fallbackLiquidatables.forEach(([fallbackOracleType, isLiquidatable], i) => {
-      if (!isLiquidatable) return
-      this.emit(SYNCHRONIZER_TRIGGER_LIQUIDATION_EVENT, { tx: txConfigsFallback[i], blockNumber: +header.number, buildTx: txBuildersFallback[i](fallbackOracleType) })
     })
   }
 
@@ -385,8 +355,16 @@ class SynchronizationService extends EventEmitter {
 
   private static isSuspiciousError(errMsg) {
     const legitMsgs = ['SAFE_POSITION', 'LIQUIDATING_POSITION']
+
+    // in some networks hex representation of error is returned (gnosis)
+    let decodedErrorMsg = null;
+    try {
+      let decodedErrorMsgGroups = errMsg.match(/Reverted 0x([0-9a-f]+)/)
+      decodedErrorMsg = decodedErrorMsgGroups ? Buffer.from(decodedErrorMsgGroups[1], 'hex').toString() : null;
+    } catch (error) {}
+
     for (const legitMsg of legitMsgs) {
-      if (errMsg.includes(legitMsg))
+      if (errMsg.includes(legitMsg)  || (decodedErrorMsg && decodedErrorMsg.includes(legitMsg)))
         return false
     }
     return true

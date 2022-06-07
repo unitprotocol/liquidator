@@ -8,7 +8,6 @@ export type Broker = { [name: string]: Process }
 type EventBroker = (LiquidationMachine) => Broker
 
 const EventBroker: EventBroker = (machine: LiquidationMachine) => ({
-  LIQUIDATOR_LIQUIDATION_TX_SENT: data => machine.notificator.notifyTriggerTx(data),
   SYNCHRONIZER_LIQUIDATION_TRIGGERED_EVENT: data => machine.notificator.notifyTriggered(data),
   SYNCHRONIZER_LIQUIDATED_EVENT: data => machine.notificator.notifyLiquidated(data),
   SYNCHRONIZER_NEW_BLOCK_EVENT: (header: BlockHeader) => [

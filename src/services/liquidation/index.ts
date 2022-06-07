@@ -71,13 +71,13 @@ class LiquidationService extends EventEmitter {
 
     let nonce
 
-    let trx
+    let trx = tx;
 
-    if (buildTx) {
-      trx = await buildTx(tx, blockNumber);
-    } else {
-      trx = tx
-    }
+    // if we want to rebuild tx according to the new block number we can do it here
+    // we may want it for example to refresh proofs for keydonix transactions
+    // if (buildTx) {
+    //   trx = await buildTx(blockNumber);
+    // }
 
     if (!trx) {
       this.logError(`Cannot perform liquidation: ${inspect(tx)}`)

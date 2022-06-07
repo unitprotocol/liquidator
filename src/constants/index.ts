@@ -3,12 +3,10 @@ import config from 'src/config'
 
 export const IS_DEV = process.env.IS_DEV
 
-export const JOIN_TOPICS_WITH_COL = [web3.utils.sha3('Join(address,address,uint256,uint256,uint256)')]
 export const JOIN_TOPICS = [web3.utils.sha3('Join(address,address,uint256,uint256)')]
 export const LIQUIDATION_TRIGGERED_TOPICS = ["0x5b79a897d30813a62a1f95ba180d3320d3701d96605708b81105e00719a069e4"]
 export const BUYOUT_TOPICS = [web3.utils.sha3("Buyout(address,address,address,uint256,uint256,uint256)")]
 export const EXIT_TOPICS = [web3.utils.sha3('Exit(address,address,uint256,uint256)')]
-export const EXIT_TOPICS_WITH_COL = [web3.utils.sha3('Exit(address,address,uint256,uint256,uint256)')]
 
 if (!(['mainnet', 'bsc', 'fantom', 'gnosis'].includes(process.env.CHAIN_NAME)))
   throw new Error(`Unsupported chain name: ${process.env.CHAIN_NAME}`)
@@ -17,13 +15,10 @@ const conf = config[process.env.CHAIN_NAME]
 
 export const CHAIN_ID = Number(conf.chain_id)
 export const MAIN_SYMBOL = conf.main_symbol
+export const USDP_SYMBOL = conf.usdp_symbol
 export const HASHTAG_PREFIX = conf.hash_tag_prefix
 export const CDP_REGISTRY = conf.cdp_registry
 export const VAULT_ADDRESS = conf.vault
-export const VAULT_PARAMETERS_ADDRESS = conf.vault_parameters
-export const VAULT_MANAGER_PARAMETERS_ADDRESS = conf.vault_manager_parameters
-export const WRAPPED_TO_UNDERLYING_ORACLE_KEYDONIX = conf.wrapped_to_underlying_oracle_keydonix
-export const WRAPPED_TO_UNDERLYING_ORACLE = conf.wrapped_to_underlying_oracle
 
 export const UNISWAP_FACTORY = conf.uniswap_factory
 
@@ -34,13 +29,8 @@ export const SHIBASWAP_FACTORY = conf.shibaswap_factory
 export const SHIBASWAP_PAIR_INIT_CODE_HASH = conf.shibaswap_init_code_hash
 
 export const WETH = conf.weth
-export const ETH_USD_AGGREGATOR = conf.eth_usd_aggregator
-export const CRV3_REPRESENTATIONS = conf.crv3_representations
-export const CRV3 = conf.crv3
-export const CURVE_PROVIDER = conf.curve_provider
 export const ORACLE_REGISTRY = conf.oracle_registry
 
-export const PRICE_EXCEPTION_LIST = [...CRV3_REPRESENTATIONS]
 export const AUCTIONS = conf.auctions
 export const MAIN_LIQUIDATION_TRIGGER = conf.main_liquidation_trigger
 export const FALLBACK_LIQUIDATION_TRIGGER = conf.fallback_liquidation_trigger

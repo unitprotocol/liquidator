@@ -4,26 +4,13 @@ import {Transfer} from 'src/types/Transfer'
 import {LiquidationTrigger} from 'src/types/LiquidationTrigger'
 import {
   CDP_REGISTRY,
-  CRV3,
-  CRV3_REPRESENTATIONS,
-  CURVE_PROVIDER,
-  ETH_USD_AGGREGATOR,
-  EXIT_TOPICS_WITH_COL,
   FALLBACK_LIQUIDATION_TRIGGER,
-  JOIN_TOPICS_WITH_COL,
   LIQUIDATION_DEBT_THRESHOLD,
   LIQUIDATION_DEBT_THRESHOLD_KEYDONIX,
   MAIN_LIQUIDATION_TRIGGER,
   ORACLE_REGISTRY,
-  PRICE_EXCEPTION_LIST,
-  SUSHISWAP_FACTORY,
-  UNISWAP_FACTORY,
   VAULT_ADDRESS,
-  VAULT_MANAGER_PARAMETERS_ADDRESS,
-  VAULT_PARAMETERS_ADDRESS,
-  WETH, WRAPPED_TO_UNDERLYING_ORACLE,
-  WRAPPED_TO_UNDERLYING_ORACLE_KEYDONIX,
-  ZERO_ADDRESS
+  WETH,
 } from 'src/constants'
 import { Buyout } from 'src/types/Buyout'
 import { web3 } from 'src/provider'
@@ -37,25 +24,18 @@ import {CDP} from "src/types/Position";
 import BigNumber from "bignumber.js";
 
 export function parseJoinExit(event: Log): JoinExit {
-  const withCol = event.topics[0] === JOIN_TOPICS_WITH_COL[0] || event.topics[0] === EXIT_TOPICS_WITH_COL[0]
   const token = topicToAddr(event.topics[1])
   const user = topicToAddr(event.topics[2])
   event.data = event.data.substr(2)
   const main = hexToBN(event.data.substr(0, 64))
-  let col: bigint, usdp: bigint
-  if (withCol) {
-    col = hexToBN(event.data.substr(64, 64))
-    usdp = hexToBN(event.data.substr(128, 64))
-  } else {
-    col = BigInt(0)
-    usdp = hexToBN(event.data.substr(64, 64))
-  }
+  let usdp: bigint
+  usdp = hexToBN(event.data.substr(64, 64))
+
   const txHash = event.transactionHash
   return {
     token,
     user,
     main,
-    col,
     usdp,
     txHash,
     blockHash: event.blockHash,
@@ -163,256 +143,31 @@ export async function getTokenDecimals(token: string) : Promise<number> {
   }
 }
 
-// todo refactor for using oracles
 export async function tryFetchPrice(token: string, amount: bigint, decimals: number) : Promise<string> {
 
+  const blockNumber = await web3.eth.getBlockNumber();
   const oracleType = await getOracleType(token)
-
-  if (PRICE_EXCEPTION_LIST.includes(token.toLowerCase()) || [10, 14, 15, ORACLE_TYPES.KEYDONIX_WRAPPED, ORACLE_TYPES.WRAPPED].includes(oracleType)) {
-    return tryFetchNonStandardAssetPrice(token, amount, decimals, oracleType)
-  }
-
-  const latestAnswerSignature = web3.eth.abi.encodeFunctionSignature({
-    name: 'latestAnswer',
-    type: 'function',
-    inputs: []
-  })
-
-  if (token.toLowerCase() === WETH.toLowerCase()) {
-    const latestAnswer = BigInt(web3.eth.abi.decodeParameter('int256', await web3.eth.call({
-      to: ETH_USD_AGGREGATOR,
-      data: latestAnswerSignature
-    })))
-
-    return '$' + formatNumber(Number(amount * latestAnswer / BigInt(1e6) / BigInt(10 ** decimals)) / 100)
-  }
-
-  const symbol = await _getTokenSymbol(token)
-  const balanceOfSignature = (address) => web3.eth.abi.encodeFunctionCall({
-    name: 'balanceOf',
-    type: 'function',
-    inputs: [{
-      type: 'address',
-      name: 'who'
-    }]
-  }, [address])
-
-  const totalSupplySignature = web3.eth.abi.encodeFunctionSignature({
-    name: 'totalSupply',
-    type: 'function',
-    inputs: []
-  })
+  const oracleAddress = await getOracleAddress(token)
+  const keydonixOracleTypes = await getKeydonixOracleTypes();
 
   try {
-    if (['UNI-V2', 'SLP', 'SSLP'].includes(symbol)) {
-
-      const wethBalance = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
-        to: WETH,
-        data: balanceOfSignature(token)
-      })))
-
-      const supply = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
-        to: token,
-        data: totalSupplySignature
-      })))
-
-      const latestAnswer = BigInt(web3.eth.abi.decodeParameter('int256', await web3.eth.call({
-        to: ETH_USD_AGGREGATOR,
-        data: latestAnswerSignature
-      })))
-
-      return '$' + formatNumber(Number(amount * latestAnswer * wethBalance * BigInt(2) / supply / BigInt(1e6) / BigInt(10 ** decimals)) / 100)
+    if ( keydonixOracleTypes.includes(oracleType) ) {
+      return '$' + formatNumber( await tryFetchKeydonixPrice(token, amount, decimals, oracleType, oracleAddress, blockNumber) );
     }
 
-    const getPairSignature = web3.eth.abi.encodeFunctionCall({
-      name: 'getPair',
-      type: 'function',
-      inputs: [{
-        type: 'address',
-        name: 'token0'
-      }, {
-        type: 'address',
-        name: 'token1'
-      }]
-    }, [token, WETH])
-
-    const uniPool = UNISWAP_FACTORY ? web3.eth.abi.decodeParameter('address', await web3.eth.call({
-      to: UNISWAP_FACTORY,
-      data: getPairSignature
-    })) as string : ZERO_ADDRESS
-
-    const sushiPool = web3.eth.abi.decodeParameter('address', await web3.eth.call({
-      to: SUSHISWAP_FACTORY,
-      data: getPairSignature
-    })) as string
-
-    if (sushiPool === ZERO_ADDRESS && uniPool === ZERO_ADDRESS) {
-      return 'unknown price'
-    }
-
-    const uniWethBalance = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
-      to: WETH,
-      data: balanceOfSignature(uniPool)
-    })))
-
-    const sushiWethBalance = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
-      to: WETH,
-      data: balanceOfSignature(sushiPool)
-    })))
-
-    let quotingPool;
-    if (uniWethBalance > sushiWethBalance) {
-      quotingPool = uniPool != ZERO_ADDRESS ? uniPool : sushiPool;
-    } else {
-      quotingPool = sushiPool != ZERO_ADDRESS ? sushiPool : uniPool;
-    }
-
-    const tokenAmountInLP = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
-      to: token,
-      data: balanceOfSignature(quotingPool)
-    })))
-
-    const latestAnswer = BigInt(web3.eth.abi.decodeParameter('int256', await web3.eth.call({
-      to: ETH_USD_AGGREGATOR,
-      data: latestAnswerSignature
-    })))
-
-    return '$' + formatNumber(Number(amount * (latestAnswer * (uniWethBalance > sushiWethBalance ? uniWethBalance : sushiWethBalance) / tokenAmountInLP) / BigInt(1e6) / BigInt(10 ** (18 - decimals)) / BigInt(10 ** decimals)) / 100)
-
-  } catch (e) {
-    return 'unknown price'
+    return '$' + formatNumber( await getPriceFromOracle(oracleAddress, token, decimals, amount) );
+  } catch(error) {
+    return 'unknown price';
   }
 }
 
-export async function tryFetchNonStandardAssetPrice(token: string, amount: bigint, decimals: number, oracleType: number) : Promise<string> {
-  if (oracleType === 15) {
-    return fetchYearnAssetPrice(token, amount, decimals)
-  }
-  if (oracleType === 14) {
-    return fetchCompoundAssetPrice(token, amount, decimals)
-  }
-  if (CRV3_REPRESENTATIONS.includes(token.toLowerCase())) {
-    return fetchCurveLPPrice(CRV3, amount)
-  }
-  if (oracleType === 10) {
-    return fetchCurveLPPrice(token, amount)
-  }
-  if (oracleType == ORACLE_TYPES.KEYDONIX_WRAPPED) {
-    const underlying = await getUnderlyingToken(WRAPPED_TO_UNDERLYING_ORACLE_KEYDONIX, token);
-    return tryFetchPrice(underlying, amount, decimals);
-  }
-  if (oracleType == ORACLE_TYPES.WRAPPED) {
-    const underlying = await getUnderlyingToken(WRAPPED_TO_UNDERLYING_ORACLE, token);
-    return tryFetchPrice(underlying, amount, decimals);
-  }
-  throw new Error(`Unknown non standard asset: ${token}`)
+export async function tryFetchKeydonixPrice(token: string, amount: bigint, decimals: number, oracleType: number, oracleAddress: string, blockNumber: number) : Promise<number> {
+  const proof = await getProof(token, oracleType, blockNumber);
+
+  return await getPriceFromOracleKeydonix(oracleAddress, token, proof, decimals, amount);
 }
 
-export async function fetchCurveLPPrice(token: string, amount: bigint) : Promise<string> {
-  const registrySig = web3.eth.abi.encodeFunctionSignature({
-    name: 'get_registry',
-    type: 'function',
-    inputs: []
-  })
-
-  try {
-
-    const curveRegistry = String(web3.eth.abi.decodeParameter('address', await web3.eth.call({
-      to: CURVE_PROVIDER,
-      data: registrySig
-    })))
-
-    const poolFromLPSig = web3.eth.abi.encodeFunctionCall({
-      name: 'get_pool_from_lp_token',
-      type: 'function',
-      inputs: [{
-        type: 'address',
-        name: 'asset'
-      }],
-    }, [token])
-
-    const pool = String(web3.eth.abi.decodeParameter('address', await web3.eth.call({
-      to: curveRegistry,
-      data: poolFromLPSig
-    })))
-
-    const virtualPriceSig = web3.eth.abi.encodeFunctionSignature({
-      name: 'get_virtual_price',
-      type: 'function',
-      inputs: []
-    })
-
-    const virtualPrice = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
-      to: pool,
-      data: virtualPriceSig
-    })))
-
-    return '$' + formatNumber(Number(amount * virtualPrice / 10n ** 34n) / 100)
-  } catch (e) {
-    return 'unknown price'
-  }
-}
-
-export async function fetchYearnAssetPrice(token: string, amount: bigint, decimals: number) : Promise<string> {
-  const pricePerShareSig = web3.eth.abi.encodeFunctionSignature({
-    name: 'pricePerShare',
-    type: 'function',
-    inputs: []
-  })
-  const tokenSig = web3.eth.abi.encodeFunctionSignature({
-    name: 'token',
-    type: 'function',
-    inputs: []
-  })
-
-  try {
-    const pricePerShare = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
-      to: token,
-      data: pricePerShareSig
-    })))
-    const underlyingToken = String(web3.eth.abi.decodeParameter('address', await web3.eth.call({
-      to: token,
-      data: tokenSig
-    })))
-
-    const underlyingAmount = amount * pricePerShare / BigInt(10 ** decimals)
-
-    return tryFetchPrice(underlyingToken, underlyingAmount, decimals)
-  } catch (e) {
-    return 'unknown price'
-  }
-}
-
-export async function fetchCompoundAssetPrice(token: string, amount: bigint, decimals: number) : Promise<string> {
-  const exchangeRateStoredSig = web3.eth.abi.encodeFunctionSignature({
-    name: 'exchangeRateStored',
-    type: 'function',
-    inputs: []
-  })
-  const underlyingSig = web3.eth.abi.encodeFunctionSignature({
-    name: 'underlying',
-    type: 'function',
-    inputs: []
-  })
-
-  try {
-    const exchangeRateStored = BigInt(web3.eth.abi.decodeParameter('uint', await web3.eth.call({
-      to: token,
-      data: exchangeRateStoredSig
-    })))
-    const underlyingToken = String(web3.eth.abi.decodeParameter('address', await web3.eth.call({
-      to: token,
-      data: underlyingSig
-    })))
-
-    const underlyingAmount = amount * exchangeRateStored / BigInt(10 ** 18)
-
-    return tryFetchPrice(underlyingToken, underlyingAmount, decimals)
-  } catch (e) {
-    return 'unknown price'
-  }
-}
-
+// todo use abi for calls
 async function _getTokenSymbol(token: string) {
   const symbolSignature = web3.eth.abi.encodeFunctionSignature({
     name: 'symbol',
@@ -484,6 +239,117 @@ export async function getOracleType(token: string): Promise<number> {
   }
 }
 
+export async function getOracleAddress(token: string): Promise<string> {
+  const oracleTypeSignature = web3.eth.abi.encodeFunctionCall({
+    name: 'oracleByAsset',
+    type: 'function',
+    inputs: [{
+      type: 'address',
+      name: 'asset'
+    }]
+  }, [token])
+
+  try {
+    const typeRaw = await web3.eth.call({
+      to: ORACLE_REGISTRY,
+      data: oracleTypeSignature
+    })
+    return web3.eth.abi.decodeParameter('address', typeRaw).toString()
+  } catch (e) {
+    return null
+  }
+}
+
+export async function getPriceFromOracle(oracle: string, token: string, decimals: number, amount: bigint): Promise<number> {
+  const signature = web3.eth.abi.encodeFunctionCall({
+    name: 'assetToUsd',
+    type: 'function',
+    inputs: [{
+      type: 'address',
+      name: 'asset'
+    },{
+      type: 'uint256',
+      name: 'amount'
+    }]
+  }, [token, amount])
+
+  try {
+    const typeRaw = await web3.eth.call({
+      to: oracle,
+      data: signature
+    })
+
+    return Number(BigInt(web3.eth.abi.decodeParameter('uint256', typeRaw)) / BigInt(2)**BigInt(112)) / 10**decimals;
+  } catch (e) {
+    return null
+  }
+}
+
+export async function getPriceFromOracleKeydonix(oracle: string, token: string, proofData, decimals: number, amount: bigint): Promise<number> {
+  const signature = web3.eth.abi.encodeFunctionCall({
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "asset",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "bytes",
+              "name": "block",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "accountProofNodesRlp",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "reserveAndTimestampProofNodesRlp",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "priceAccumulatorProofNodesRlp",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct KeydonixOracleAbstract.ProofDataStruct",
+          "name": "proofData",
+          "type": "tuple"
+        }
+      ],
+      "name": "assetToUsd",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }, [token, amount, proofData])
+
+  try {
+    const typeRaw = await web3.eth.call({
+      to: oracle,
+      data: signature
+    })
+
+    return Number(BigInt(web3.eth.abi.decodeParameter('uint256', typeRaw)) / BigInt(2)**BigInt(112)) / 10**decimals;
+  } catch (e) {
+    return null
+  }
+}
+
 export async function getLiquidationBlock(asset: string, owner: string): Promise<number> {
   const sig = web3.eth.abi.encodeFunctionCall({
     name: 'liquidationBlock',
@@ -508,31 +374,6 @@ export async function getLiquidationBlock(asset: string, owner: string): Promise
   }
 }
 
-export async function isOracleTypeEnabled(type: number, token: string): Promise<boolean> {
-  const oracleTypeByAssetSignature = web3.eth.abi.encodeFunctionCall({
-    name: 'isOracleTypeEnabled',
-    type: 'function',
-    inputs: [{
-      type: 'uint256',
-      name: 'oracleType'
-    }, {
-      type: 'address',
-      name: 'asset'
-    }]
-  }, [type.toString(), token])
-
-  try {
-    const raw = await web3.eth.call({
-      to: VAULT_PARAMETERS_ADDRESS,
-      data: oracleTypeByAssetSignature
-    })
-    return Boolean(web3.eth.abi.decodeParameter('bool', raw))
-  } catch (e) {
-    return false
-  }
-}
-
-// todo refactor this
 export async function getProof(token: string, oracleType: ORACLE_TYPES, blockNumber: number): Promise<[string, string, string,string]> {
 
   const proofBlockNumber = blockNumber - lookbackBlocks
@@ -552,7 +393,8 @@ export async function getProof(token: string, oracleType: ORACLE_TYPES, blockNum
 }
 
 export async function getProofForWrapped(token: string, blockNumber: number): Promise<[string, string, string,string]> {
-  const underlying = await getUnderlyingToken(WRAPPED_TO_UNDERLYING_ORACLE_KEYDONIX, token);
+  const wrappedOracle = await getOracleAddress(token)
+  const underlying = await getUnderlyingToken(wrappedOracle, token);
   const oracleType = await getOracleType(underlying);
 
   return getProof(underlying, oracleType, blockNumber);
@@ -646,46 +488,6 @@ export async function getCollateralAmount(asset: string, owner: string): Promise
   }
 }
 
-export async function getLiquidationRatio(asset: string): Promise<bigint> {
-  const sig = web3.eth.abi.encodeFunctionCall({
-    name: 'liquidationRatio',
-    type: 'function',
-    inputs: [{
-      type: 'address',
-      name: 'asset'
-    }]
-  }, [asset])
-
-  try {
-    const raw = await web3.eth.call({
-      to: VAULT_MANAGER_PARAMETERS_ADDRESS,
-      data: sig
-    })
-    return BigInt(web3.eth.abi.decodeParameter('uint', raw))
-  } catch (e) {
-    return 0n
-  }
-}
-
-export async function getEthPriceInUsd(): Promise<bigint> {
-  const sig = web3.eth.abi.encodeFunctionCall({
-    name: 'latestRoundData',
-    type: 'function',
-    inputs: []
-  }, [])
-
-  try {
-    const raw = await web3.eth.call({
-      to: ETH_USD_AGGREGATOR,
-      data: sig
-    })
-    const res = web3.eth.abi.decodeParameters(['uint80', 'int256', 'uint256', 'uint256', 'uint80'], raw)
-    return BigInt(res[1])
-  } catch (e) {
-    return 0n
-  }
-}
-
 export async function getReserves(pool: string): Promise<[bigint, bigint, bigint]> {
   const sig = web3.eth.abi.encodeFunctionCall({
     name: 'getReserves',
@@ -740,24 +542,6 @@ export async function getToken1(pool: string): Promise<string> {
 
   } catch (e) {
     return '0x0000000000000000000000000000000000000000'
-  }
-}
-
-export async function getSupply(token: string): Promise<bigint> {
-  const sig = web3.eth.abi.encodeFunctionCall({
-    name: 'totalSupply',
-    type: 'function',
-    inputs: []
-  }, [])
-
-  try {
-    const raw = await web3.eth.call({
-      to: token,
-      data: sig
-    })
-    return BigInt(web3.eth.abi.decodeParameter('uint', raw))
-  } catch (e) {
-    return 0n
   }
 }
 
@@ -870,6 +654,7 @@ export async function getAllCdpsData (blockNumber: number): Promise<Map<string, 
           return {
             ...cdp,
             isDebtsEnoughForLiquidationSpends: totalDebt.gte(debtThreshold),
+            oracleType: assetToOracleTypeMap[cdp.asset],
             isFallback: isKeydonix,
             liquidationTrigger: isKeydonix ? FALLBACK_LIQUIDATION_TRIGGER : MAIN_LIQUIDATION_TRIGGER,
             liquidationBlock: await getLiquidationBlock(cdp.asset, cdp.owner)
