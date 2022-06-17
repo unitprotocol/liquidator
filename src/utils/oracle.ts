@@ -7,17 +7,12 @@ import {
   SHIBASWAP_PAIR_INIT_CODE_HASH,
   SUSHISWAP_FACTORY,
   SUSHISWAP_PAIR_INIT_CODE_HASH,
-  WETH, WRAPPED_TO_UNDERLYING_ORACLE_KEYDONIX
+  WETH
 } from 'src/constants'
 import {
-  getCollateralAmount,
-  getLiquidationRatio, getOracleType,
-  getReserves,
-  getSupply,
+  getOracleType,
   getToken0,
   getToken1,
-  getTotalDebt, getUnderlyingToken,
-  isOracleTypeEnabled,
 } from 'src/utils/index'
 
 const Q112 = BigInt('0x10000000000000000000000000000')
@@ -32,27 +27,6 @@ export enum ORACLE_TYPES {
   KEYDONIX_SUSHI = 13,
   KEYDONIX_SHIBA = 18,
   KEYDONIX_WRAPPED = 19,
-}
-
-export function sqrt(value: bigint) {
-  if (value < 0n) {
-    throw new Error('square root of negative numbers is not supported')
-  }
-
-  if (value < 2n) {
-    return value
-  }
-
-  function newtonIteration(n, x0) {
-    // eslint-disable-next-line no-bitwise
-    const x1 = (n / x0 + x0) >> 1n
-    if (x0 === x1 || x0 === x1 - 1n) {
-      return x0
-    }
-    return newtonIteration(n, x1)
-  }
-
-  return newtonIteration(value, 1n)
 }
 
 export async function _getProof(address: bigint, positions: readonly bigint[], block: bigint) {
@@ -75,25 +49,6 @@ export async function _getProof(address: bigint, positions: readonly bigint[], b
     }
   })
   return { accountProof, storageProof }
-}
-
-export async function isLiquidatable_Fallback(asset: string, owner: string, blockNumber: number, ethPriceUsd: bigint): Promise<[ORACLE_TYPES, boolean]> {
-
-  const fallbackOracleType = await selectKeydonixOracle(asset)
-  if (!fallbackOracleType) {
-    return [undefined, false]
-  }
-
-  const [lr, debt, collateralAmount, assetPrice_EthQ112] = await Promise.all([
-    getLiquidationRatio(asset),
-    getTotalDebt(asset, owner),
-    getCollateralAmount(asset, owner),
-    getKeydonixPrice_Eth_Q112(asset, fallbackOracleType, blockNumber),
-  ])
-
-  const collateralPrice = (collateralAmount * assetPrice_EthQ112 * ethPriceUsd) / ethUsdDenominator / Q112
-
-  return [fallbackOracleType, collateralPrice * lr / 100n <= debt]
 }
 
 function bigintToHexAddress(value): string {
@@ -175,101 +130,6 @@ export async function getMerkleProof(
   ]
 }
 
-async function getKeydonixPrice_Eth_Q112(assetAddress: string, oracleType: ORACLE_TYPES, blockNumber: number): Promise<bigint> {
-  if (assetAddress === WETH)
-    return BigInt('0x10000000000000000000000000000')
-
-  if (oracleType === ORACLE_TYPES.KEYDONIX_WRAPPED) {
-    const underlying = await getUnderlyingToken(WRAPPED_TO_UNDERLYING_ORACLE_KEYDONIX, assetAddress);
-    const underlyingOracleType = await getOracleType(underlying);
-    return getKeydonixPrice_Eth_Q112(underlying, underlyingOracleType, blockNumber);
-  } else if (oracleType !== ORACLE_TYPES.KEYDONIX_LP) {
-    return _getKeydonixPrice(assetAddress, oracleType, blockNumber)
-  }
-
-  const [token0Addr, token1Addr] = await Promise.all([getToken0(assetAddress), getToken1(assetAddress)])
-  const [reserve0, reserve1] = await getReserves(assetAddress)
-  let tokenReserve: bigint
-  let ethReserve: bigint
-  let underlyingToken: string
-  if (BigInt(token0Addr) === BigInt(WETH)) {
-    underlyingToken = token1Addr
-    tokenReserve = BigInt(reserve1)
-    ethReserve = BigInt(reserve0)
-  } else if (BigInt(token1Addr) === BigInt(WETH)) {
-    underlyingToken = token0Addr
-    tokenReserve = BigInt(reserve0)
-    ethReserve = BigInt(reserve1)
-  }
-  const avgPriceInEth = await _getKeydonixPrice(underlyingToken, await selectKeydonixOracle(underlyingToken), blockNumber)
-  const currPriceInEth = (ethReserve * Q112) / tokenReserve
-  let ethReserveCalc: bigint
-
-  if (currPriceInEth < avgPriceInEth) {
-    const toSqrt = ethReserve * (ethReserve * BigInt(9) + (tokenReserve * BigInt(3988000) * avgPriceInEth) / Q112)
-    const ethReserveChange = (sqrt(toSqrt) - ethReserve * BigInt(1997)) / BigInt(2000)
-
-    ethReserveCalc = ethReserve + ethReserveChange
-  } else {
-    const a = tokenReserve * avgPriceInEth
-    const b = (a * BigInt(9)) / Q112
-    const c = ethReserve * BigInt(3988000)
-    const sqRoot = sqrt((a / Q112) * (b + c))
-    const d = (a * BigInt(3)) / Q112
-    ethReserveCalc = ethReserve - (ethReserve - (d + sqRoot) / BigInt(2000))
-  }
-  const lpSupply = await getSupply(assetAddress)
-  return (ethReserveCalc * BigInt(2) * Q112) / lpSupply
-}
-
-export async function selectKeydonixOracle(tokenAddr: string): Promise<ORACLE_TYPES> {
-  // todo at least use KEYDONIX_ORACLE_TYPES, at most use getOracleType everywhere (need to contracts config update)
-  const [uni, lp, sushi, shiba, wrapped] = await Promise.all([
-    isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_UNI, tokenAddr),
-    isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_LP, tokenAddr),
-    isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_SUSHI, tokenAddr),
-    isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_SHIBA, tokenAddr),
-    isOracleTypeEnabled(ORACLE_TYPES.KEYDONIX_WRAPPED, tokenAddr),
-  ])
-  return uni ? ORACLE_TYPES.KEYDONIX_UNI
-      : lp ? ORACLE_TYPES.KEYDONIX_LP
-      : sushi ? ORACLE_TYPES.KEYDONIX_SUSHI
-      : shiba ? ORACLE_TYPES.KEYDONIX_SHIBA
-      : wrapped ? ORACLE_TYPES.KEYDONIX_WRAPPED
-      : undefined
-}
-
-async function _getKeydonixPrice(assetAddress: string, oracleType: ORACLE_TYPES, blockNumber: number): Promise<bigint> {
-  let uniswapPoolAddress
-  if (oracleType === ORACLE_TYPES.KEYDONIX_UNI) {
-    uniswapPoolAddress = BigInt(
-      Pair.getAddress(
-        new Token(1, web3.utils.toChecksumAddress(WETH), 18),
-        new Token(1, web3.utils.toChecksumAddress(assetAddress), 18),
-      ),
-    )
-  } else if (oracleType === ORACLE_TYPES.KEYDONIX_SUSHI) {
-    uniswapPoolAddress = BigInt(
-      getSushiSwapAddress(
-        new Token(1, web3.utils.toChecksumAddress(WETH), 18),
-        new Token(1, web3.utils.toChecksumAddress(assetAddress), 18),
-      ),
-    )
-  } else if (oracleType === ORACLE_TYPES.KEYDONIX_SHIBA) {
-    uniswapPoolAddress = BigInt(
-      getShibaSwapAddress(
-        new Token(1, web3.utils.toChecksumAddress(WETH), 18),
-        new Token(1, web3.utils.toChecksumAddress(assetAddress), 18),
-      ),
-    )
-  } else {
-    throw new Error(`Wrong oracle for asset ${assetAddress} ${oracleType}. KEYDONIX`)
-  }
-
-  const proofBlockNumber = blockNumber - lookbackBlocks
-
-  return getPrice(uniswapPoolAddress, BigInt(WETH), BigInt(proofBlockNumber), BigInt(blockNumber))
-}
 
 function bufferToHex(buffer: Uint8Array) {
   return [...new Uint8Array(buffer)].map(b => b.toString(16).padStart(2, '0')).join('')
@@ -603,69 +463,4 @@ function getShibaSwapAddress(tokenA: Token, tokenB: Token): string {
     keccak256(['bytes'], [pack(['address', 'address'], [tokens[0].address, tokens[1].address])]),
     SHIBASWAP_PAIR_INIT_CODE_HASH
   )
-}
-
-async function getPrice(
-  exchangeAddress: bigint,
-  denominationToken: bigint,
-  proofBlockNumber: bigint,
-  currentBlockNumber: bigint,
-): Promise<bigint> {
-  async function getAccumulatorValue(innerBlockNumber: bigint, timestamp: bigint): Promise<bigint> {
-    const [token0, token1, reservesAndTimestamp, accumulator0, accumulator1] = await Promise.all([
-      getStorageAt(exchangeAddress, 6n, innerBlockNumber),
-      getStorageAt(exchangeAddress, 7n, innerBlockNumber),
-      getStorageAt(exchangeAddress, 8n, innerBlockNumber),
-      getStorageAt(exchangeAddress, 9n, innerBlockNumber),
-      getStorageAt(exchangeAddress, 10n, innerBlockNumber),
-    ])
-    // eslint-disable-next-line no-bitwise
-    const blockTimestampLast = reservesAndTimestamp >> (112n + 112n)
-    // eslint-disable-next-line no-bitwise
-    const reserve1 = (reservesAndTimestamp >> 112n) & (BigInt('0x10000000000000000000000000000') - 1n)
-    // eslint-disable-next-line no-bitwise
-    const reserve0 = reservesAndTimestamp & (BigInt('0x10000000000000000000000000000') - 1n)
-    if (token0 !== denominationToken && token1 !== denominationToken)
-      throw new Error(
-        `Denomination token ${addressToString(
-          denominationToken,
-        )} is not one of the tokens for exchange ${exchangeAddress}`,
-      )
-    if (reserve0 === 0n)
-      throw new Error(`Exchange ${addressToString(exchangeAddress)} does not have any reserves for token0.`)
-    if (reserve1 === 0n)
-      throw new Error(`Exchange ${addressToString(exchangeAddress)} does not have any reserves for token1.`)
-    if (blockTimestampLast === 0n)
-      throw new Error(
-        `Exchange ${addressToString(exchangeAddress)} has not had its first accumulator update (or it is year 2106).`,
-      )
-    if (accumulator0 === 0n)
-      throw new Error(
-        `Exchange ${addressToString(
-          exchangeAddress,
-        )} has not had its first accumulator update (or it is 136 years since launch).`,
-      )
-    if (accumulator1 === 0n)
-      throw new Error(
-        `Exchange ${addressToString(
-          exchangeAddress,
-        )} has not had its first accumulator update (or it is 136 years since launch).`,
-      )
-    const numeratorReserve = token0 === denominationToken ? reserve0 : reserve1
-    const denominatorReserve = token0 === denominationToken ? reserve1 : reserve0
-    const accumulator = token0 === denominationToken ? accumulator1 : accumulator0
-    const timeElapsedSinceLastAccumulatorUpdate = timestamp - blockTimestampLast
-    const priceNow = (numeratorReserve * BigInt('0x10000000000000000000000000000')) / denominatorReserve
-    return accumulator + timeElapsedSinceLastAccumulatorUpdate * priceNow
-  }
-  const [latestBlock, historicBlock] = await Promise.all([getBlockByNumber(currentBlockNumber), getBlockByNumber(proofBlockNumber)])
-  if (latestBlock === null) throw new Error(`Block ${currentBlockNumber} does not exist.`)
-  if (historicBlock === null) throw new Error(`Block ${proofBlockNumber} does not exist.`)
-  const [latestAccumulator, historicAccumulator] = await Promise.all([
-    getAccumulatorValue(latestBlock.number, latestBlock.timestamp),
-    getAccumulatorValue(proofBlockNumber, historicBlock.timestamp),
-  ])
-  const accumulatorDelta = latestAccumulator - historicAccumulator
-  const timeDelta = BigInt(latestBlock.timestamp) - BigInt(historicBlock.timestamp)
-  return accumulatorDelta / timeDelta
 }

@@ -4,13 +4,10 @@ mainnet:
   chain_id: 1
   hash_tag_prefix: ''
   main_symbol: 'ETH'
+  usdp_symbol: 'USDP'
   oracle_registry: '0x75fBFe26B21fd3EA008af0C764949f8214150C8f'
   cdp_registry: '0x1a5Ff58BC3246Eb233fEA20D32b79B5F01eC650c'
   vault: '0xb1cFF81b9305166ff1EFc49A129ad2AfCd7BCf19'
-  vault_manager_parameters: '0x203153522B9EAef4aE17c6e99851EE7b2F7D312E'
-  vault_parameters: '0xB46F8CF42e504Efe8BEf895f848741daA55e9f1D'
-  wrapped_to_underlying_oracle_keydonix: '0xfF536BB145177D3E8E9A84fFF148B0e42282BF40'
-  wrapped_to_underlying_oracle: '0x220Ea780a484c18fd0Ab252014c58299759a1Fbd'
 
   uniswap_factory: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
 
@@ -20,7 +17,6 @@ mainnet:
   shibaswap_factory: '0x115934131916c8b277dd010ee02de363c09d037c'
   shibaswap_init_code_hash: '0x65d1a3b1e46c6e4f1be1ad5f99ef14dc488ae0549dc97db9b30afe2241ce1c7a'
 
-  eth_usd_aggregator: '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419'
   weth: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
   vault_managers:
     - '0x3b088b680ff7253e662bc29e5a7b696ba0100869'
@@ -29,12 +25,8 @@ mainnet:
     - '0x9cCbb2F03184720Eef5f8fA768425AF06604Daf4'
   fallback_liquidation_trigger: '0x6a99d3840998a6a4612ff4e3735cc061bea75e1f'
   main_liquidation_trigger: '0x3b088b680ff7253e662bc29e5a7b696ba0100869'
-  crv3_representations:
-    - '0x4bfb2fa13097e5312b19585042fdbf3562dc8676'
-  crv3: '0x6c3f90f043a72fa612cbac8115ee7e52bde6e490'
   liquidation_check_timeout: 10
   liquidation_confirmations_threshold: 3
-  curve_provider: '0x0000000022D53366457F9d5E68Ec105046FC4383'
   liquidation_debt_threshold: 200
   liquidation_debt_threshold_keydonix: 400
 bsc:
@@ -43,18 +35,14 @@ bsc:
   chain_id: 56
   hash_tag_prefix: 'bsc_'
   main_symbol: 'BSC'
+  usdp_symbol: 'USDP'
   oracle_registry: '0xbea721ACe12e881cb44Dbe9361ffEd9141CE547F'
   cdp_registry: '0xE8372dcef80189c0F88631507f6466b3f60E24A4'
   vault: '0xdacfeed000e12c356fb72ab5089e7dd80ff4dd93'
-  vault_manager_parameters: '0x99f2B13C28A4183a5d5e0fe02B1B5aeEe85FAF5A'
-  vault_parameters: '0x56c7CA666d192332F72a5842E72eED5f59F0fb48'
-  wrapped_to_underlying_oracle_keydonix: ''
-  wrapped_to_underlying_oracle: ''
 
   sushiswap_factory: '0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73'
   uniswap_factory: ''
   sushiswap_init_code_hash: '0x00fb7f630766e6a796048ea87d01acd3068e8ff67d078148a3fa3f4a84f69bd5'
-  eth_usd_aggregator: '0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE'
   weth: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
   vault_managers:
     - '0x1337dac01fc21fa21d17914f96725f7a7b73868f'
@@ -62,11 +50,8 @@ bsc:
     - '0x852de08f3cD5b92dD8b3B92b321363D04EeEc39E'
   fallback_liquidation_trigger: ''
   main_liquidation_trigger: '0x1337dac01fc21fa21d17914f96725f7a7b73868f'
-  crv3_representations: ''
-  crv3: ''
   liquidation_check_timeout: 100
   liquidation_confirmations_threshold: 3
-  curve_provider: ''
   liquidation_debt_threshold: 2
   liquidation_debt_threshold_keydonix: 2
 fantom:
@@ -75,18 +60,14 @@ fantom:
   chain_id: 250
   hash_tag_prefix: 'ftm_'
   main_symbol: 'FTM'
+  usdp_symbol: 'USDP'
   oracle_registry: '0x0058aB54d4405D8084e8D71B8AB36B3091b21c7D'
   cdp_registry: '0x1442bC024a92C2F96c3c1D2E9274bC4d8119d97e'
   vault: '0xD7A9b0D75e51bfB91c843b23FB2C19aa3B8D958e'
-  vault_manager_parameters: '0x1c7aEA8B6498F0854D1fCE542a27ed6a10D71d2f'
-  vault_parameters: '0xa8F0b5758041158Cf0375b7AdC8AC175ff031B6C'
-  wrapped_to_underlying_oracle_keydonix: ''
-  wrapped_to_underlying_oracle: ''
 
   sushiswap_factory: ''
   uniswap_factory: ''
   sushiswap_init_code_hash: ''
-  eth_usd_aggregator: '0xf4766552D15AE4d256Ad41B6cf2933482B0680dc'
   weth: '0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83'
   vault_managers:
     - '0xD12d6082811709287AE8b6d899Ab841659075FC3'
@@ -94,11 +75,8 @@ fantom:
     - '0x1F18FAc6A422cF4a8D18369F017a100C77b49DeF'
   fallback_liquidation_trigger: ''
   main_liquidation_trigger: '0xD12d6082811709287AE8b6d899Ab841659075FC3'
-  crv3_representations: ''
-  crv3: ''
   liquidation_check_timeout: 100
   liquidation_confirmations_threshold: 3
-  curve_provider: ''
   liquidation_debt_threshold: 2
   liquidation_debt_threshold_keydonix: 2
 gnosis:
@@ -107,18 +85,14 @@ gnosis:
   chain_id: 100
   hash_tag_prefix: 'gno_'
   main_symbol: 'GNO'
+  usdp_symbol: 'USG'
   oracle_registry: '0x7670225e8c72dC627EAe09640c2Ba9a088b837b8'
   cdp_registry: '0x8ae98DD5D6177BE5Eb86fdD3c216Ae1952968F91'
   vault: '0x2EBb09eC5ECdc20800031f9d6Cee98f90127A822'
-  vault_manager_parameters: '0x9096c43f1E11d64bad829f962377663097F28346'
-  vault_parameters: '0x22a974DdF36EcE1568e843719E72Db3eC7066c43'
-  wrapped_to_underlying_oracle_keydonix: ''
-  wrapped_to_underlying_oracle: ''
 
   sushiswap_factory: ''
   uniswap_factory: ''
   sushiswap_init_code_hash: ''
-  eth_usd_aggregator: '0x678df3415fc31947da4324ec63212874be5a82f8'
   weth: '0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d'
   vault_managers:
     - '0xCa5d2E0961fe43eAE4bf07FA961B3CA8Cc0f50f6'
@@ -126,10 +100,7 @@ gnosis:
     - '0x9095557b53E7701bB0AC685d33efE116231B2b19'
   fallback_liquidation_trigger: ''
   main_liquidation_trigger: '0xCa5d2E0961fe43eAE4bf07FA961B3CA8Cc0f50f6'
-  crv3_representations: ''
-  crv3: ''
   liquidation_check_timeout: 20
   liquidation_confirmations_threshold: 3
-  curve_provider: ''
   liquidation_debt_threshold: 2
   liquidation_debt_threshold_keydonix: 2

@@ -12,5 +12,5 @@ export type TxConfig = {
 export interface Liquidation {
   tx: TxConfig
   blockNumber: number
-  buildTx?: (tx: TxConfig, blockNumber: number) => TxConfig
+  buildTx?: (blockNumber: number) => TxConfig
 }

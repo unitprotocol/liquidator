@@ -14,7 +14,7 @@ import { Buyout } from 'src/types/Buyout'
 import { BasicEvent } from 'src/types/BasicEvent'
 import { NotificationState } from 'src/services/statemanager'
 import BigNumber from 'bignumber.js'
-import {HASHTAG_PREFIX, EXPLORER_URL, IS_DEV, LIQUIDATION_URL, MAIN_SYMBOL} from 'src/constants'
+import {HASHTAG_PREFIX, EXPLORER_URL, IS_DEV, LIQUIDATION_URL, MAIN_SYMBOL, USDP_SYMBOL} from 'src/constants'
 import { web3 } from 'src/provider'
 
 const TelegramBot = require("node-telegram-bot-api")
@@ -66,7 +66,6 @@ export default class NotificationService {
   }
 
   async toMsg(data: JoinExit, isJoin) {
-    return; //temporary
     if (!(await this._shouldNotify(data))) return
 
     let assetAction = '', usdpAction = ''
@@ -94,7 +93,7 @@ export default class NotificationService {
 
       const collateralInfo = assetChange ? '' : `(${symbol}) `
 
-      usdpAction = `${usdpPrefix} ${formatNumber(usdp)} USDP ${collateralInfo}${duckCount > 100 ? '🐋' : '🦆'.repeat(duckCount)}`
+      usdpAction = `${usdpPrefix} ${formatNumber(usdp)} ${USDP_SYMBOL} ${collateralInfo}${duckCount > 100 ? '🐋' : '🦆'.repeat(duckCount)}`
     }
 
     return assetAction + usdpAction + '\n' + `<a href="${EXPLORER_URL}/tx/${data.txHash}">Explorer</a>`
@@ -123,7 +122,7 @@ export default class NotificationService {
 
     const text = `#${HASHTAG_PREFIX}liquidation_trigger`
       + `\nLiquidation auction for ${symbol} just started`
-      + `\nInitial price ${debtFormatted} USDP`
+      + `\nInitial price ${debtFormatted} ${USDP_SYMBOL}`
       + `\nAsset ${data.token}`
       + `\nOwner ${data.user}`
       + `\n<a href="${LIQUIDATION_URL}">Liquidate</a>`
@@ -142,7 +141,7 @@ export default class NotificationService {
 
     const usdpPriceFormatted: number | string = Number(data.price / BigInt(10 ** (18 - 2))) / 1e2
 
-    const price = usdpPriceFormatted === 0 ? 'free' : `${usdpPriceFormatted} USDP`
+    const price = usdpPriceFormatted === 0 ? 'free' : `${usdpPriceFormatted} ${USDP_SYMBOL}`
 
     const assetAmount = new BigNumber(data.amount.toString()).div(10 ** decimals).toNumber()
 
@@ -154,18 +153,6 @@ export default class NotificationService {
       + '\n' + `<a href="${EXPLORER_URL}/tx/${data.txHash}">Explorer</a>`
 
     return this.sendMessage(text, this.liquidationChannel)
-  }
-
-  async notifyTriggerTx(data: LiquidationTrigger) {
-    if (!(await this._shouldNotify(data))) return
-    const symbol = await getTokenSymbol(data.token)
-
-    const text = `Trying to liquidate CDP with ${symbol} collateral`
-      + `\nAsset ${data.token}`
-      + `\nOwner ${data.user}`
-      + '\n' + `<a href="https://bscscan.com/tx/${data.txHash}">Explorer</a>`
-
-    return this.sendMessage(text)
   }
 
   private async sendMessage(text, chatId = this.defaultChatId, form = { parse_mode: 'HTML', disable_web_page_preview: true }) {
