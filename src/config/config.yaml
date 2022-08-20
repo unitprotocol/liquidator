@@ -29,20 +29,23 @@ mainnet:
   liquidation_confirmations_threshold: 3
   liquidation_debt_threshold: 200
   liquidation_debt_threshold_keydonix: 400
-bsc:
+bsc_old:
   explorer_url: 'https://bscscan.com'
   liquidation_url: 'https://unit.xyz/liquidations'
   chain_id: 56
-  hash_tag_prefix: 'bsc_'
-  main_symbol: 'BSC'
+  hash_tag_prefix: 'bsc_old_'
+  main_symbol: 'BSC_OLD'
   usdp_symbol: 'USDP'
   oracle_registry: '0xbea721ACe12e881cb44Dbe9361ffEd9141CE547F'
   cdp_registry: '0xE8372dcef80189c0F88631507f6466b3f60E24A4'
   vault: '0xdacfeed000e12c356fb72ab5089e7dd80ff4dd93'
 
-  sushiswap_factory: '0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73'
   uniswap_factory: ''
-  sushiswap_init_code_hash: '0x00fb7f630766e6a796048ea87d01acd3068e8ff67d078148a3fa3f4a84f69bd5'
+  sushiswap_factory: ''
+  sushiswap_init_code_hash: ''
+  shibaswap_factory: ''
+  shibaswap_init_code_hash: ''
+
   weth: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
   vault_managers:
     - '0x1337dac01fc21fa21d17914f96725f7a7b73868f'
@@ -50,7 +53,35 @@ bsc:
     - '0x852de08f3cD5b92dD8b3B92b321363D04EeEc39E'
   fallback_liquidation_trigger: ''
   main_liquidation_trigger: '0x1337dac01fc21fa21d17914f96725f7a7b73868f'
-  liquidation_check_timeout: 100
+  liquidation_check_timeout: 50
+  liquidation_confirmations_threshold: 3
+  liquidation_debt_threshold: 2
+  liquidation_debt_threshold_keydonix: 2
+bsc:
+  explorer_url: 'https://bscscan.com'
+  liquidation_url: 'https://unit.xyz/liquidations'
+  chain_id: 56
+  hash_tag_prefix: 'bsc_'
+  main_symbol: 'BSC'
+  usdp_symbol: 'USDP'
+  oracle_registry: '0xED724e65373Fc3505Da02E05957678C471105a60'
+  cdp_registry: '0xe94C28d7FB600751D8C5C8A6435a2dFA9Fb7Cf08'
+  vault: '0xaa22Eb53553Ca9921427F596d8F62e95ea27372e'
+
+  uniswap_factory: ''
+  sushiswap_factory: ''
+  sushiswap_init_code_hash: ''
+  shibaswap_factory: ''
+  shibaswap_init_code_hash: ''
+
+  weth: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c'
+  vault_managers:
+    - '0xF6E54a0a024D9A59406a4bA9dCE2d04c9e0fb7C7'
+  auctions:
+    - '0x6e0B3dBDCe0C9a8b4CD44067D8548b00f2BEbF16'
+  fallback_liquidation_trigger: ''
+  main_liquidation_trigger: '0xF6E54a0a024D9A59406a4bA9dCE2d04c9e0fb7C7'
+  liquidation_check_timeout: 50
   liquidation_confirmations_threshold: 3
   liquidation_debt_threshold: 2
   liquidation_debt_threshold_keydonix: 2
@@ -65,9 +96,12 @@ fantom:
   cdp_registry: '0x1442bC024a92C2F96c3c1D2E9274bC4d8119d97e'
   vault: '0xD7A9b0D75e51bfB91c843b23FB2C19aa3B8D958e'
 
-  sushiswap_factory: ''
   uniswap_factory: ''
+  sushiswap_factory: ''
   sushiswap_init_code_hash: ''
+  shibaswap_factory: ''
+  shibaswap_init_code_hash: ''
+
   weth: '0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83'
   vault_managers:
     - '0xD12d6082811709287AE8b6d899Ab841659075FC3'
@@ -77,8 +111,8 @@ fantom:
   main_liquidation_trigger: '0xD12d6082811709287AE8b6d899Ab841659075FC3'
   liquidation_check_timeout: 100
   liquidation_confirmations_threshold: 3
-  liquidation_debt_threshold: 2
-  liquidation_debt_threshold_keydonix: 2
+  liquidation_debt_threshold: 1
+  liquidation_debt_threshold_keydonix: 0
 gnosis:
   explorer_url: 'https://blockscout.com/xdai/mainnet'
   liquidation_url: 'https://unit.xyz/liquidations'
@@ -90,9 +124,12 @@ gnosis:
   cdp_registry: '0x8ae98DD5D6177BE5Eb86fdD3c216Ae1952968F91'
   vault: '0x2EBb09eC5ECdc20800031f9d6Cee98f90127A822'
 
-  sushiswap_factory: ''
   uniswap_factory: ''
+  sushiswap_factory: ''
   sushiswap_init_code_hash: ''
+  shibaswap_factory: ''
+  shibaswap_init_code_hash: ''
+
   weth: '0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d'
   vault_managers:
     - '0xCa5d2E0961fe43eAE4bf07FA961B3CA8Cc0f50f6'
@@ -102,5 +139,89 @@ gnosis:
   main_liquidation_trigger: '0xCa5d2E0961fe43eAE4bf07FA961B3CA8Cc0f50f6'
   liquidation_check_timeout: 20
   liquidation_confirmations_threshold: 3
-  liquidation_debt_threshold: 2
-  liquidation_debt_threshold_keydonix: 2
+  liquidation_debt_threshold: 1
+  liquidation_debt_threshold_keydonix: 0
+avalanche:
+  explorer_url: 'https://snowtrace.io'
+  liquidation_url: 'https://unit.xyz/liquidations'
+  chain_id: 43114
+  hash_tag_prefix: 'ava_'
+  main_symbol: 'AVA'
+  usdp_symbol: 'USDP'
+  oracle_registry: '0x91B3e6dc1506702702Cc6814461ceE1Fe059D246'
+  cdp_registry: '0xE01030CFEE17D5FE938F9c92a2849D5Dc54Ba246'
+  vault: '0xBF389addC2A319fAf111fbe1bBBc8BF4A562549C'
+
+  uniswap_factory: ''
+  sushiswap_factory: ''
+  sushiswap_init_code_hash: ''
+  shibaswap_factory: ''
+  shibaswap_init_code_hash: ''
+
+  weth: '0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7'
+  vault_managers:
+    - '0xA7549fe82F3dE73b270880A817FE05d6c40094E0'
+  auctions:
+    - '0xC744c62BEbED8Db3eCB2BdB226E864eB0AA60A6D'
+  fallback_liquidation_trigger: ''
+  main_liquidation_trigger: '0xA7549fe82F3dE73b270880A817FE05d6c40094E0'
+  liquidation_check_timeout: 20
+  liquidation_confirmations_threshold: 3
+  liquidation_debt_threshold: 1
+  liquidation_debt_threshold_keydonix: 0
+arbitrum:
+  explorer_url: 'https://arbiscan.io/'
+  liquidation_url: 'https://unit.xyz/liquidations'
+  chain_id: 42161
+  hash_tag_prefix: 'arb_'
+  main_symbol: 'ARB'
+  usdp_symbol: 'USDP'
+  oracle_registry: '0xc7952a86896Bc00E268F696D7789e27aeE1FFF25'
+  cdp_registry: '0xe6297CCe54d35eCb71B9014669a6187734aD8fea'
+  vault: '0x1278615c4f0b09F32A73eFF2d24A1FC3652C2903'
+
+  uniswap_factory: ''
+  sushiswap_factory: ''
+  sushiswap_init_code_hash: ''
+  shibaswap_factory: ''
+  shibaswap_init_code_hash: ''
+
+  weth: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1'
+  vault_managers:
+    - '0x85a19Ac3e47B0c16f4C7FE733e64a7D61a853D98'
+  auctions:
+    - '0x29FD96C94c9e120de16a1C6bBdf39fDD0C468aFe'
+  fallback_liquidation_trigger: ''
+  main_liquidation_trigger: '0x85a19Ac3e47B0c16f4C7FE733e64a7D61a853D98'
+  liquidation_check_timeout: 60
+  liquidation_confirmations_threshold: 3
+  liquidation_debt_threshold: 1
+  liquidation_debt_threshold_keydonix: 0
+optimism:
+  explorer_url: 'https://optimistic.etherscan.io/'
+  liquidation_url: 'https://unit.xyz/liquidations'
+  chain_id: 10
+  hash_tag_prefix: 'opt_'
+  main_symbol: 'OPT'
+  usdp_symbol: 'USDP'
+  oracle_registry: '0xBBD408eb2dc6b34C2D18893286aC0210557F5a94'
+  cdp_registry: '0xeA2D946076F2f7AfE64353C4acf0B5ad66471f5F'
+  vault: '0x112331e98e25BB1f4C8Eb0659674E40Fc1fD3BC4'
+
+  uniswap_factory: ''
+  sushiswap_factory: ''
+  sushiswap_init_code_hash: ''
+  shibaswap_factory: ''
+  shibaswap_init_code_hash: ''
+
+  weth: '0x4200000000000000000000000000000000000006'
+  vault_managers:
+    - '0xBb85794cd26516E4dB8E6a004236Ba06d34bfC60'
+  auctions:
+    - '0x5E7902A7d4c3ad0317b9C84B59348836E94158a2'
+  fallback_liquidation_trigger: ''
+  main_liquidation_trigger: '0xBb85794cd26516E4dB8E6a004236Ba06d34bfC60'
+  liquidation_check_timeout: 50
+  liquidation_confirmations_threshold: 3
+  liquidation_debt_threshold: 1
+  liquidation_debt_threshold_keydonix: 0

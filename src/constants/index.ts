@@ -8,10 +8,9 @@ export const LIQUIDATION_TRIGGERED_TOPICS = ["0x5b79a897d30813a62a1f95ba180d3320
 export const BUYOUT_TOPICS = [web3.utils.sha3("Buyout(address,address,address,uint256,uint256,uint256)")]
 export const EXIT_TOPICS = [web3.utils.sha3('Exit(address,address,uint256,uint256)')]
 
-if (!(['mainnet', 'bsc', 'fantom', 'gnosis'].includes(process.env.CHAIN_NAME)))
-  throw new Error(`Unsupported chain name: ${process.env.CHAIN_NAME}`)
-
 const conf = config[process.env.CHAIN_NAME]
+if (!conf)
+  throw new Error(`Unsupported chain name: ${process.env.CHAIN_NAME}`)
 
 export const CHAIN_ID = Number(conf.chain_id)
 export const MAIN_SYMBOL = conf.main_symbol
