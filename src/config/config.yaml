@@ -1,6 +1,6 @@
 mainnet:
   explorer_url: 'https://etherscan.io'
-  liquidation_url: 'https://unit.xyz/liquidations'
+  liquidation_url: 'https://unit.xyz/eth/liquidations'
   chain_id: 1
   hash_tag_prefix: ''
   main_symbol: 'ETH'
@@ -31,7 +31,7 @@ mainnet:
   liquidation_debt_threshold_keydonix: 400
 bsc_old:
   explorer_url: 'https://bscscan.com'
-  liquidation_url: 'https://unit.xyz/liquidations'
+  liquidation_url: 'https://bsc-v1.unit.xyz/liquidations'
   chain_id: 56
   hash_tag_prefix: 'bsc_old_'
   main_symbol: 'BSC_OLD'
@@ -59,7 +59,7 @@ bsc_old:
   liquidation_debt_threshold_keydonix: 2
 bsc:
   explorer_url: 'https://bscscan.com'
-  liquidation_url: 'https://unit.xyz/liquidations'
+  liquidation_url: 'https://unit.xyz/bsc/liquidations'
   chain_id: 56
   hash_tag_prefix: 'bsc_'
   main_symbol: 'BSC'
@@ -87,7 +87,7 @@ bsc:
   liquidation_debt_threshold_keydonix: 2
 fantom:
   explorer_url: 'https://ftmscan.com'
-  liquidation_url: 'https://unit.xyz/liquidations'
+  liquidation_url: 'https://unit.xyz/ftm/liquidations'
   chain_id: 250
   hash_tag_prefix: 'ftm_'
   main_symbol: 'FTM'
@@ -115,7 +115,7 @@ fantom:
   liquidation_debt_threshold_keydonix: 0
 gnosis:
   explorer_url: 'https://blockscout.com/xdai/mainnet'
-  liquidation_url: 'https://unit.xyz/liquidations'
+  liquidation_url: 'https://unit.xyz/gnosis/liquidations'
   chain_id: 100
   hash_tag_prefix: 'gno_'
   main_symbol: 'GNO'
@@ -143,7 +143,7 @@ gnosis:
   liquidation_debt_threshold_keydonix: 0
 avalanche:
   explorer_url: 'https://snowtrace.io'
-  liquidation_url: 'https://unit.xyz/liquidations'
+  liquidation_url: 'https://unit.xyz/avalanche/liquidations'
   chain_id: 43114
   hash_tag_prefix: 'ava_'
   main_symbol: 'AVA'
@@ -171,7 +171,7 @@ avalanche:
   liquidation_debt_threshold_keydonix: 0
 arbitrum:
   explorer_url: 'https://arbiscan.io/'
-  liquidation_url: 'https://unit.xyz/liquidations'
+  liquidation_url: 'https://unit.xyz/arbitrum/liquidations'
   chain_id: 42161
   hash_tag_prefix: 'arb_'
   main_symbol: 'ARB'
@@ -199,7 +199,7 @@ arbitrum:
   liquidation_debt_threshold_keydonix: 0
 optimism:
   explorer_url: 'https://optimistic.etherscan.io/'
-  liquidation_url: 'https://unit.xyz/liquidations'
+  liquidation_url: 'https://unit.xyz/optimism/liquidations'
   chain_id: 10
   hash_tag_prefix: 'opt_'
   main_symbol: 'OPT'
