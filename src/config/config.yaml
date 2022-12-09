@@ -115,7 +115,7 @@ fantom:
   liquidation_debt_threshold_keydonix: 0
 gnosis:
   explorer_url: 'https://blockscout.com/xdai/mainnet'
-  liquidation_url: 'https://borrow.is/gnosis/liquidations'
+  liquidation_url: 'https://unit.xyz/gnosis/liquidations'
   chain_id: 100
   hash_tag_prefix: 'gno_'
   main_symbol: 'GNO'
