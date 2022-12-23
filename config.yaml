@@ -25,10 +25,11 @@ mainnet:
     - '0x9cCbb2F03184720Eef5f8fA768425AF06604Daf4'
   fallback_liquidation_trigger: '0x6a99d3840998a6a4612ff4e3735cc061bea75e1f'
   main_liquidation_trigger: '0x3b088b680ff7253e662bc29e5a7b696ba0100869'
-  liquidation_check_timeout: 10
+  blocks_check_delay: 10
   liquidation_confirmations_threshold: 3
-  liquidation_debt_threshold: 200
-  liquidation_debt_threshold_keydonix: 400
+  liquidation_debt_threshold: 100
+  liquidation_debt_threshold_keydonix: 200
+  min_balance: 1
 bsc_old:
   explorer_url: 'https://bscscan.com'
   liquidation_url: 'https://bsc-v1.unit.xyz/liquidations'
@@ -53,10 +54,11 @@ bsc_old:
     - '0x852de08f3cD5b92dD8b3B92b321363D04EeEc39E'
   fallback_liquidation_trigger: ''
   main_liquidation_trigger: '0x1337dac01fc21fa21d17914f96725f7a7b73868f'
-  liquidation_check_timeout: 50
+  blocks_check_delay: 50
   liquidation_confirmations_threshold: 3
   liquidation_debt_threshold: 2
   liquidation_debt_threshold_keydonix: 2
+  min_balance: 0.3
 bsc:
   explorer_url: 'https://bscscan.com'
   liquidation_url: 'https://unit.xyz/bsc/liquidations'
@@ -81,10 +83,11 @@ bsc:
     - '0x6e0B3dBDCe0C9a8b4CD44067D8548b00f2BEbF16'
   fallback_liquidation_trigger: ''
   main_liquidation_trigger: '0xF6E54a0a024D9A59406a4bA9dCE2d04c9e0fb7C7'
-  liquidation_check_timeout: 50
+  blocks_check_delay: 50
   liquidation_confirmations_threshold: 3
   liquidation_debt_threshold: 2
   liquidation_debt_threshold_keydonix: 2
+  min_balance: 0.3
 fantom:
   explorer_url: 'https://ftmscan.com'
   liquidation_url: 'https://unit.xyz/ftm/liquidations'
@@ -109,10 +112,11 @@ fantom:
     - '0x1F18FAc6A422cF4a8D18369F017a100C77b49DeF'
   fallback_liquidation_trigger: ''
   main_liquidation_trigger: '0xD12d6082811709287AE8b6d899Ab841659075FC3'
-  liquidation_check_timeout: 100
+  blocks_check_delay: 100
   liquidation_confirmations_threshold: 3
   liquidation_debt_threshold: 1
   liquidation_debt_threshold_keydonix: 0
+  min_balance: 9
 gnosis:
   explorer_url: 'https://blockscout.com/xdai/mainnet'
   liquidation_url: 'https://unit.xyz/gnosis/liquidations'
@@ -137,10 +141,11 @@ gnosis:
     - '0x9095557b53E7701bB0AC685d33efE116231B2b19'
   fallback_liquidation_trigger: ''
   main_liquidation_trigger: '0xCa5d2E0961fe43eAE4bf07FA961B3CA8Cc0f50f6'
-  liquidation_check_timeout: 20
+  blocks_check_delay: 20
   liquidation_confirmations_threshold: 3
   liquidation_debt_threshold: 1
   liquidation_debt_threshold_keydonix: 0
+  min_balance: 9
 avalanche:
   explorer_url: 'https://snowtrace.io'
   liquidation_url: 'https://unit.xyz/avalanche/liquidations'
@@ -165,10 +170,11 @@ avalanche:
     - '0xC744c62BEbED8Db3eCB2BdB226E864eB0AA60A6D'
   fallback_liquidation_trigger: ''
   main_liquidation_trigger: '0xA7549fe82F3dE73b270880A817FE05d6c40094E0'
-  liquidation_check_timeout: 20
+  blocks_check_delay: 20
   liquidation_confirmations_threshold: 3
   liquidation_debt_threshold: 1
   liquidation_debt_threshold_keydonix: 0
+  min_balance: 2
 arbitrum:
   explorer_url: 'https://arbiscan.io/'
   liquidation_url: 'https://unit.xyz/arbitrum/liquidations'
@@ -193,10 +199,11 @@ arbitrum:
     - '0x29FD96C94c9e120de16a1C6bBdf39fDD0C468aFe'
   fallback_liquidation_trigger: ''
   main_liquidation_trigger: '0x85a19Ac3e47B0c16f4C7FE733e64a7D61a853D98'
-  liquidation_check_timeout: 60
+  blocks_check_delay: 60
   liquidation_confirmations_threshold: 3
   liquidation_debt_threshold: 1
   liquidation_debt_threshold_keydonix: 0
+  min_balance: 0.06
 optimism:
   explorer_url: 'https://optimistic.etherscan.io/'
   liquidation_url: 'https://unit.xyz/optimism/liquidations'
@@ -221,7 +228,8 @@ optimism:
     - '0x5E7902A7d4c3ad0317b9C84B59348836E94158a2'
   fallback_liquidation_trigger: ''
   main_liquidation_trigger: '0xBb85794cd26516E4dB8E6a004236Ba06d34bfC60'
-  liquidation_check_timeout: 50
+  blocks_check_delay: 100
   liquidation_confirmations_threshold: 3
   liquidation_debt_threshold: 1
   liquidation_debt_threshold_keydonix: 0
+  min_balance: 0.06

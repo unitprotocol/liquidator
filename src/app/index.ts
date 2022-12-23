@@ -2,6 +2,7 @@ import 'module-alias/register'
 import SynchronizationService from 'src/services/synchronization'
 import LiquidationService from 'src/services/liquidation'
 import NotificationService from 'src/services/notification'
+import HealthService from 'src/services/health'
 import { Liquidation } from 'src/types/TxConfig'
 import { web3 } from 'src/provider'
 import EventBroker from 'src/broker'
@@ -11,6 +12,7 @@ class LiquidationMachine {
   public readonly synchronizer: SynchronizationService
   public readonly liquidator: LiquidationService
   public readonly notificator: NotificationService
+  public readonly health: HealthService
   public readonly statemanager: StateManagerService
   public liquidatorReady: boolean
   public postponedLiquidationTriggers: Liquidation[]
@@ -27,6 +29,8 @@ class LiquidationMachine {
 
     this.liquidator = new LiquidationService(web3, this.notificator)
     this.liquidator.on('ready', () => { this.liquidatorReady = true })
+
+    this.health = new HealthService(web3, this.statemanager)
 
     const events = Object.keys(broker)
 

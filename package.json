@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "tsc && ts-node src/app"
+    "start": "npx tsc && npx ts-node src/app"
   },
   "dependencies": {
     "@ethersproject/address": "^5.2.0",
@@ -24,5 +24,8 @@
   },
   "_moduleAliases": {
     "src": "dist"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.4"
   }
 }

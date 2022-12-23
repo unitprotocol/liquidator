@@ -14,10 +14,12 @@ import {
   AUCTIONS,
   BUYOUT_TOPICS,
   SYNCHRONIZER_LIQUIDATED_EVENT,
-  LIQUIDATION_CHECK_TIMEOUT,
+  BLOCKS_CHECK_DELAY,
   SYNCHRONIZER_SAVE_STATE_REQUEST,
   FALLBACK_LIQUIDATION_TRIGGER,
   MAIN_LIQUIDATION_TRIGGER,
+  CHAIN_NAME,
+  IS_DEV,
 } from 'src/constants'
 import Logger from 'src/logger'
 import { TxConfig } from 'src/types/TxConfig'
@@ -88,7 +90,7 @@ class SynchronizationService extends EventEmitter {
     console.timeEnd('Fetched in')
     this.log('Tracking events...')
     this.emit('ready', this)
-    await this.logOnline('Started')
+    await this.logOnline(`Started ${CHAIN_NAME} in ${IS_DEV?'devel':'production'} mode`)
     this.trackEvents()
   }
 
@@ -101,6 +103,9 @@ class SynchronizationService extends EventEmitter {
   }
 
   public async syncToBlock(header: BlockHeader) {
+    // multiplier 1.1 not to run sync in one block with liquidation checks (to save rate limit)
+    if (+header.number < this.lastProcessedBlock + BLOCKS_CHECK_DELAY * 1.1)
+      return
 
     const toBlock = header.number
     if (this.lastProcessedBlock >= toBlock) return
@@ -192,7 +197,7 @@ class SynchronizationService extends EventEmitter {
   }
 
   async checkLiquidatable(header: BlockHeader) {
-    if (+header.number < this.lastLiquidationCheck + LIQUIDATION_CHECK_TIMEOUT)
+    if (+header.number < this.lastLiquidationCheck + BLOCKS_CHECK_DELAY)
       return
 
     this.setLastLiquidationCheck(+header.number)
@@ -402,7 +407,8 @@ class SynchronizationService extends EventEmitter {
   }
 
   private logOnline(...args) {
-    return this.notificator.logAction(this.logger.format(args, true))
+    this.logger.info(args)
+    // return this.notificator.logAction(this.logger.format(args, true))
   }
 
   private logError(...args) {

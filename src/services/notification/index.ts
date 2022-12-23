@@ -66,7 +66,6 @@ export default class NotificationService {
   }
 
   async toMsg(data: JoinExit, isJoin) {
-    return; // we temporarily do not want to send messages
     if (!(await this._shouldNotify(data))) return
 
     let assetAction = '', usdpAction = ''

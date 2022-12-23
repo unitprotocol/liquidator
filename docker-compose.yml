@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  liquidator-mainnet: &default
+    build:
+      dockerfile: docker/Dockerfile
+      context: .
+    volumes:
+      - liquidator_data:/data/
+    env_file:
+      - .env
+    environment:
+      - CHAIN_NAME=mainnet
+    restart: always
+    ports:
+      - "3001:3000"
+
+  liquidator-bsc_old:
+    <<: *default
+    environment:
+      - CHAIN_NAME=bsc_old
+    ports:
+      - "3002:3000"
+
+  liquidator-bsc:
+    <<: *default
+    environment:
+      - CHAIN_NAME=bsc
+    ports:
+      - "3003:3000"
+
+  liquidator-fantom:
+    <<: *default
+    environment:
+      - CHAIN_NAME=fantom
+    ports:
+      - "3004:3000"
+
+  liquidator-gnosis:
+    <<: *default
+    environment:
+      - CHAIN_NAME=gnosis
+    ports:
+      - "3005:3000"
+
+  liquidator-avalanche:
+    <<: *default
+    environment:
+      - CHAIN_NAME=avalanche
+    ports:
+      - "3006:3000"
+
+  liquidator-arbitrum:
+    <<: *default
+    environment:
+      - CHAIN_NAME=arbitrum
+    ports:
+      - "3007:3000"
+
+  liquidator-optimism:
+    <<: *default
+    environment:
+      - CHAIN_NAME=optimism
+    ports:
+      - "3008:3000"
+
+volumes:
+  liquidator_data:
+
