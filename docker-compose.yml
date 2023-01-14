@@ -11,7 +11,7 @@ services:
       - .env
     environment:
       - CHAIN_NAME=mainnet
-    restart: always
+    restart: unless-stopped
     ports:
       - "3001:3000"
 
